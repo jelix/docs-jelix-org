@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <urls xmlns="http://jelix.org/ns/urls/1.0">
     <entrypoint type="classic" name="fr" default="true">
-        <url pathinfo="/" module="app" action="default:index">
+        <url pathinfo="/" module="gitiwiki" include="urls.xml">
         </url>
     </entrypoint>
 </urls>

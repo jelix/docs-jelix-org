@@ -6,3 +6,5 @@ startAction="default:index"
 
 [modules]
 app.access=2
+
+gitiwiki.access=2

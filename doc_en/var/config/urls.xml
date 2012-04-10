@@ -5,7 +5,7 @@
         </url>
     </entrypoint>
     <entrypoint type="classic" name="en" default="true">
-        <url pathinfo="/" module="app" action="default:index">
+        <url pathinfo="/" module="gitiwiki" include="urls.xml">
         </url>
     </entrypoint>
 </urls>
