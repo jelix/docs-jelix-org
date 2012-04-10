@@ -4,10 +4,10 @@
         <version date="2012-04-10">0.1pre</version>
         <label lang="en_EN">doc_fr</label>
         <description lang="en_EN"></description>
-        <license URL="">All rights reserved</license>
+        <license URL="">GPL</license>
         <copyright>2012 Innophi</copyright>
         <creator name="Laurent Jouanneau" email="laurent@innophi.com" active="true" />
-        <homepageURL>http://innophi.com</homepageURL>
+        <homepageURL>http://doc.jelix.org</homepageURL>
     </info>
     <dependencies>
         <jelix minversion="1.4pre.2325" maxversion="1.4pre.*" />

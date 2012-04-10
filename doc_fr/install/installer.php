@@ -3,8 +3,8 @@
 * @package   doc_fr
 * @author    Laurent Jouanneau
 * @copyright 2012 Innophi
-* @link      http://innophi.com
-* @license    All rights reserved
+* @link      http://doc.jelix.org
+* @license    GPL
 */
 
 require_once (dirname(__FILE__).'/../application.init.php');

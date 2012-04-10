@@ -4,8 +4,8 @@
 * @subpackage app
 * @author    Laurent Jouanneau
 * @copyright 2012 Innophi
-* @link      http://innophi.com
-* @license    All rights reserved
+* @link      http://doc.jelix.org
+* @license    GPL
 */
 
 class defaultCtrl extends jController {
