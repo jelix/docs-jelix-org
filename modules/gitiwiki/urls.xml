@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<suburls xmlns="http://jelix.org/ns/suburls/1.0">
+    <url pathinfo="/" module="gitiwiki" action="default:index" optionalTrailingSlash="true">
+    </url>
+
+    <url pathinfo="/:repository" module="gitiwiki" action="wiki:page" optionalTrailingSlash="true">
+        <static name="page" value="/"/>
+    </url>
+
+    <url pathinfo="/:repository/:page" module="gitiwiki" action="wiki:page">
+        <param name="page" type="path" />
+    </url>
+
+</suburls>
