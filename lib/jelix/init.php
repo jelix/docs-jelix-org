@@ -18,7 +18,7 @@
 * @link     http://www.jelix.org
 * @licence  GNU Lesser General Public Licence see LICENCE file or http://www.gnu.org/licenses/lgpl.html
 */
-define('JELIX_VERSION','1.4pre.2325');
+define('JELIX_VERSION','1.4pre.2326');
 define('JELIX_NAMESPACE_BASE','http://jelix.org/ns/');
 define('JELIX_LIB_PATH',dirname(__FILE__).'/');
 define('JELIX_LIB_CORE_PATH',JELIX_LIB_PATH.'core/');
@@ -257,18 +257,18 @@ class jBasicErrorHandler{
 			while(ob_get_level()&&@ob_end_clean());
 			echo 'Error during initialization: \n';
 			foreach(self::$initErrorMessages as $err){
-				@error_log($err->getFormatedMessage(),3,jApp::logPath('errors.log'));
+				@error_log($err->getFormatedMessage()."\n",3,jApp::logPath('errors.log'));
 				echo '* '.$err->getMessage().' ('.$e->getFile().' '.$e->getLine().")\n";
 			}
-			@error_log($errorLog->getFormatedMessage(),3,jApp::logPath('errors.log'));
+			@error_log($errorLog->getFormatedMessage()."\n",3,jApp::logPath('errors.log'));
 			echo '* '.$message.' ('.$file.' '.$line.")\n";
 		}
 		else{
 			while(ob_get_level()&&@ob_end_clean());
 			foreach(self::$initErrorMessages as $err){
-				@error_log($err->getFormatedMessage(),3,jApp::logPath('errors.log'));
+				@error_log($err->getFormatedMessage()."\n",3,jApp::logPath('errors.log'));
 			}
-			@error_log($errorLog->getFormatedMessage(),3,jApp::logPath('errors.log'));
+			@error_log($errorLog->getFormatedMessage()."\n",3,jApp::logPath('errors.log'));
 			$msg=$errorLog->getMessage();
 			if(strpos($msg,'--')!==false){
 				list($msg,$bin)=explode('--',$msg,2);
