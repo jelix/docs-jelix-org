@@ -48,7 +48,7 @@ app.access=2
 defaultJformsBuilder=html
 
 [responses]
-html=myHtmlResponse
+html=module:app/responses/myHtmlResponse
 
 [error_handling]
 ;errorMessage="A technical error has occured (code: %code%). Sorry for this inconvenience."
