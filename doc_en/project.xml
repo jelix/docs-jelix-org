@@ -3,20 +3,21 @@
     <info id="app@innophi.com" name="app" createdate="2012-04-10">
         <version date="2012-04-10">0.1pre</version>
         <label lang="en_EN">doc_en</label>
-        <description lang="en_EN"></description>
+        <description lang="en_EN"/>
         <license URL="">GPL</license>
         <copyright>2012 Innophi</copyright>
-        <creator name="Laurent Jouanneau" email="laurent@innophi.com" active="true" />
+        <creator name="Laurent Jouanneau" email="laurent@innophi.com" active="true"/>
         <homepageURL>http://doc.jelix.org</homepageURL>
     </info>
     <dependencies>
-        <jelix minversion="1.4pre.2325" maxversion="1.4pre.*" />
+        <jelix minversion="1.4pre.2325" maxversion="1.4pre.*"/>
     </dependencies>
     <entrypoints>
         <!-- file: the path to the entry point relative to the base path
             config: the path to the config file used by the entry point, relative
                     to var/config/
             type: type of the entry point : classic, cmdline, xmlrpc....-->
-        <entry file="index.php" config="index/config.ini.php" />
+        <entry file="index.php" config="index/config.ini.php"/>
+        <entry file="en.php" config="en/config.ini.php" type="classic"/>
     </entrypoints>
 </project>

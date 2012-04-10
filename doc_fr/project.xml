@@ -17,6 +17,6 @@
             config: the path to the config file used by the entry point, relative
                     to var/config/
             type: type of the entry point : classic, cmdline, xmlrpc....-->
-        <entry file="index.php" config="index/config.ini.php" />
+        <entry file="fr.php" config="index/config.ini.php" />
     </entrypoints>
 </project>

@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <urls xmlns="http://jelix.org/ns/urls/1.0">
-    <entrypoint type="classic" name="index" default="true">
+    <entrypoint type="classic" name="index">
+        <url pathinfo="/" module="app" action="default:index">
+        </url>
+    </entrypoint>
+    <entrypoint type="classic" name="en" default="true">
         <url pathinfo="/" module="app" action="default:index">
         </url>
     </entrypoint>

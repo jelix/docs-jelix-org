@@ -8,12 +8,12 @@
 * @license    GPL
 */
 
-require ('../doc_en/application.init.php');
+require ('../doc_fr/application.init.php');
 require (JELIX_LIB_CORE_PATH.'request/jClassicRequest.class.php');
 
 checkAppOpened();
 
-jApp::loadConfig('index/config.ini.php');
+jApp::loadConfig('fr/config.ini.php');
 
 jApp::setCoord(new jCoordinator());
 jApp::coord()->process(new jClassicRequest());

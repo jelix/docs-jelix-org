@@ -13,7 +13,7 @@ require (realpath($appPath.'../lib/jelix/').'/'.'init.php');
 
 jApp::initPaths(
     $appPath,
-    $appPath.'www/',
+    $appPath.'../www/',
     $appPath.'var/',
     $appPath.'var/log/',
     $appPath.'var/config/',
