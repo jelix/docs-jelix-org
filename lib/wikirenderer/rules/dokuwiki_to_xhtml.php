@@ -651,6 +651,10 @@ class dkxhtml_syntaxhighlight extends WikiRendererBloc {
                     $this->_closeNow = false;
                     $this->_detectMatch=$m[2];
                 }
+                if (isset($m[1]))
+                    $this->_openTag = '<pre><code class="language-'.trim($m[1]).'">';
+                else
+                    $this->_openTag = '<pre><code>';
                 return true;
             }else{
                 return false;
