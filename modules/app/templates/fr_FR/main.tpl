@@ -20,9 +20,9 @@
         </h1>
 
         <ul id="topmenubar">
-            <li class="selected"><a href="http://jelix.org/fr/">À propos</a></li>
+            <li><a href="http://jelix.org/fr/">À propos</a></li>
             <li><a href="http://jelix.org/articles/fr/telechargement">Téléchargement</a></li>
-            <li><a href="http://jelix.org/articles/fr/documentation" class="selected">Documentation</a></li>
+            <li class="selected"><a href="http://jelix.org/articles/fr/documentation" class="selected">Documentation</a></li>
             <li><a href="http://jelix.org/articles/fr/communaute">Communauté</a></li>
             <li><a href="http://jelix.org/articles/fr/support">Support</a></li>
         </ul>
