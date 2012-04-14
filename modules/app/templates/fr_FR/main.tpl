@@ -7,7 +7,7 @@
             <a href="#submenubar">sous rubriques</a>
         </div>
         <div id="lang-box">
-            {if $link_lang}<a href="{jurl $link_lang[0], $link_lang[1]}" hreflang="en" title="english version">EN</a>{/if}
+            <a href="/en" hreflang="en" title="english version">EN</a>
             <strong>FR</strong>
         </div>
     </div>
@@ -95,7 +95,8 @@
             <a href="http://schollidesign.deviantart.com/art/Human-O2-Iconset-105344123">Human-O2</a>
             et <a href="http://www.oxygen-icons.org/">Oxygen</a>.<br/>
             Design par Laurentj. <br/>
-            <img src="/design/btn_jelix_powered.png" alt="page générée par une application Jelix" />
+            Site motorisé par <img src="/design/btn_jelix_powered.png" alt="Jelix" /><br />
+            et <a href="https://github.com/laurentj/gitiwiki">Gitiwiki</a>
         </p>
     </div>
 </div>
