@@ -19,5 +19,6 @@
             type: type of the entry point : classic, cmdline, xmlrpc....-->
         <entry file="index.php" config="index/config.ini.php"/>
         <entry file="en.php" config="en/config.ini.php" type="classic"/>
+        <entry file="manage.php" config="cmdline/manage.ini.php" type="cmdline"/>
     </entrypoints>
 </project>

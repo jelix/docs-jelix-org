@@ -29,6 +29,9 @@ class gtwRepo {
 
     protected $repoName;
 
+    /**
+     * @param string $repoName the name of the repository as registered in the configuration
+     */
     function __construct($repoName) {
         $conf = jApp::config();
         if (!isset($conf->{'gwrepo_'.$repoName})) {
@@ -46,6 +49,9 @@ class gtwRepo {
             $this->config['generators'] = array();
         }
         $this->config['branches'] = array();
+
+        if (!isset($this->config['title']))
+            $this->config['title'] = $repoName;
 
         $this->repo = new Git($this->config['path']);
         $this->repoName = $repoName;
@@ -114,13 +120,13 @@ class gtwRepo {
         if ($path == '') {
             $name = 'index';
             $implicitName  = true;
-            //jLog::log("get $path : implicite index home");
+            //jLog::log("get $path : implicit index home");
         }
         else if (substr($path, -1,1) == '/') {
             $path = rtrim($path, '/');
             $name = 'index';
             $implicitName  = true;
-            //jLog::log("get $path : implicite index");
+            //jLog::log("get $path : implicit index");
         }
         else {
             $name = basename($path);
@@ -137,7 +143,9 @@ class gtwRepo {
             return null;
         }
 
-        $treeObject = $this->repo->getObject($hash);
+        $originalPath = $path;
+        $originalName = $name;
+        $originalTreeObject = $treeObject = $this->repo->getObject($hash);
         if (!$treeObject) {
             //jLog::log("get $path : don't find the tree object");
             return null;
@@ -234,10 +242,10 @@ class gtwRepo {
         $fileResult = $this->checkMultiview($treeObject, $path, $name, $commitId);
         if ($fileResult || ! $implicitName)
             return $fileResult;
-        //jLog::log("get $path : directory view");
-        return new gtwDirectory($this, $commitId, $treeObject, $path);
+        //jLog::log("get $originalPath: directory view");
+        return new gtwDirectory($this, $commitId, $originalTreeObject, $originalPath);
     }
-    
+
     protected function checkMultiview($treeObject, $path, $name, $commitId) {
         $metaDirObject = $this->getMetaDirObject($treeObject);
         $file = new gtwFile($this, $commitId, $treeObject, $path, $name);
@@ -284,7 +292,7 @@ class gtwRepo {
         if (isset($this->config['branches'][$hash])) {
             return $this->config['branches'][$hash];
         }
-        $c = $this->config['branches'][$hash] = array('multiviews'=>array('.gtw'), 'redirection'=>array(), 'ignore'=>array());
+        $c = $this->config['branches'][$hash] = array('multiviews'=>array('.gtw'), 'redirection'=>array(), 'ignore'=>array(), 'protocol-aliases'=>array());
 
         $cfhash = $commit->find('.config.ini');
         if (!$cfhash){
@@ -321,6 +329,9 @@ class gtwRepo {
 
             if (!isset($c['ignore']))
                 $c['ignore'] = array();
+
+            if (!isset($c['protocol-aliases']))
+                $c['protocol-aliases'] = array();
 
             $this->config['branches'][$hash] = $c;
         }

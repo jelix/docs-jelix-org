@@ -18,5 +18,6 @@
                     to var/config/
             type: type of the entry point : classic, cmdline, xmlrpc....-->
         <entry file="fr.php" config="index/config.ini.php" />
+        <entry file="manage.php" config="cmdline/manage.ini.php" type="cmdline"/>
     </entrypoints>
 </project>
