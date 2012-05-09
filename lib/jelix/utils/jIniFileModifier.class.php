@@ -63,7 +63,7 @@ class jIniFileModifier{
 				}
 			}else if(preg_match('/^(\s*;.*)$/',$line,$m)){
 				$this->content[$currentSection][]=array(self::TK_COMMENT,$m[1]);
-			}else if(preg_match('/^(\s*\[([a-z0-9_.-@:]+)\]\s*)/i',$line,$m)){
+			}else if(preg_match('/^(\s*\[([a-z0-9_.\-@:]+)\]\s*)/i',$line,$m)){
 				$currentSection=$m[2];
 				$this->content[$currentSection]=array(
 					array(self::TK_SECTION,$m[1]),
@@ -124,6 +124,18 @@ class jIniFileModifier{
 			}
 		}
 		$this->modified=true;
+	}
+	public function setValues($values,$section=0){
+		foreach($values as $name=>$val){
+			if(is_array($val)){
+				$i=0;
+				foreach($val as $arval){
+					$this->setValue($name,$arval,$section,$i++);
+				}
+			}
+			else
+				$this->setValue($name,$val,$section);
+		}
 	}
 	public function removeValue($name,$section=0,$key=null,$removePreviousComment=true){
 		$foundValue=false;
@@ -245,6 +257,37 @@ class jIniFileModifier{
 			return $item[2];
 		}
 		return null;
+	}
+	public function getValues($section=0){
+		if(!isset($this->content[$section])){
+			return array();
+		}
+		$values=array();
+		foreach($this->content[$section] as $k=>$item){
+			if($item[0]!=self::TK_VALUE&&$item[0]!=self::TK_ARR_VALUE)
+				continue;
+			if(preg_match('/^-?[0-9]$/',$item[2])){
+				$val=intval($item[2]);
+			}
+			else if(preg_match('/^-?[0-9\.]$/',$item[2])){
+				$val=floatval($item[2]);
+			}
+			else if(strtolower($item[2])==='true'||strtolower($item[2])==='on'){
+				$val=true;
+			}
+			else if(strtolower($item[2])==='false'||strtolower($item[2])==='off'){
+				$val=false;
+			}
+			else
+				$val=$item[2];
+			if($item[0]==self::TK_VALUE){
+				$values[$item[1]]=$val;
+			}
+			else{
+				$values[$item[1]][$item[3]]=$val;
+			}
+		}
+		return $values;
 	}
 	public function save(){
 		if($this->modified){
