@@ -1,0 +1,9 @@
+
+- run install_repositories.sh
+
+- To allow easily to remove temp files, put your login into a group, "devweb" for example, and:
+   - run with root rights:
+        set_rights.sh devweb
+   - in /etc/apache2/envvars, add this line:
+        umask 002
+
