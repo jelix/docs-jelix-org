@@ -207,8 +207,10 @@ name=
 [datepickers]
 ;default = jelix/js/jforms/datepickers/default/init.js
 
+
 [gitiwiki]
 booksPath="app:../books"
 
 [gitiwikiGenerators]
-wiki="gitiwiki~gtwWikiRenderer,dokuwiki_to_xhtml"
+wiki="gitiwiki~gtwWikiRenderer,gitiwiki_to_xhtml"
+gtw="gitiwiki~gtwWikiRenderer,gitiwiki_to_xhtml"

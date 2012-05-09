@@ -209,4 +209,6 @@ name=
 booksPath="app:../books"
 
 [gitiwikiGenerators]
-gtw="gitiwiki~gtwWikiRenderer,dokuwiki_to_xhtml"
+wiki="gitiwiki~gtwWikiRenderer,gitiwiki_to_xhtml"
+gtw="gitiwiki~gtwWikiRenderer,gitiwiki_to_xhtml"
+
