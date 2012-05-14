@@ -4,7 +4,9 @@
 
 
 FORCE=$1
-
+cd $(dirname $0)
+ROOTPATH=`pwd`
+REPOS_PATH=$ROOTPATH/repositories
 
 update()
 {
@@ -21,6 +23,7 @@ do
 
     book=${BOOK[index]}
     if [ "$FORCE" != "" -o "$OLDREV" != "$NEWREV" ]; then
+        echo "Generate Book $book"
         cd $ROOTPATH
         rm -rf books/$book
         php $APP/scripts/manage.php gitiwiki~wiki:generateBook $book index
@@ -43,8 +46,7 @@ BOOK[4]="manual-1.2"
 BOOK[5]="manual-1.3"
 
 APP=doc_en
-REPO=repositories/en/jelix-manual-en/
-ROOTPATH=../../..
+REPO=$REPOS_PATH/en/jelix-manual-en/
 update
 
 BOOK[1]="manuel-1.4"
@@ -53,7 +55,7 @@ BOOK[3]="manuel-1.1"
 BOOK[4]="manuel-1.2"
 BOOK[5]="manuel-1.3"
 
-REPO=repositories/fr/jelix-manuel-fr/
+REPO=$REPOS_PATH/fr/jelix-manuel-fr/
 APP=doc_fr
 update
 
