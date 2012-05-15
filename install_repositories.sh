@@ -9,7 +9,7 @@ git checkout -b jelix-1.2 remotes/origin/jelix-1.2
 git checkout -b jelix-1.3 remotes/origin/jelix-1.3
 git checkout master
 
-cd ../../repositories/fr/
+cd ../../fr/
 git clone git://github.com/jelix/jelix-manuel-fr.git
 
 cd jelix-manuel-fr
