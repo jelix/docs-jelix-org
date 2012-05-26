@@ -1,9 +1,10 @@
 
-- run install_repositories.sh
+- To install Manuals of the framework Jelix, optionally add your github login to install your own forks :
+   - run install_repositories.sh 
+   - or run install_repositories.sh login 
 
 - To allow easily to remove temp files, put your login into a group, "devweb" for example, and:
    - run with root rights:
         set_rights.sh devweb
    - in /etc/apache2/envvars, add this line:
         umask 002
-
