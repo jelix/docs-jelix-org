@@ -5,7 +5,12 @@ account=${1-jelix}
 echo "Setting github account to $account..."
 
 cd repositories/en/
-git clone git://github.com/${account}/jelix-manual-en.git
+if test $account != "jelix"; then
+  git clone git@github.com:${account}/jelix-manual-en.git
+else
+  git clone git://github.com/jelix/jelix-manual-en.git
+fi
+
 cd jelix-manual-en
 git checkout -b jelix-1.0 remotes/origin/jelix-1.0
 git checkout -b jelix-1.1 remotes/origin/jelix-1.1
@@ -18,7 +23,11 @@ if test $account != "jelix"; then
 fi
 
 cd ../../fr/
-git clone git://github.com/${account}/jelix-manuel-fr.git
+if test $account != "jelix"; then
+  git clone git@github.com:${account}/jelix-manuel-fr.git
+else
+  git clone git://github.com/jelix/jelix-manuel-fr.git
+fi
 
 cd jelix-manuel-fr
 git checkout -b jelix-1.0 remotes/origin/jelix-1.0
