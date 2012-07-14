@@ -1,4 +1,4 @@
 *.komodoproject
 .komodotools
 books/*
-
+books/pdf/*

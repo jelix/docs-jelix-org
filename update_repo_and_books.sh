@@ -8,7 +8,7 @@ cd $(dirname $0)
 ROOTPATH=`pwd`
 REPOS_PATH=$ROOTPATH/repositories
 
-MANUAL_LANG=""
+MANUAL_LOCALE=""
 
 update()
 {
@@ -29,7 +29,10 @@ do
         cd $ROOTPATH
         rm -rf books/$book
         php $APP/scripts/manage.php gitiwiki~wiki:generateBook $book index
-        php $APP/scripts/manage.php gtwdocbook~docbook:index -lang $MANUAL_LANG $book index.gtw
+        php $APP/scripts/manage.php gtwdocbook~docbook:index -lang $MANUAL_LOCALE $book index.gtw \
+        && cd pdf_utils/
+        && dblatex -V -p jelixdoc_params.xsl --texstyle=jelixdoc_$MANUAL_LANG.sty $ROOTPATH/books/$book/books/index.gtw/docbook.xml 2>&1 \
+        && mv docbook.pdf $ROOTPATH/books/pdf/$MANUAL_LANG/jelix-$book.pdf
         cd $REPO
     fi
 done
@@ -52,7 +55,8 @@ BOOK[6]="manual-1.4"
 
 APP=doc_en
 REPO=$REPOS_PATH/en/jelix-manual-en/
-MANUAL_LANG="en_US"
+MANUAL_LOCALE="en_US"
+MANUAL_LANG="en"
 update
 
 BOOK[1]="manuel-1.5"
@@ -62,7 +66,8 @@ BOOK[4]="manuel-1.2"
 BOOK[5]="manuel-1.3"
 BOOK[6]="manuel-1.4"
 
-MANUAL_LANG="fr_FR"
+MANUAL_LOCALE="fr_FR"
+MANUAL_LANG="fr"
 
 REPO=$REPOS_PATH/fr/jelix-manuel-fr/
 APP=doc_fr

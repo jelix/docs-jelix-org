@@ -1,0 +1,170 @@
+%% 
+%% This style is derivated from the docbook one, and adapted for jelix
+%% 
+\NeedsTeXFormat{LaTeX2e} 
+\ProvidesPackage{jelixdoc_en}[2008/06/16 Style LaTeX/docbook for jelix doc] 
+
+% attention babel doit etre dclare avant docbook
+\usepackage[english]{babel}
+
+%% Just use the original package and pass the options 
+\RequirePackageWithOptions{docbook} 
+%% Redefine the paragraph layout 
+\setlength\parskip{\medskipamount} 
+\setlength\parindent{5pt} 
+
+
+% % suppression des tableau des revisions
+% % 
+% \def\DBKrevitem#1#2#3#4{}
+% % Default history table
+% \def\DBKrevhistory{}
+% 
+% % Default credits table
+% \def\DBKindexation{}
+
+% Whole bookinfo tables
+% \def\DBKdomitete{
+%   \begin{sffamily}
+%   \DBKindexation
+%   \vspace{1cm}
+%   \DBKrevhistory
+%   \end{sffamily}
+% }
+\def\DBKdomitete{}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Page de garde (voir fichier dbk_title.sty de la distrib)
+% 
+\def\DBKcover{
+  \ifthenelse{\equal{\DBKedition}{}}{%
+    \def\edhead{}%
+  }{%
+    \def\edhead{Ed. \DBKedition}%
+  }
+  % % 
+  % interligne double 
+  \thispagestyle{empty}
+  \textsf{
+      % \vfill
+      \vspace{2.5cm}
+      \begin{center}
+           \includegraphics[]{image_couverture.png}
+      \end{center}
+      \vfill
+      \vspace{2cm}
+      \begin{center}
+        \Huge{\textbf{\DBKtitle}}\\[0.3em] %
+        \ifthenelse{\equal{\DBKsubtitle}{}}{}{
+          \rule{2cm}{0.3mm}\\[0.7em]
+          \huge{\textbf{\DBKsubtitle}}%
+        }                              
+      \end{center}                     
+      \vfill
+      % 
+      \vfill
+      \hspace{1cm}
+      \vspace{1cm}
+      \begin{center}
+        \begin{tabular}{p{7cm} p{7cm}}
+          \Large{\DBKreference{} \edhead} & \\
+        \end{tabular}
+      \end{center}
+  }
+  \newpage
+}
+
+
+\def\DBKcheadbody{%
+  \begin{tabular}{
+    >{\raggedright}p{5.6cm} >{\centering}p{5.6cm} >{\raggedleft}p{5.6cm}} %
+    \multirow{3}{5.6cm}{\DBKtitle}
+    & & \textsf{\DBKreference{} \DBKsubtitle} \tabularnewline%
+    & \releasebox & \tabularnewline %
+    & & \textsf{\thepage{} / \getpagerefnumber{LastPage}}
+  \tabularnewline%
+  \end{tabular}%
+}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Redefinition of tableofcontent, to have it in separate pages
+% and tuning interline space
+\let\stdtoc=\tableofcontents
+\def\tableofcontents{%
+    \newpage%
+    \setlength{\oldbaselineskip}{\baselineskip}
+    % original dblatex was 1.0em ; 0.8em or lower make skiplines irregular
+    \setlength{\baselineskip}{0.9em}
+    \stdtoc{}%
+    \setlength{\baselineskip}{\oldbaselineskip}
+    \newpage%
+} 
+
+
+
+% Personnalisation des listing :
+% Extrait du style css de Laurent :
+%  pre {
+%    padding-left: 1em;
+%    border-left: 4px solid #efe03b;
+%    background-image: url(fond_horizontale.png);
+%    background-repeat: repeat-y;
+%    color: black;
+%    overflow: auto;
+%  }
+% Extrait du fichier "dblatex-0.28/share/dblatex/latex/style/dbk_verbatim.sty"
+%   
+% \definecolor{colIdentifier}{rgb}{0,0,0}
+\definecolor{jelix_verb_rule}{rgb}{0.94, 0.88, 0.23}% idem #efe03b
+% myphp language, derivated from php, has more keywords to highlight
+%
+\lstdefinelanguage[]{myphp}[]{php}{%
+    morekeywords={class,function, implements, extends}%
+}
+
+\lstset{%
+    basicstyle=\ttfamily\small, %
+    identifierstyle=\color{colIdentifier}, %
+    keywordstyle=\color{colKeys}, %
+    stringstyle=\color{colString}, %
+    commentstyle=\color{colComments}, %
+    tabsize=2, %
+    % frame=single, %
+    frame=leftline, %
+    % framerule=0pt, %
+    framerule=3pt, %
+    rulecolor=\color{jelix_verb_rule}, %
+    extendedchars=true, %
+    showspaces=false, %
+    showlines=true, %
+    showstringspaces=false, %
+    numberstyle=\tiny, %
+    breaklines=true, %
+    prebreak={\space\wrapsign}, %
+    % backgroundcolor=\color[gray]{0.95}, %
+    backgroundcolor=\color[gray]{0.98}, %
+    breakautoindent=true, %
+    captionpos=b,%
+    language=myphp,
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Les parametres de la page
+% 
+\setlength{\paperwidth}{21cm}
+\setlength{\paperheight}{29.7cm}
+\setlength{\hoffset}{-1in}
+\setlength{\voffset}{-1in}
+\setlength{\oddsidemargin}{2cm}
+\setlength{\marginparsep}{0cm}
+\setlength{\marginparwidth}{0cm}
+\setlength{\textwidth}{18cm}
+\setlength{\topmargin}{0.5cm}
+\setlength{\headsep}{2cm}
+
+\setlength{\textheight}{24cm}
+\setlength{\footskip}{1.5cm}
+% 
+%./
