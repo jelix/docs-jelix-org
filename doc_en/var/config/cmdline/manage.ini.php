@@ -7,5 +7,6 @@ startAction = "wiki:index"
 app.access=2
 
 gitiwiki.access=2
+gtwdocbook.access=2
 
 [responses]
