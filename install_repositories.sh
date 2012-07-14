@@ -16,6 +16,7 @@ git checkout -b jelix-1.0 remotes/origin/jelix-1.0
 git checkout -b jelix-1.1 remotes/origin/jelix-1.1
 git checkout -b jelix-1.2 remotes/origin/jelix-1.2
 git checkout -b jelix-1.3 remotes/origin/jelix-1.3
+git checkout -b jelix-1.4 remotes/origin/jelix-1.4
 git checkout master
 
 if test $account != "jelix"; then
@@ -34,6 +35,7 @@ git checkout -b jelix-1.0 remotes/origin/jelix-1.0
 git checkout -b jelix-1.1 remotes/origin/jelix-1.1
 git checkout -b jelix-1.2 remotes/origin/jelix-1.2
 git checkout -b jelix-1.3 remotes/origin/jelix-1.3
+git checkout -b jelix-1.4 remotes/origin/jelix-1.4
 git checkout master
 
 if test $account != "jelix"; then
