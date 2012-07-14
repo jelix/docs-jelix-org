@@ -49,10 +49,13 @@ do
         php $APP/scripts/manage.php gitiwiki~wiki:generateBook $book index
         if [ "$NOPDF" == "" ]
         then
+            if [ ! -d $ROOTPATH/books/pdf/$MANUAL_LANG ]; then
+                mkdir -p $ROOTPATH/books/pdf/$MANUAL_LANG
+            fi
             php $APP/scripts/manage.php gtwdocbook~docbook:index -lang $MANUAL_LOCALE $book index.gtw \
             && cd pdf_utils/ \
             && dblatex -V -p jelixdoc_params.xsl --texstyle=jelixdoc_$MANUAL_LANG.sty $ROOTPATH/books/$book/books/index.gtw/docbook.xml 2>&1 \
-            && mv $ROOTPATH/books/$book/books/index.gtw/docbook.pdf $ROOTPATH/books/pdf/jelix-$book.pdf
+            && mv $ROOTPATH/books/$book/books/index.gtw/docbook.pdf $ROOTPATH/books/pdf/$MANUAL_LANG/jelix-$book.pdf
         fi
         cd $REPO
     fi
