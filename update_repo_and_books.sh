@@ -2,8 +2,23 @@
 
 # This script can be called by a cron...
 
+ARG1=$1
+ARG2=$2
+FORCE=""
+NOPDF=""
 
-FORCE=$1
+if [ "$ARG1" == "--force" -o "$ARG2" == "--force" ]
+then
+    FORCE="1"
+fi
+
+
+if [ "$ARG1" == "--no-pdf" -o "$ARG2" == "--no-pdf" ]
+then
+    NOPDF="1"
+fi
+
+
 cd $(dirname $0)
 ROOTPATH=`pwd`
 REPOS_PATH=$ROOTPATH/repositories
@@ -16,6 +31,10 @@ cd $REPO
 for index in 1 2 3 4 5 6
 do
     br=${BRANCH[index]}
+    book=${BOOK[index]}
+    echo ""
+    echo "--------------------------------- $book -------------------------------------"
+
     echo "checkout $br..."
     
     git checkout $br
@@ -23,16 +42,18 @@ do
     git pull origin $br
     NEWREV=`cat .git/refs/heads/$br`
 
-    book=${BOOK[index]}
     if [ "$FORCE" != "" -o "$OLDREV" != "$NEWREV" ]; then
         echo "Generate Book $book"
         cd $ROOTPATH
         rm -rf books/$book
         php $APP/scripts/manage.php gitiwiki~wiki:generateBook $book index
-        php $APP/scripts/manage.php gtwdocbook~docbook:index -lang $MANUAL_LOCALE $book index.gtw \
-        && cd pdf_utils/
-        && dblatex -V -p jelixdoc_params.xsl --texstyle=jelixdoc_$MANUAL_LANG.sty $ROOTPATH/books/$book/books/index.gtw/docbook.xml 2>&1 \
-        && mv docbook.pdf $ROOTPATH/books/pdf/$MANUAL_LANG/jelix-$book.pdf
+        if [ "$NOPDF" == "" ]
+        then
+            php $APP/scripts/manage.php gtwdocbook~docbook:index -lang $MANUAL_LOCALE $book index.gtw \
+            && cd pdf_utils/ \
+            && dblatex -V -p jelixdoc_params.xsl --texstyle=jelixdoc_$MANUAL_LANG.sty $ROOTPATH/books/$book/books/index.gtw/docbook.xml 2>&1 \
+            && mv $ROOTPATH/books/$book/books/index.gtw/docbook.pdf $ROOTPATH/books/pdf/jelix-$book.pdf
+        fi
         cd $REPO
     fi
 done
