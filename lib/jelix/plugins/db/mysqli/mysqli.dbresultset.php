@@ -24,7 +24,7 @@ class mysqliDbResultSet extends jDbResultSet{
 		return $ret;
 	}
 	protected function _free(){
-		return $this->_idResult->close();
+		return @$this->_idResult->free_result();
 	}
 	protected function _rewind(){
 		return @$this->_idResult->data_seek(0);

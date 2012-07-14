@@ -544,14 +544,15 @@ class jFormsControlDatetime extends jFormsControlDate{
 	}
 	function setValueFromRequest($request){
 		$value=$request->getParam($this->ref,'');
-		if(!is_array($value))
-			$this->setData('');
-		elseif($value['year']===''&&$value['month']===''&&$value['day']===''&&$value['hour']===''&&$value['minutes']===''&&(!$this->enableSeconds||$value['seconds']===''))
-			$this->setData('');
-		else{
-			if($value['seconds']==='')
-				$value['seconds']='00';
-			$this->setData($value['year'].'-'.$value['month'].'-'.$value['day'].' '.$value['hour'].':'.$value['minutes'].':'.$value['seconds']);
+		$this->setData($value);
+		if(is_array($value)){
+			if($value['year']===''&&$value['month']===''&&$value['day']===''&&$value['hour']===''&&$value['minutes']===''&&(!$this->enableSeconds||$value['seconds']===''))
+				$this->setData('');
+			else{
+				if($value['seconds']==='')
+					$value['seconds']='00';
+				$this->setData($value['year'].'-'.$value['month'].'-'.$value['day'].' '.$value['hour'].':'.$value['minutes'].':'.$value['seconds']);
+			}
 		}
 	}
 	function getDisplayValue($value){

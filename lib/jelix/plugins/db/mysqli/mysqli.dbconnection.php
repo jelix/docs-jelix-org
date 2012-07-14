@@ -17,6 +17,7 @@ require_once(dirname(__FILE__).'/mysqli.dbresultset.php');
 require_once(dirname(__FILE__).'/mysqli.dbstatement.php');
 class mysqliDbConnection extends jDbConnection{
 	protected $_charsets=array('UTF-8'=>'utf8','ISO-8859-1'=>'latin1');
+	private $_usesMysqlnd=true;
 	function __construct($profile){
 		if(!function_exists('mysqli_connect')){
 			throw new jException('jelix~db.error.nofunction','mysql');
@@ -40,7 +41,7 @@ class mysqliDbConnection extends jDbConnection{
 	public function prepare($query){
 		$res=$this->_connection->prepare($query);
 		if($res){
-			$rs=new mysqliDbStatement($res);
+			$rs=new mysqliDbStatement($res,$this->_usesMysqlnd);
 		}else{
 			throw new jException('jelix~db.error.query.bad',$this->_connection->error.'('.$query.')');
 		}
@@ -62,6 +63,11 @@ class mysqliDbConnection extends jDbConnection{
 			if(isset($this->profile['force_encoding'])&&$this->profile['force_encoding']==true
 			&&isset($this->_charsets[jApp::config()->charset])){
 				$cnx->set_charset($this->_charsets[jApp::config()->charset]);
+			}
+			if(is_callable(array($cnx,'get_result'))){
+				$this->_usesMysqlnd=true;
+			}else{
+				$this->_usesMysqlnd=false;
 			}
 			return $cnx;
 		}

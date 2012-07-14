@@ -127,11 +127,13 @@ class jTpl{
 			$tpl=$sel->toString();
 			$previousTpl=$this->_templateName;
 			$this->_templateName=$tpl;
-			if(in_array($tpl,$this->processedMeta)){
-				$callMeta=false;
+			if($callMeta){
+				if(in_array($tpl,$this->processedMeta)){
+					$callMeta=false;
+				}
+				else
+					$this->processedMeta[]=$tpl;
 			}
-			else
-				$this->processedMeta[]=$tpl;
 			$this->recursiveTpl[]=$tpl;
 			$md=$this->getTemplate($sel,$outputtype,$trusted);
 			if($callMeta){
@@ -161,7 +163,7 @@ class jTpl{
 			if($outputtype=='')
 				$outputtype='html';
 			$cachePath.=$outputtype.'_'.$this->_templateName.'.php';
-			$mustCompile=$GLOBALS['gJConfig']->compilation['force']||!file_exists($cachePath);
+			$mustCompile=jApp::config()->compilation['force']||!file_exists($cachePath);
 			if($mustCompile&&!function_exists('template_'.$md)){
 				$compiler=new jTplCompiler();
 				$compiler->outputType=$outputtype;

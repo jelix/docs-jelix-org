@@ -94,6 +94,27 @@ class jConfigCompiler{
 			else
 				$config->timeZone="Europe/Paris";
 		}
+		$availableLocales=explode(',',$config->availableLocales);
+		foreach($availableLocales as $locale){
+			if(preg_match("/^([a-z]{2,3})_([A-Z]{2,3})$/",$locale,$m)){
+				if(!isset($config->langToLocale[$m[1]]))
+					$config->langToLocale[$m[1]]=$locale;
+			}
+			else{
+				throw new Exception("Error in the main configuration. Bad locale code in available locales -- availableLocales: '$locale' is not a locale code");
+			}
+		}
+		$locale=$config->locale;
+		if(preg_match("/^([a-z]{2,3})_([A-Z]{2,3})$/",$locale,$m)){
+			$config->langToLocale[$m[1]]=$locale;
+		}
+		else{
+			throw new Exception("Error in the main configuration. Bad locale code in default locale -- config->locale: '$locale' is not a locale code");
+		}
+		if(!in_array($locale,$availableLocales)){
+			array_unshift($availableLocales,$locale);
+		}
+		$config->availableLocales=$availableLocales;
 		if($config->sessions['storage']=='files'){
 			$config->sessions['files_path']=str_replace(array('lib:','app:'),array(LIB_PATH,jApp::appPath()),$config->sessions['files_path']);
 		}
@@ -436,16 +457,18 @@ class jConfigCompiler{
 				if(file_exists($path))
 					continue;
 			}
-			else if(preg_match('@^module:([^:]+)(\:(.+))?$@',$class,$m)){
+			else if(preg_match('@^(?:module:)?([^~]+)~(.+)$@',$class,$m)){
 				$mod=$m[1];
-				if(isset($config->_modulesPathList[$mod])&&isset($m[2])){
-					$class=$m[3];
+				if(isset($config->_modulesPathList[$mod])){
+					$class=$m[2];
 					$path=$config->_modulesPathList[$mod].'responses/'.$class.'.class.php';
 					$config->{$list}[$type]=$class;
 					$config->{$list}[$type.'.path']=$path;
 					if(file_exists($path))
 						continue;
 				}
+				else
+					$path=$class;
 			}
 			else if(file_exists($path=JELIX_LIB_CORE_PATH.'response/'.$class.'.class.php')){
 				$config->{$list}[$type.'.path']=$path;

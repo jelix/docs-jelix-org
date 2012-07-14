@@ -77,7 +77,7 @@ class jFile{
 					continue;
 			}
 			if($dirContent->isFile()||$dirContent->isLink()){
-				unlink($dirContent->getPathName());
+					unlink($dirContent->getPathName());
 			}else{
 				if(!$dirContent->isDot()&&$dirContent->isDir()){
 					$removed=self::removeDir($dirContent->getPathName(),true,$except);

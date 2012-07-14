@@ -50,7 +50,7 @@ class jSignificantUrlsCompiler implements jISimpleCompiler{
 		'number'=>'(\d+)','int'=>'(\d+)','integer'=>'(\d+)','digit'=>'(\d)',
 		'date'=>'([0-2]\d{3}\-(?:0[1-9]|1[0-2])\-(?:[0-2][1-9]|3[0-1]))',
 		'year'=>'([0-2]\d{3})','month'=>'(0[1-9]|1[0-2])','day'=>'([0-2][1-9]|[1-2]0|3[0-1])',
-		'path'=>'(.*)'
+		'path'=>'(.*)','locale'=>'(\w{2,3}(?:(?:\-|_)\w{2,3})?)','lang'=>'(\w{2,3})'
 		);
 	public function compile($aSelector){
 		$sourceFile=$aSelector->getPath();
@@ -148,7 +148,16 @@ class jSignificantUrlsCompiler implements jISimpleCompiler{
 					}
 				}
 				foreach($url->static as $var){
-					$u->statics[(string)$var['name']]=(string)$var['value'];
+					$t="";
+					if(isset($var['type'])){
+						switch((string) $var['type']){
+							case 'lang': $t='$l';break;
+							case 'locale': $t='$L';break;
+							default:
+								throw new Exception('urls definition: invalid type on a <static> element');
+						}
+					}
+					$u->statics[(string)$var['name']]=$t . (string)$var['value'];
 				}
 				$this->parseInfos[]=array($u->module,$u->action,'!^'.$regexppath.'$!',
 											$u->params,$u->escapes,$u->statics,
@@ -254,7 +263,7 @@ class jSignificantUrlsCompiler implements jISimpleCompiler{
 	}
 	protected function extractDynamicParams($url,$regexppath,$u){
 		$regexppath=preg_quote($regexppath,'!');
-		if(preg_match_all("/\\\:([a-zA-Z_]+)/",$regexppath,$m,PREG_PATTERN_ORDER)){
+		if(preg_match_all("/\\\:([a-zA-Z_0-9]+)/",$regexppath,$m,PREG_PATTERN_ORDER)){
 			$u->params=$m[1];
 			foreach($url->param as $var){
 				$name=(string) $var['name'];
@@ -276,14 +285,18 @@ class jSignificantUrlsCompiler implements jISimpleCompiler{
 				else{
 					$regexp='([^\/]+)';
 				}
+				$u->escapes[$k]=0;
 				if($type=='path'){
 					$u->escapes[$k]=1;
 				}
 				else if(isset($var['escape'])){
 					$u->escapes[$k]=(((string)$var['escape'])=='true'?2:0);
 				}
-				else{
-					$u->escapes[$k]=0;
+				if($type=='lang'){
+					$u->escapes[$k]|=4;
+				}
+				else if($type=='locale'){
+					$u->escapes[$k]|=8;
 				}
 				$regexppath=str_replace('\:'.$name,$regexp,$regexppath);
 			}
@@ -364,7 +377,16 @@ class jSignificantUrlsCompiler implements jISimpleCompiler{
 				}
 			}
 			foreach($url->static as $var){
-				$u->statics[(string)$var['name']]=(string)$var['value'];
+				$t="";
+				if(isset($var['type'])){
+					switch((string) $var['type']){
+						case 'lang': $t='$l';break;
+						case 'locale': $t='$L';break;
+						default:
+							throw new Exception('urls definition: invalid type on a <static> element');
+					}
+				}
+				$u->statics[(string)$var['name']]=$t . (string)$var['value'];
 			}
 			$this->parseInfos[]=array($u->module,$u->action,'!^'.$regexppath.'$!',
 										$u->params,$u->escapes,$u->statics,

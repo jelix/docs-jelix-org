@@ -26,6 +26,9 @@ class jTcpdf extends TCPDF{
 	public function __construct($orientation='P',$unit='mm',$format='A4',$encoding=null){
 		if($encoding===null)
 			$encoding=jApp::config()->charset;
+		if(!is_dir(K_PATH_FONTS)){
+			throw new jException('jelix~errors.tcpdf.fonts_missing',array(K_PATH_FONTS));
+		}
 		parent::__construct($orientation,$unit,$format,($encoding=='UTF-8'||$encoding=='UTF-16'),$encoding);
 		$this->setHeaderFont(array('helvetica','',10));
 		$this->setFooterFont(array('helvetica','',10));

@@ -16,8 +16,8 @@ class jResponseSitemap extends jResponse{
 										'monthly','yearly','never');
 	protected $maxSitemap=1000;
 	protected $maxUrl=50000;
-	protected $urlSitemap;
-	protected $urlList;
+	protected $urlSitemap=array();
+	protected $urlList=array();
 	public $content;
 	public $contentTpl;
 	public function __construct(){
@@ -31,7 +31,7 @@ class jResponseSitemap extends jResponse{
 			return true;
 		}
 		$this->_httpHeaders['Content-Type']='application/xml;charset=UTF-8';
-		if(!is_null($this->urlSitemap)){
+		if(count($this->urlSitemap)){
 			$head='<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' . "\n";
 			$foot='</sitemapindex>';
 			$this->contentTpl='jelix~sitemapindex';
@@ -100,19 +100,31 @@ class jResponseSitemap extends jResponse{
 		$urls=array();
 		$conf=&jApp::config()->urlengine;
 		$significantFile=$conf['significantFile'];
-		$entryPoint=$conf['defaultEntrypoint'];
-		$snp=$conf['urlScriptIdenc'];
-		$file=jApp::tempPath('compiled/urlsig/' . $significantFile .
-				'.' . rawurlencode($entryPoint). '.entrypoint.php');
+		$basePath=$conf['basePath'];
+		$epExt=($conf['multiview'] ? $conf['entrypointExtension']:'');
+		$file=jApp::tempPath('compiled/urlsig/' . $significantFile . '.creationinfos.php');
 		if(file_exists($file)){
 			require $file;
-			$dataParseUrl=$GLOBALS['SIGNIFICANT_PARSEURL'][$snp];
-			foreach($dataParseUrl as $k=>$infoparsing){
-				if($k==0){
+			foreach($GLOBALS['SIGNIFICANT_CREATEURL'] as $selector=>$createinfo){
+				if($createinfo[0]!=1&&$createinfo[0]!=4){
 					continue;
 				}
-				if(preg_match('/^([^\(]*)/',substr($infoparsing[2],2,-2),$matches)){
-					$urls[]=$matches[1];
+				if($createinfo[0]==4){
+					foreach($createinfo as $k=>$createinfo2){
+						if($k==0)continue;
+						if($createinfo2[2]==true
+						||count($createinfo2[3])){
+							continue;
+						}
+						$urls[]=$basePath.($createinfo2[1]?$createinfo2[1].$epExt:'').$createinfo2[5];
+					}
+				}
+				else if($createinfo[2]==true
+						||count($createinfo[3])){
+					continue;
+				}
+				else{
+					$urls[]=$basePath.($createinfo[1]?$createinfo[1].$epExt:'').$createinfo[5];
 				}
 			}
 		}

@@ -177,12 +177,12 @@ class jInstallerMessageProvider{
 		if($lang==''&&isset($_SERVER['HTTP_ACCEPT_LANGUAGE'])){
 			$languages=explode(',',$_SERVER['HTTP_ACCEPT_LANGUAGE']);
 			foreach($languages as $bl){
-				if(preg_match("/^([a-zA-Z]{2})(?:[-_]([a-zA-Z]{2}))?(;q=[0-9]\\.[0-9])?$/",$bl,$match)){
+				if(preg_match("/^([a-zA-Z]{2,3})(?:[-_]([a-zA-Z]{2,3}))?(;q=[0-9]\\.[0-9])?$/",$bl,$match)){
 					$lang=strtolower($match[1]);
 					break;
 				}
 			}
-		}elseif(preg_match("/^([a-zA-Z]{2})(?:[-_]([a-zA-Z]{2}))?$/",$lang,$match)){
+		}elseif(preg_match("/^([a-zA-Z]{2,3})(?:[-_]([a-zA-Z]{2,3}))?$/",$lang,$match)){
 			$lang=strtolower($match[1]);
 		}
 		if($lang==''||!isset($this->messages[$lang])){

@@ -53,7 +53,7 @@ class jResponseHtml extends jResponseBasicHtml{
 		$this->setContentType();
 		if($this->bodyTpl!=''){
 			$this->body->meta($this->bodyTpl);
-			$content=$this->body->fetch($this->bodyTpl,'html');
+			$content=$this->body->fetch($this->bodyTpl,'html',true,false);
 		}
 		else $content='';
 		jLog::outputLog($this);

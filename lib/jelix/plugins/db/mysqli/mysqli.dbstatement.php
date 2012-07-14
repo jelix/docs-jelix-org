@@ -10,14 +10,24 @@
 */
 require_once(dirname(__FILE__).'/mysqli.dbresultset.php');
 class mysqliDbStatement extends jDbStatement{
+	private $_usesMysqlnd=true;
+	function __construct($connection,$usesMysqlnd){
+		$this->_usesMysqlnd=$usesMysqlnd;
+		parent::__construct($connection);
+	}
 	public function execute(){
 		$this->_stmt->execute();
 		if($this->_stmt->result_metadata()){
 			try{
-				$res=new mysqliDbResultSet($this->_stmt->get_result());
+				if($this->_usesMysqlnd){
+					$res=new mysqliDbResultSet($this->_stmt->get_result());
+				}else{
+					$this->_stmt->store_result();
+					$res=new mysqliDbResultSet($this->_stmt);
+				}
 			}
 			catch(Exception $e){
-				throw new jException('jelix~db.error.nofunction','Mysqlnd');
+				throw new jException('jelix~db.error.query.bad',$this->_stmt->errno);
 			}
 		}
 		else{

@@ -18,7 +18,7 @@
 * @link     http://www.jelix.org
 * @licence  GNU Lesser General Public Licence see LICENCE file or http://www.gnu.org/licenses/lgpl.html
 */
-define('JELIX_VERSION','1.4pre.2341');
+define('JELIX_VERSION','1.4b2pre.2383');
 define('JELIX_NAMESPACE_BASE','http://jelix.org/ns/');
 define('JELIX_LIB_PATH',dirname(__FILE__).'/');
 define('JELIX_LIB_CORE_PATH',JELIX_LIB_PATH.'core/');
@@ -822,7 +822,7 @@ class jSelectorLoc extends jSelectorModule{
 			$charset=jApp::config()->charset;
 		}
 		if(strpos($locale,'_')===false){
-			$locale.='_'.strtoupper($locale);
+			$locale=jLocale::langToLocale($locale);
 		}
 		$this->locale=$locale;
 		$this->charset=$charset;
@@ -850,7 +850,7 @@ class jSelectorLoc extends jSelectorModule{
 			throw new jExceptionSelector('jelix~errors.selector.module.unknown',$this->toString());
 		}
 		$locales=array($this->locale);
-		$lang=substr($this->locale,0,2);
+		$lang=substr($this->locale,0,strpos($this->locale,'_'));
 		$generic_locale=$lang.'_'.strtoupper($lang);
 		if($this->locale!==$generic_locale)
 			$locales[]=$generic_locale;
@@ -871,7 +871,7 @@ class jSelectorLoc extends jSelectorModule{
 			}
 		}
 		if($this->toString()=='jelix~errors.selector.invalid.target'){
-			$l='en_EN';
+			$l='en_US';
 			$c='UTF-8';
 		}
 		else{
@@ -1981,6 +1981,53 @@ class jLocale{
 			}
 			return $string;
 		}
+	}
+	static function getCorrespondingLocale($l,$strictCorrespondance=false){
+		if(strpos($l,'_')===false){
+			$l=self::langToLocale($l);
+		}
+		if($l!=''){
+			$avLoc=&jApp::config()->availableLocales;
+			if(in_array($l,$avLoc)){
+				return $l;
+			}
+			if($strictCorrespondance)
+				return '';
+			$l2=self::langToLocale(substr($l,0,strpos($l,'_')));
+			if($l2!=$l&&in_array($l2,$avLoc)){
+				return $l2;
+			}
+		}
+		return '';
+	}
+	static function getPreferedLocaleFromRequest(){
+		if(!isset($_SERVER['HTTP_ACCEPT_LANGUAGE']))
+			return '';
+		$languages=explode(',',$_SERVER['HTTP_ACCEPT_LANGUAGE']);
+		foreach($languages as $bl){
+			if(!preg_match("/^([a-zA-Z]{2,3})(?:[-_]([a-zA-Z]{2,3}))?(;q=[0-9]\\.[0-9])?$/",$bl,$match))
+				continue;
+			$l=strtolower($match[1]);
+			if(isset($match[2]))
+				$l.='_'.strtoupper($match[2]);
+			$lang=self::getCorrespondingLocale($l);
+			if($lang!='')
+				return $lang;
+		}
+		return '';
+	}
+	static protected $langToLocale=null;
+	static function langToLocale($lang){
+		$conf=jApp::config();
+		if(isset($conf->langToLocale[$lang]))
+			return $conf->langToLocale[$lang];
+		if(is_null(self::$langToLocale)){
+			self::$langToLocale=@parse_ini_file(JELIX_LIB_CORE_PATH.'lang_to_locale.ini.php');
+		}
+		if(isset(self::$langToLocale[$lang])){
+			return self::$langToLocale[$lang];
+		}
+		return '';
 	}
 }
 interface jILogMessage{
