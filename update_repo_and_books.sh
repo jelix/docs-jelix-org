@@ -52,7 +52,7 @@ BOOK[6]="manual-1.4"
 
 APP=doc_en
 REPO=$REPOS_PATH/en/jelix-manual-en/
-MANUAL_LANG="en_EN"
+MANUAL_LANG="en_US"
 update
 
 BOOK[1]="manuel-1.5"
