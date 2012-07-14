@@ -1,0 +1,4 @@
+*.komodoproject
+.komodotools
+books/*
+

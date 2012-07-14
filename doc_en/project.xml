@@ -2,8 +2,8 @@
 <project xmlns="http://jelix.org/ns/project/1.0">
     <info id="app@innophi.com" name="app" createdate="2012-04-10">
         <version date="2012-04-10">0.1pre</version>
-        <label lang="en_EN">doc_en</label>
-        <description lang="en_EN"/>
+        <label lang="en_US">doc_en</label>
+        <description lang="en_US"/>
         <license URL="">GPL</license>
         <copyright>2012 Innophi</copyright>
         <creator name="Laurent Jouanneau" email="laurent@innophi.com" active="true"/>
