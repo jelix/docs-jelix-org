@@ -29,7 +29,6 @@ do
         cd $ROOTPATH
         rm -rf books/$book
         php $APP/scripts/manage.php gitiwiki~wiki:generateBook $book index
-        php $APP/scripts/manage.php gitiwiki~wiki:generateBook $book index
         php $APP/scripts/manage.php gtwdocbook~docbook:index -lang $MANUAL_LANG $book index.gtw
         cd $REPO
     fi
