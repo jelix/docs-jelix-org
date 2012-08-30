@@ -33,8 +33,8 @@
         <div id="content-header">
             <ul id="submenubar">
                 <li><a href="http://jelix.org/articles/fr/tutoriels">Tutoriels</a></li>
-                <li><a href="/fr/manuel-1.3">Manuel 1.3</a></li>
-                <li><a href="/fr/manuel-1.4">1.4beta!</a></li>
+                <li><a href="/fr/manuel-1.4">Manuel 1.4</a></li>
+                <li><a href="/fr/manuel-1.3">1.3</a></li>
                 <li><a href="/fr/manuel-1.2">1.2</a></li>
                 <li><a href="/fr/manuel-1.1">1.1</a></li>
                 <li><a href="/fr/manuel-1.0">1.0</a></li>
