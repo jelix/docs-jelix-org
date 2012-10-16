@@ -17,6 +17,10 @@ To install applications
 
 - copy doc_fr/var/config/defaultconfig.ini.php.dist to doc_en/var/config/defaultconfig.ini.php and change it if needed
 
+- copy doc_en/var/config/profiles.ini.php.dist to doc_en/var/config/defaultconfig.ini.php and change it if needed
+
+- copy doc_fr/var/config/profiles.ini.php.dist to doc_en/var/config/defaultconfig.ini.php and change it if needed
+
 - link (or copy) lib/jelix-www to www/jelix
 
 - run the script `update_appli.sh`, it will install applications.
