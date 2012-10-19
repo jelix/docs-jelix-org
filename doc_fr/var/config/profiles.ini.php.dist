@@ -135,7 +135,7 @@ cache_file_umask =
 
 
 [gtwrepo]
-default=manuel-1.0
+default=manuel-1.4
 
 [gtwrepo:manuel-1.0]
 path="app:../repositories/fr/jelix-manuel-fr/.git"
