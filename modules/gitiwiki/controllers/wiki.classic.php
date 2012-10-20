@@ -72,7 +72,9 @@ class wikiCtrl extends jController {
             $defaultRepo = new gtwRepo('default');
             $defaultRepoConfig = $defaultRepo->config();
             $defaultUrl = null;
-            if( $defaultRepoConfig['branch'] != $repoConfig['branch'] && $defaultRepo->findFile($this->param('page')) !== null ) {
+            if( $repoConfig['linkToDefault'] &&
+                $defaultRepoConfig['branch'] != $repoConfig['branch'] &&
+                $defaultRepo->findFile($this->param('page')) !== null ) {
                 $defaultUrl = jUrl::get( 'wiki:page', array('repository'=>$defaultRepoConfig['_name'], 'page'=>$this->param('page') ) );
             }
 
