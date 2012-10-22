@@ -7,6 +7,7 @@ echo "Setting github account to $account..."
 cd repositories/en/
 if test $account != "jelix"; then
   git clone git@github.com:${account}/jelix-manual-en.git
+  git fetch
 else
   git clone git://github.com/jelix/jelix-manual-en.git
 fi
@@ -26,6 +27,7 @@ fi
 cd ../../fr/
 if test $account != "jelix"; then
   git clone git@github.com:${account}/jelix-manuel-fr.git
+  git fetch
 else
   git clone git://github.com/jelix/jelix-manuel-fr.git
 fi
