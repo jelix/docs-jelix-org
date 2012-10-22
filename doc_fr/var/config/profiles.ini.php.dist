@@ -142,46 +142,46 @@ path="app:../repositories/fr/jelix-manuel-fr/.git"
 generators=gitiwikiGenerators
 branch=jelix-1.0
 title="Manuel Jelix 1.0"
-gitSourceEditURL="https://github.com/jelix/jelix-manuel-fr/edit/%branch%%file%"
-gitSourceViewURL="https://github.com/jelix/jelix-manuel-fr/blob/%branch%%file%"
+gitSourceEditURL="https://github.com/jelix/jelix-manuel-fr/edit/%branch%/%file%"
+gitSourceViewURL="https://github.com/jelix/jelix-manuel-fr/blob/%branch%/%file%"
 
 [gtwrepo:manuel-1.1]
 path="app:../repositories/fr/jelix-manuel-fr/.git"
 generators=gitiwikiGenerators
 branch=jelix-1.1
 title="Manuel Jelix 1.1"
-gitSourceEditURL="https://github.com/jelix/jelix-manuel-fr/edit/%branch%%file%"
-gitSourceViewURL="https://github.com/jelix/jelix-manuel-fr/blob/%branch%%file%"
+gitSourceEditURL="https://github.com/jelix/jelix-manuel-fr/edit/%branch%/%file%"
+gitSourceViewURL="https://github.com/jelix/jelix-manuel-fr/blob/%branch%/%file%"
 
 [gtwrepo:manuel-1.2]
 path="app:../repositories/fr/jelix-manuel-fr/.git"
 generators=gitiwikiGenerators
 branch=jelix-1.2
 title="Manuel Jelix 1.2"
-gitSourceEditURL="https://github.com/jelix/jelix-manuel-fr/edit/%branch%%file%"
-gitSourceViewURL="https://github.com/jelix/jelix-manuel-fr/blob/%branch%%file%"
+gitSourceEditURL="https://github.com/jelix/jelix-manuel-fr/edit/%branch%/%file%"
+gitSourceViewURL="https://github.com/jelix/jelix-manuel-fr/blob/%branch%/%file%"
 
 [gtwrepo:manuel-1.3]
 path="app:../repositories/fr/jelix-manuel-fr/.git"
 generators=gitiwikiGenerators
 branch=jelix-1.3
 title="Manuel Jelix 1.3"
-gitSourceEditURL="https://github.com/jelix/jelix-manuel-fr/edit/%branch%%file%"
-gitSourceViewURL="https://github.com/jelix/jelix-manuel-fr/blob/%branch%%file%"
+gitSourceEditURL="https://github.com/jelix/jelix-manuel-fr/edit/%branch%/%file%"
+gitSourceViewURL="https://github.com/jelix/jelix-manuel-fr/blob/%branch%/%file%"
 
 [gtwrepo:manuel-1.4]
 path="app:../repositories/fr/jelix-manuel-fr/.git"
 generators=gitiwikiGenerators
 branch=jelix-1.4
 title="Manuel Jelix 1.4"
-gitSourceEditURL="https://github.com/jelix/jelix-manuel-fr/edit/%branch%%file%"
-gitSourceViewURL="https://github.com/jelix/jelix-manuel-fr/blob/%branch%%file%"
+gitSourceEditURL="https://github.com/jelix/jelix-manuel-fr/edit/%branch%/%file%"
+gitSourceViewURL="https://github.com/jelix/jelix-manuel-fr/blob/%branch%/%file%"
 
 [gtwrepo:manuel-1.5]
 path="app:../repositories/fr/jelix-manuel-fr/.git"
 generators=gitiwikiGenerators
 branch=master
 title="Manuel Jelix 1.5"
-gitSourceEditURL="https://github.com/jelix/jelix-manuel-fr/edit/%branch%%file%"
-gitSourceViewURL="https://github.com/jelix/jelix-manuel-fr/blob/%branch%%file%"
+gitSourceEditURL="https://github.com/jelix/jelix-manuel-fr/edit/%branch%/%file%"
+gitSourceViewURL="https://github.com/jelix/jelix-manuel-fr/blob/%branch%/%file%"
 
