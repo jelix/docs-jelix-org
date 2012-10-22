@@ -13,7 +13,7 @@ timeZone="Europe/Paris"
 
 theme=default
 
-pluginsPath="lib:jelix-plugins/,app:../plugins/"
+pluginsPath="lib:jelix-plugins/,app:../plugins/,module:gitiwiki/plugins,module:gtwdocbook/plugins"
 
 modulesPath="lib:jelix-modules/,app:../modules/"
 
