@@ -46,5 +46,6 @@ class myHtmlResponse extends jResponseHtml {
        $this->body->assignIfNone('MAIN','<p></p>');
        $this->body->assignIfNone('page_title','Jelix');
        $this->body->assignIfNone('MAINFOOTER','');
+       $this->body->assignIfNone('currentRepoName',null);
     }
 }
