@@ -270,7 +270,7 @@ class gtwRepo {
             $n = $name.$ext;
             $file = new gtwFile($this, $commitId, $treeObject, $path, $n);
             if ($file->exists()) {
-                return $file;
+                return new gtwRedirection( $path . '/' . $n );
             }
             $file->setMetaDirObject($metaDirObject);
             $redir = $file->getMeta('redirection');
