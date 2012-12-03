@@ -1,3 +1,4 @@
+{hook 'GtwBeforeWikipage', array('repository'=>$repository, 'page'=>$pageName)}
 
 {if $bookPageInfo}
 <div id="book-page-header">
@@ -148,11 +149,13 @@
 <div id="article-footer">
     <div id="info">
         {if $sourceEditURL}
-        <a href="{$sourceEditURL}">{@gitiwiki~wikipage.edit.source.label@}</a><br/>
+        <a rel="nofollow" href="{$sourceEditURL}">{@gitiwiki~wikipage.edit.source.label@}</a><br/>
         {/if}
         {if $sourceViewURL}
-        <a href="{$sourceViewURL}">{@gitiwiki~wikipage.view.source.label@}</a>
+        <a rel="nofollow" href="{$sourceViewURL}">{@gitiwiki~wikipage.view.source.label@}</a>
         {/if}
     </div>
 </div>
 {/if}
+
+{hook 'GtwAfterWikipage', array('repository'=>$repository, 'page'=>$pageName)}
