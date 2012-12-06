@@ -2,28 +2,64 @@
 
 # This script can be called by a cron...
 
-ARG1=$1
-ARG2=$2
 FORCE=""
 NOPDF=""
+BOOKID=""
+usage()
+{
+    echo "update_repo_and_book [options] [bookid]"
+    echo "  For each book registered inside this script:"
+    echo "  - it pull changes from the git repository"
+    echo "  - if there are some changes, it generates book informations for the wiki"
+    echo "    and it generates the pdf of the book"
+    echo "  If a book id is given, only do these operations on the corresponding book"
+    echo ""
+    echo "options:"
+    echo "  -f|--force  :  force the generation of the books, even if there are no changes"
+    echo "  -p|--no-pdf : generate only book informations, not pdfs"
+    echo ""
+}
 
-if [ "$ARG1" == "--force" -o "$ARG2" == "--force" ]
-then
+
+for i in $*
+do
+case $i in
+    -f|--force)
     FORCE="1"
-fi
-
-
-if [ "$ARG1" == "--no-pdf" -o "$ARG2" == "--no-pdf" ]
-then
+    ;;
+    -p|--no-pdf)
     NOPDF="1"
-fi
-
+    ;;
+    -h|--help)
+    usage
+    ;;
+    -*)
+      echo "ERROR: Unknown option: $i"
+      echo ""
+      usage
+      exit 1
+    ;;
+    *)
+    if [ "$BOOKID" == "" ]
+    then
+        BOOKID=$i
+    else
+        echo "ERROR: Too many parameters: $i"
+        echo ""
+        usage
+        exit 1
+    fi
+    ;;
+esac
+done
 
 cd $(dirname $0)
 ROOTPATH=`pwd`
 REPOS_PATH=$ROOTPATH/repositories
 
 MANUAL_LOCALE=""
+BOOKGENERATED="0"
+
 
 update()
 {
@@ -32,6 +68,17 @@ for index in 1 2 3 4 5 6
 do
     br=${BRANCH[index]}
     book=${BOOK[index]}
+    if [ "$BOOKID" == "" -o "$BOOKID" == "$book" ]
+    then
+        updateBook
+        BOOKGENERATED="1"
+    fi
+done
+cd $ROOTPATH
+}
+
+updateBook()
+{
     echo ""
     echo "--------------------------------- $book -------------------------------------"
 
@@ -59,9 +106,9 @@ do
         fi
         cd $REPO
     fi
-done
-cd $ROOTPATH
 }
+
+
 
 BRANCH[1]="master"
 BRANCH[2]="jelix-1.0"
@@ -69,6 +116,7 @@ BRANCH[3]="jelix-1.1"
 BRANCH[4]="jelix-1.2"
 BRANCH[5]="jelix-1.3"
 BRANCH[6]="jelix-1.4"
+
 
 BOOK[1]="manual-1.5"
 BOOK[2]="manual-1.0"
@@ -97,3 +145,8 @@ REPO=$REPOS_PATH/fr/jelix-manuel-fr/
 APP=doc_fr
 update
 
+if [ "$BOOKID" != "" -a "$BOOKGENERATED" == "0" ]
+then
+    echo "ERROR: unknown book"
+    exit 1
+fi
