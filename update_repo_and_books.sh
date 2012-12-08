@@ -5,6 +5,8 @@
 FORCE=""
 NOPDF=""
 BOOKID=""
+TARGETPATH=""
+
 usage()
 {
     echo "update_repo_and_book [options] [bookid]"
@@ -17,6 +19,7 @@ usage()
     echo "options:"
     echo "  -f|--force  :  force the generation of the books, even if there are no changes"
     echo "  -p|--no-pdf : generate only book informations, not pdfs"
+    echo "  --output-pdf=a/path/ : indicates a path where to move books"
     echo ""
 }
 
@@ -32,6 +35,9 @@ case $i in
     ;;
     -h|--help)
     usage
+    ;;
+    --output-pdf=*)
+        TARGETPATH=${i:13}
     ;;
     -*)
       echo "ERROR: Unknown option: $i"
@@ -68,6 +74,7 @@ for index in 1 2 3 4 5 6
 do
     br=${BRANCH[index]}
     book=${BOOK[index]}
+    subdirtarget=${SUBDIR[index]}
     if [ "$BOOKID" == "" -o "$BOOKID" == "$book" ]
     then
         updateBook
@@ -96,13 +103,19 @@ updateBook()
         php $APP/scripts/manage.php gitiwiki~wiki:generateBook $book index
         if [ "$NOPDF" == "" ]
         then
-            if [ ! -d $ROOTPATH/books/pdf/$MANUAL_LANG ]; then
-                mkdir -p $ROOTPATH/books/pdf/$MANUAL_LANG
+            if [ "$TARGETPATH" == "" ]; then
+                MOVETO="$ROOTPATH/books/pdf/$MANUAL_LANG"
+            else
+                MOVETO="$TARGETPATH/$subdirtarget"
+            fi
+
+            if [ ! -d $MOVETO ]; then
+                mkdir -p $MOVETO
             fi
             php $APP/scripts/manage.php gtwdocbook~docbook:index -lang $MANUAL_LOCALE $book index.gtw \
             && cd pdf_utils/ \
             && dblatex -V -p jelixdoc_params.xsl --texstyle=jelixdoc_$MANUAL_LANG.sty $ROOTPATH/books/$book/books/index.gtw/docbook.xml 2>&1 \
-            && mv $ROOTPATH/books/$book/books/index.gtw/docbook.pdf $ROOTPATH/books/pdf/$MANUAL_LANG/jelix-$book.pdf
+            && mv $ROOTPATH/books/$book/books/index.gtw/docbook.pdf $MOVETO/jelix-$book.pdf
         fi
         cd $REPO
     fi
@@ -117,6 +130,12 @@ BRANCH[4]="jelix-1.2"
 BRANCH[5]="jelix-1.3"
 BRANCH[6]="jelix-1.4"
 
+SUBDIR[1]="1.5.x"
+SUBDIR[2]="1.0.x"
+SUBDIR[3]="1.1.x"
+SUBDIR[4]="1.2.x"
+SUBDIR[5]="1.3.x"
+SUBDIR[6]="1.4.x"
 
 BOOK[1]="manual-1.5"
 BOOK[2]="manual-1.0"
