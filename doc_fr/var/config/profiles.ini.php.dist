@@ -194,6 +194,6 @@ branch=master
 title="Manuel Jelix 1.5"
 gitSourceEditURL="https://github.com/jelix/jelix-manuel-fr/edit/%branch%/%file%"
 gitSourceViewURL="https://github.com/jelix/jelix-manuel-fr/blob/%branch%/%file%"
-order=50
+order=-10
 menulabel="1.5 (pré-alpha)"
 

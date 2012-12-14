@@ -33,7 +33,7 @@
         <div id="content-header">
             <ul id="submenubar">
                 <li><a href="http://jelix.org/articles/fr/tutoriels">Tutoriels</a></li>
-                {zone 'gitiwiki~reposList', array('labelAttr'=>'menulabel', 'currentRepoName'=>$currentRepoName, 'order'=>'asc')}
+                {zone 'gitiwiki~reposList', array('labelAttr'=>'menulabel', 'currentRepoName'=>$currentRepoName, 'order'=>'desc')}
                 <li><a href="http://jelix.org/reference/index.html.fr">Référence API</a></li>
             </ul>
         </div>
