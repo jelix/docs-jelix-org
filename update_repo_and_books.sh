@@ -70,7 +70,7 @@ BOOKGENERATED="0"
 update()
 {
 cd $REPO
-for index in 1 2 3 4 5 6
+for index in 1 2 3 4 5 6 7
 do
     br=${BRANCH[index]}
     book=${BOOK[index]}
