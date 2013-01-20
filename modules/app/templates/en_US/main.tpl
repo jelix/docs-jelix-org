@@ -32,7 +32,7 @@
         <div id="content-header">
             <ul id="submenubar">
              <li><a href="http://jelix.org/articles/en/tutorials">Tutorials</a></li>
-                {foreach array('manual-1.4', 'manual-1.3',  'manual-1.2', 'manual-1.1', 'manual-1.0') as $repo}
+                {foreach array('manual-1.5', 'manual-1.4', 'manual-1.3',  'manual-1.2', 'manual-1.1', 'manual-1.0') as $repo}
                     <li{if $repo===$currentRepoName} class="selected"{/if}><a href="{jurl 'gitiwiki~wiki:page', array('repository'=>$repo, 'page' => '/')}">{jlocale 'app~site.submenubar.title.' . str_replace('-', '_', $repo)}</a></li>
                 {/foreach}
              <li><a href="http://jelix.org/reference/index.html.en">API reference</a></li>
@@ -68,7 +68,6 @@
             </ul>
         </div>
 
-
         <div class="footer-box">
             <ul>
                 <li><a href="http://jelix.org/articles/en/download/nightly">download nightlies</a></li>
@@ -81,7 +80,7 @@
         </div>
 
         <p id="footer-legend">
-            Copyright 2006-2012 Jelix team. <br/>
+            Copyright 2006-2013 Jelix team. <br/>
             Icons used on this page come from <a href="http://schollidesign.deviantart.com/art/Human-O2-Iconset-105344123">Human-O2</a>
             and <a href="http://www.oxygen-icons.org/">Oxygen</a> icons sets.<br/>
             Design by Laurentj. <br/>
