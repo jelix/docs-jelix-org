@@ -185,3 +185,11 @@ title="Manuel Jelix 1.5"
 gitSourceEditURL="https://github.com/jelix/jelix-manuel-fr/edit/%branch%/%file%"
 gitSourceViewURL="https://github.com/jelix/jelix-manuel-fr/blob/%branch%/%file%"
 
+[gtwrepo:manuel-1.6]
+path="app:../repositories/fr/jelix-manuel-fr/.git"
+generators=gitiwikiGenerators
+branch=master
+title="Manuel Jelix 1.6"
+gitSourceEditURL="https://github.com/jelix/jelix-manuel-fr/edit/%branch%/%file%"
+gitSourceViewURL="https://github.com/jelix/jelix-manuel-fr/blob/%branch%/%file%"
+
