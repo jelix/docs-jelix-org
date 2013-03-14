@@ -39,16 +39,16 @@ class reposListZone extends jZone {
     }
 
     protected function desc($a, $b) {
-        $o1 = intval($a["order"]);
-        $o2 = intval($b["order"]);
+        $o2 = intval($a["order"]);
+        $o1 = intval($b["order"]);
         if ($o1 < $o2) return -1;
         if ($o2 < $o1) return 1;
         return 0;
     }
 
     protected function asc($a, $b) {
-        $o2 = intval($a["order"]);
-        $o1 = intval($b["order"]);
+        $o1 = intval($a["order"]);
+        $o2 = intval($b["order"]);
         if ($o1 < $o2) return -1;
         if ($o2 < $o1) return 1;
         return 0;
