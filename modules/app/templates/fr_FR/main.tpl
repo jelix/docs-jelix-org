@@ -36,7 +36,7 @@
                 {foreach array('manuel-1.5', 'manuel-1.4', 'manuel-1.3',  'manuel-1.2', 'manuel-1.1', 'manuel-1.0') as $repo}
                     <li{if $repo===$currentRepoName} class="selected"{/if}><a href="{jurl 'gitiwiki~wiki:page', array('repository'=>$repo, 'page' => '/')}">{jlocale 'app~site.submenubar.title.' . str_replace('-', '_', $repo)}</a></li>
                 {/foreach}
-                <li><a href="http://jelix.org/reference/index.html.fr">Référence API</a></li>
+                <li><a href="http://jelix.org/reference/index.php.fr">Référence API</a></li>
             </ul>
         </div>
         <div id="article">
