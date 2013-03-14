@@ -32,9 +32,7 @@
         <div id="content-header">
             <ul id="submenubar">
              <li><a href="http://jelix.org/articles/en/tutorials">Tutorials</a></li>
-                {foreach array('manual-1.5', 'manual-1.4', 'manual-1.3',  'manual-1.2', 'manual-1.1', 'manual-1.0') as $repo}
-                    <li{if $repo===$currentRepoName} class="selected"{/if}><a href="{jurl 'gitiwiki~wiki:page', array('repository'=>$repo, 'page' => '/')}">{jlocale 'app~site.submenubar.title.' . str_replace('-', '_', $repo)}</a></li>
-                {/foreach}
+                {zone 'gitiwiki~reposList', array('labelAttr'=>'menulabel', 'currentRepoName'=>$currentRepoName, 'order'=>'desc')}
              <li><a href="http://jelix.org/reference/index.php.en">API reference</a></li>
             </ul>
         </div>
