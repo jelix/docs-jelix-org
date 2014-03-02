@@ -205,10 +205,10 @@ menulabel="1.5 Manual"
 [gtwrepo:manual-1.6]
 path="app:../repositories/en/jelix-manual-en/.git"
 generators=gitiwikiGenerators
-branch=master
+branch="jelix-1.6"
 title="Manual Jelix 1.6"
 gitSourceEditURL="https://github.com/jelix/jelix-manual-en/edit/%branch%/%file%"
 gitSourceViewURL="https://github.com/jelix/jelix-manual-en/blob/%branch%/%file%"
 linkToDefault=off
-order=-10
-menulabel="1.6pre"
+order=60
+menulabel="1.6.0RC2"
