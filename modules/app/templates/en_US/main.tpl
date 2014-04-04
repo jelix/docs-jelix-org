@@ -33,7 +33,7 @@
             <ul id="submenubar">
              <li><a href="http://jelix.org/articles/en/tutorials">Tutorials</a></li>
                 {zone 'gitiwiki~reposList', array('labelAttr'=>'menulabel', 'currentRepoName'=>$currentRepoName, 'order'=>'desc')}
-             <li><a href="http://jelix.org/reference/index.php.en">API reference</a></li>
+             <li><a href="http://jelix.org/reference/index.php">API reference</a></li>
             </ul>
         </div>
         <div id="article">
@@ -78,7 +78,7 @@
         </div>
 
         <p id="footer-legend">
-            Copyright 2006-2013 Jelix team. <br/>
+            Copyright 2006-2014 Jelix team. <br/>
             Icons used on this page come from <a href="http://schollidesign.deviantart.com/art/Human-O2-Iconset-105344123">Human-O2</a>
             and <a href="http://www.oxygen-icons.org/">Oxygen</a> icons sets.<br/>
             Design by Laurentj. <br/>

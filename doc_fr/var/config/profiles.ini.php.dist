@@ -135,7 +135,7 @@ cache_file_umask =
 
 
 [gtwrepo]
-default=manuel-1.5
+default=manuel-1.6
 
 [gtwrepo:manuel-1.0]
 path="app:../repositories/fr/jelix-manuel-fr/.git"
@@ -201,7 +201,7 @@ gitSourceEditURL="https://github.com/jelix/jelix-manuel-fr/edit/%branch%/%file%"
 gitSourceViewURL="https://github.com/jelix/jelix-manuel-fr/blob/%branch%/%file%"
 linkToDefault=off
 order=50
-menulabel="Manuel 1.5"
+menulabel="1.5"
 
 [gtwrepo:manuel-1.6]
 path="app:../repositories/fr/jelix-manuel-fr/.git"
@@ -212,5 +212,5 @@ gitSourceEditURL="https://github.com/jelix/jelix-manuel-fr/edit/%branch%/%file%"
 gitSourceViewURL="https://github.com/jelix/jelix-manuel-fr/blob/%branch%/%file%"
 linkToDefault=off
 order=60
-menulabel="1.6.0RC2"
+menulabel="Manuel 1.6"
 
