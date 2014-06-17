@@ -70,7 +70,7 @@ BOOKGENERATED="0"
 update()
 {
 cd $REPO
-for index in 1 2 3 4 5 6 7
+for index in 1 2 3 4 5 6 7 8
 do
     br=${BRANCH[index]}
     book=${BOOK[index]}
@@ -130,22 +130,25 @@ BRANCH[4]="jelix-1.2"
 BRANCH[5]="jelix-1.3"
 BRANCH[6]="jelix-1.4"
 BRANCH[7]="jelix-1.5"
+BRANCH[8]="jelix-1.6"
 
-SUBDIR[1]="1.6.x"
+SUBDIR[1]="1.7.x"
 SUBDIR[2]="1.0.x"
 SUBDIR[3]="1.1.x"
 SUBDIR[4]="1.2.x"
 SUBDIR[5]="1.3.x"
 SUBDIR[6]="1.4.x"
 SUBDIR[7]="1.5.x"
+SUBDIR[8]="1.6.x"
 
-BOOK[1]="manual-1.6"
+BOOK[1]="manual-1.7"
 BOOK[2]="manual-1.0"
 BOOK[3]="manual-1.1"
 BOOK[4]="manual-1.2"
 BOOK[5]="manual-1.3"
 BOOK[6]="manual-1.4"
 BOOK[7]="manual-1.5"
+BOOK[8]="manual-1.6"
 
 APP=doc_en
 REPO=$REPOS_PATH/en/jelix-manual-en/
@@ -153,13 +156,14 @@ MANUAL_LOCALE="en_US"
 MANUAL_LANG="en"
 update
 
-BOOK[1]="manuel-1.6"
+BOOK[1]="manuel-1.7"
 BOOK[2]="manuel-1.0"
 BOOK[3]="manuel-1.1"
 BOOK[4]="manuel-1.2"
 BOOK[5]="manuel-1.3"
 BOOK[6]="manuel-1.4"
 BOOK[7]="manuel-1.5"
+BOOK[8]="manuel-1.6"
 
 MANUAL_LOCALE="fr_FR"
 MANUAL_LANG="fr"
