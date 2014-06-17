@@ -313,16 +313,16 @@ class dkdbk_list extends WikiRendererBloc {
                     $str .='</listitem>';
 
                 if($t[1] == '-')
-                    $str .= "<orderedlist>\n<listitem>";
+                    $str .= "<orderedlist>\n<listitem><para>";
                 else
-                    $str .= "<itemizedlist>\n<listitem>";
+                    $str .= "<itemizedlist>\n<listitem><para>";
                 array_pop($this->_stack);
                 $this->_stack[] = array($newLen ,  $this->_detectMatch[2]);
             } else {
                 if($this->_firstItem)
-                    $str.="<listitem>";
+                    $str.="</para><listitem>";
                 else
-                    $str.="</listitem>\n<listitem>";
+                    $str.="</para></listitem>\n<listitem>";
             }
 
         }

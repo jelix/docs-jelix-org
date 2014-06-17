@@ -21,10 +21,10 @@
     <publisher><publishername>Jelix.org</publishername></publisher>
     <!-- <graphic /> -->
     <copyright>
-        {foreach $book['copyright_years'] as $y}
+        {foreach $book['copyright']['years'] as $y}
         <year>{$y|escxml}</year>
         {/foreach}
-        {foreach $book['copyright_holders'] as $h}
+        {foreach $book['copyright']['holders'] as $h}
         <holder>{$h|escxml}</holder>
         {/foreach}
     </copyright>
