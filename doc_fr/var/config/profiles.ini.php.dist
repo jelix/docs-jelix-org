@@ -199,7 +199,7 @@ branch="jelix-1.5"
 title="Manuel Jelix 1.5"
 gitSourceEditURL="https://github.com/jelix/jelix-manuel-fr/edit/%branch%/%file%"
 gitSourceViewURL="https://github.com/jelix/jelix-manuel-fr/blob/%branch%/%file%"
-linkToDefault=off
+linkToDefault=on
 order=15
 menulabel="1.5"
 
@@ -218,10 +218,10 @@ menulabel="Manuel 1.6"
 [gtwrepo:manuel-1.7]
 path="app:../repositories/fr/jelix-manuel-fr/.git"
 generators=gitiwikiGenerators
-branch="jelix-1.7"
+branch="master"
 title="Manuel Jelix 1.7 (en developpement)"
 gitSourceEditURL="https://github.com/jelix/jelix-manuel-fr/edit/%branch%/%file%"
 gitSourceViewURL="https://github.com/jelix/jelix-manuel-fr/blob/%branch%/%file%"
-linkToDefault=off
+linkToDefault=on
 order=0
-menulabel="Manuel 1.7a1pre"
+menulabel="1.7a1pre"
