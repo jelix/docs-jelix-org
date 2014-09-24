@@ -101,6 +101,7 @@ updateBook()
         cd $ROOTPATH
         rm -rf books/$book
         php $APP/scripts/manage.php gitiwiki~wiki:generateBook $book index
+        php $APP/scripts/manage.php gtwdocbook~docbook:index -lang $MANUAL_LOCALE $book index.gtw
         if [ "$NOPDF" == "" ]
         then
             if [ "$TARGETPATH" == "" ]; then
@@ -112,8 +113,7 @@ updateBook()
             if [ ! -d $MOVETO ]; then
                 mkdir -p $MOVETO
             fi
-            php $APP/scripts/manage.php gtwdocbook~docbook:index -lang $MANUAL_LOCALE $book index.gtw \
-            && cd pdf_utils/ \
+            cd pdf_utils/ \
             && dblatex -V -p jelixdoc_params.xsl --texstyle=jelixdoc_$MANUAL_LANG.sty $ROOTPATH/books/$book/books/index.gtw/docbook.xml 2>&1 \
             && mv $ROOTPATH/books/$book/books/index.gtw/docbook.pdf $MOVETO/jelix-$book.pdf
         fi

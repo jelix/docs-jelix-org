@@ -1,6 +1,8 @@
-<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.3//EN" "http://www.oasis-open.org/docbook/xml/4.3/docbookx.dtd">
-<book>
-<bookinfo>
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook V5.0//EN"
+                   "http://docbook.org/xml/5.0/dtd/docbook.dtd">
+<book xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink" version="5.0">
+<info>
     <title>{$book['title']|escxml}</title>
     <subtitle>{$book['subtitle']|escxml}</subtitle>
     <edition>{$edition|escxml}</edition>
@@ -10,11 +12,19 @@
     {if count($book['authors'])}
     <authorgroup>
         {foreach $book['authors'] as $author}
-        <author><firstname>{$author[0]|escxml}</firstname><surname>{$author[1]|escxml}</surname></author>
+        <author>
+            <personname>
+                <firstname>{$author[0]|escxml}</firstname><surname>{$author[1]|escxml}</surname>
+            </personname>
+        </author>
         {/foreach}
     </authorgroup>
     {else}
-    <author><firstname>{$book['authors'][0][0]|escxml}</firstname><surname>{$book['authors'][0][1]|escxml}</surname></author>
+    <author>
+        <personname>
+            <firstname>{$book['authors'][0][0]|escxml}</firstname><surname>{$book['authors'][0][1]|escxml}</surname>
+        </personname>
+    </author>
     {/if}
 
     <pubdate>{$pubdate}</pubdate>
@@ -30,7 +40,7 @@
     </copyright>
 
     <legalnotice>{$legalnotice}</legalnotice>
-</bookinfo>
+</info>
 
 {$content}
 
