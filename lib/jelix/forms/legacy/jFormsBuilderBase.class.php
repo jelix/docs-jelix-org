@@ -38,7 +38,7 @@ abstract class jFormsBuilderBase{
 	abstract public function outputFooter();
 	abstract public function outputAllControls();
 	abstract public function outputControl($ctrl,$attributes=array());
-	abstract public function outputControlLabel($ctrl);
+	abstract public function outputControlLabel($ctrl,$editMode=true);
 	protected static function generateFormName($sel){
 		static $forms=array();
 		$name='jforms_'.str_replace('~','_',$sel);

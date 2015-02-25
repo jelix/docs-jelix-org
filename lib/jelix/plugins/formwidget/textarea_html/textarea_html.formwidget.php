@@ -36,4 +36,17 @@ class textarea_htmlFormWidget extends \jelix\forms\HtmlWidget\WidgetBase{
 		echo '>',htmlspecialchars($value),"</textarea>\n";
 		$this->outputJs();
 	}
+	public function outputControlValue(){
+		$attr=$this->getValueAttributes();
+		echo '<div ';
+		$this->_outputAttr($attr);
+		echo '>';
+		$value=$this->getValue();
+		$value=$this->ctrl->getDisplayValue($value);
+		if($this->ctrl->isHtmlContent())
+			echo $value;
+		else
+			echo nl2br(htmlspecialchars($value));
+		echo '</div>';
+	}
 }

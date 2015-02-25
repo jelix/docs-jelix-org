@@ -16,13 +16,13 @@ class jInstallerEntryPoint{
 	public $scriptName;
 	public $file;
 	public $type;
-	function __construct($defaultConfig,$configFile,$file,$type){
+	function __construct($mainConfig,$configFile,$file,$type){
 		$this->type=$type;
 		$this->isCliScript=($type=='cmdline');
 		$this->configFile=$configFile;
 		$this->scriptName=($this->isCliScript?$file:'/'.$file);
 		$this->file=$file;
-		$this->configIni=new jIniMultiFilesModifier($defaultConfig,jApp::configPath($configFile));
+		$this->configIni=new jIniMultiFilesModifier($mainConfig,jApp::configPath($configFile));
 		$this->config=jConfigCompiler::read($configFile,true,
 											$this->isCliScript,
 											$this->scriptName);

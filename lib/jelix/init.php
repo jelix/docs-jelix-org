@@ -10,7 +10,7 @@
 * @author   Laurent Jouanneau
 * @author Croes Gerald
 * @contributor Loic Mathaud, Julien Issler
-* @copyright 2005-2012 Laurent Jouanneau
+* @copyright 2005-2014 Laurent Jouanneau
 * @copyright 2001-2005 CopixTeam
 * @copyright 2006 Loic Mathaud
 * @copyright 2007-2009 Julien Issler
@@ -18,7 +18,7 @@
 * @link     http://www.jelix.org
 * @licence  GNU Lesser General Public Licence see LICENCE file or http://www.gnu.org/licenses/lgpl.html
 */
-define('JELIX_VERSION','1.5.6pre.3002');
+define('JELIX_VERSION','1.6.4pre.3167');
 define('JELIX_NAMESPACE_BASE','http://jelix.org/ns/');
 define('JELIX_LIB_PATH',__DIR__.'/');
 define('JELIX_LIB_CORE_PATH',JELIX_LIB_PATH.'core/');
@@ -51,6 +51,10 @@ class jApp{
 		self::$configPath=(is_null($configPath)?self::$varPath.'config/':$configPath);
 		self::$scriptPath=(is_null($scriptPath)?$appPath.'scripts/':$scriptPath);
 		self::$_isInit=true;
+		self::$_coord=null;
+		self::$_config=null;
+		self::$configAutoloader=null;
+		self::$_mainConfigFile=null;
 	}
 	public static function isInit(){return self::$_isInit;}
 	public static function appPath($file=''){return self::$appPath.$file;}
@@ -68,6 +72,11 @@ class jApp{
 		if(substr($env,-1)!='/')
 			$env.='/';
 		self::$env=$env;
+	}
+	public static function urlBasePath(){
+		if(!self::$_config||!isset(self::$_config->urlengine['basePath']))
+			return null;
+		return self::$_config->urlengine['basePath'];
 	}
 	protected static $_config=null;
 	public static function config(){
@@ -97,6 +106,18 @@ class jApp{
 			self::setConfig(jConfig::load($configFile));
 		self::$_config->enableErrorHandler=$enableErrorHandler;
 	}
+	protected static $_mainConfigFile=null;
+	public static function mainConfigFile(){
+		if(self::$_mainConfigFile)
+			return self::$_mainConfigFile;
+		$configFileName=self::configPath('mainconfig.ini.php');
+		if(!file_exists($configFileName)){
+			$configFileName=self::configPath('defaultconfig.ini.php');
+			trigger_error("the config file defaultconfig.ini.php is deprecated and will be removed in the next major release",E_USER_DEPRECATED);
+		}
+		self::$_mainConfigFile=$configFileName;
+		return $configFileName;
+	}
 	protected static $_coord=null;
 	public static function coord(){
 		return self::$_coord;
@@ -117,14 +138,16 @@ class jApp{
 		self::$contextBackup[]=array(self::$appPath,self::$varPath,self::$logPath,
 										self::$configPath,self::$wwwPath,self::$scriptPath,
 										self::$tempBasePath,self::$env,$conf,$coord,
-										self::$modulesContext);
+										self::$modulesContext,self::$configAutoloader,
+										self::$_mainConfigFile);
 	}
 	public static function restoreContext(){
 		if(!count(self::$contextBackup))
 			return;
 		list(self::$appPath,self::$varPath,self::$logPath,self::$configPath,
 			self::$wwwPath,self::$scriptPath,self::$tempBasePath,self::$env,
-			$conf,self::$_coord,self::$modulesContext)=array_pop(self::$contextBackup);
+			$conf,self::$_coord,self::$modulesContext,self::$configAutoloader,
+			self::$_mainConfigFile)=array_pop(self::$contextBackup);
 		self::setConfig($conf);
 	}
 	public static function loadPlugin($name,$type,$suffix,$classname,$args=null){
@@ -355,9 +378,10 @@ class jBasicErrorHandler{
 				$HEADBOTTOM='';
 				$BODYTOP='';
 				$BODYBOTTOM=htmlspecialchars($msg);
-				$BASEPATH='/';
-				if(jApp::config()&&isset(jApp::config()->urlengine['basePath']))
-					$BASEPATH=jApp::config()->urlengine['basePath'];
+				$BASEPATH=jApp::urlBasePath();
+				if($BASEPATH==''){
+					$BASEPATH='/';
+				}
 				header("HTTP/1.1 500 Internal jelix error");
 				header('Content-type: text/html');
 				include($file);
@@ -382,7 +406,7 @@ class jException extends Exception{
 		}catch(Exception $e){
 			$message=$e->getMessage();
 		}
-		if(preg_match('/^\s*\((\d+)\)(.+)$/m',$message,$m)){
+		if(preg_match('/^\s*\((\d+)\)(.+)$/ms',$message,$m)){
 			$code=$m[1];
 			$message=$m[2];
 		}
@@ -408,13 +432,17 @@ class jConfig{
 		self::$fromCache=true;
 		if(!file_exists($file)){
 			self::$fromCache=false;
-		}else{
+		}
+		else{
 			$t=filemtime($file);
-			$dc=jApp::configPath('defaultconfig.ini.php');
+			$dc=jApp::mainConfigFile();
+			$lc=jApp::configPath('localconfig.ini.php');
 			if((file_exists($dc)&&filemtime($dc)>$t)
-				||filemtime(jApp::configPath($configFile))>$t){
+				||filemtime(jApp::configPath($configFile))>$t
+				||(file_exists($lc)&&filemtime($lc)>$t)){
 				self::$fromCache=false;
-			}else{
+			}
+			else{
 				if(BYTECODE_CACHE_EXISTS){
 					include($file);
 					$config=(object) $config;
@@ -434,8 +462,10 @@ class jConfig{
 		if(!self::$fromCache){
 			require_once(JELIX_LIB_CORE_PATH.'jConfigCompiler.class.php');
 			return jConfigCompiler::readAndCache($configFile);
-		}else
+		}
+		else{
 			return $config;
+		}
 	}
 }
 class jConfigAutoloader{
@@ -1230,10 +1260,10 @@ class jUrl extends jUrlBase{
 		if($rootUrl!==null){
 			if(substr($rootUrl,0,7)!=='http://'&&substr($rootUrl,0,8)!=='https://'
 				&&substr($rootUrl,0,1)!=='/'){
-					$rootUrl=jApp::config()->urlengine['basePath'] . $rootUrl;
+					$rootUrl=jApp::urlBasePath(). $rootUrl;
 			}
 		}else{
-			$rootUrl=jApp::config()->urlengine['basePath'];
+			$rootUrl=jApp::urlBasePath();
 		}
 		return $rootUrl;
 	}
@@ -1644,13 +1674,13 @@ abstract class jRequest{
 	if(jApp::config()->domainName!=''){
 		return jApp::config()->domainName;
 	}
-	elseif(isset($_SERVER['SERVER_NAME'])){
-		return $_SERVER['SERVER_NAME'];
-	}
 	elseif(isset($_SERVER['HTTP_HOST'])){
 		if(($pos=strpos($_SERVER['HTTP_HOST'],':'))!==false)
 			return substr($_SERVER['HTTP_HOST'],0,$pos);
 		return $_SERVER['HTTP_HOST'];
+	}
+	elseif(isset($_SERVER['SERVER_NAME'])){
+		return $_SERVER['SERVER_NAME'];
 	}
 	return '';
 	}
@@ -2243,10 +2273,12 @@ class jFileLogger implements jILogger{
 			$sel=new jSelectorLog($f);
 			$file=$sel->getPath();
 			@error_log(date("Y-m-d H:i:s")."\t".$ip."\t$type\t".$message->getFormatedMessage()."\n",3,$file);
+			@chmod($file,jApp::config()->chmodFile);
 		}
 		catch(Exception $e){
 			$file=jApp::logPath('errors.log');
 			@error_log(date("Y-m-d H:i:s")."\t".$ip."\terror\t".$e->getMessage()."\n",3,$file);
+			@chmod($file,jApp::config()->chmodFile);
 		}
 	}
 	function output($response){}
@@ -2453,7 +2485,7 @@ class jSession{
 			return false;
 		}
 		if(!$params['shared_session'])
-			session_set_cookie_params(0,jApp::config()->urlengine['basePath']);
+			session_set_cookie_params(0,jApp::urlBasePath());
 		if($params['storage']!=''){
 			if(!ini_get('session.gc_probability'))
 				ini_set('session.gc_probability','1');
@@ -2555,7 +2587,7 @@ class jSession{
 		return true;
 	}
 }
-$gLibPath=array('Db'=>JELIX_LIB_PATH.'db/','Dao'=>JELIX_LIB_PATH.'dao/',
+$GLOBALS['gLibPath']=array('Db'=>JELIX_LIB_PATH.'db/','Dao'=>JELIX_LIB_PATH.'dao/',
 'Forms'=>JELIX_LIB_PATH.'forms/','Event'=>JELIX_LIB_PATH.'events/',
 'Tpl'=>JELIX_LIB_PATH.'tpl/','Controller'=>JELIX_LIB_PATH.'controllers/',
 'Auth'=>JELIX_LIB_PATH.'auth/','Installer'=>JELIX_LIB_PATH.'installer/',

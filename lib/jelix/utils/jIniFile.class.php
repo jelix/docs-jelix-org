@@ -17,7 +17,7 @@ class jIniFile{
 			return false;
 		}
 	}
-	public static function write($array,$filename,$header=''){
+	public static function write($array,$filename,$header='',$chmod=null){
 		$result='';
 		foreach($array as $k=>$v){
 			if(is_array($v)){
@@ -32,6 +32,9 @@ class jIniFile{
 		if($f=@fopen($filename,'wb')){
 			fwrite($f,$header.$result);
 			fclose($f);
+			if($chmod){
+				chmod($f,$chmod);
+			}
 		}else{
 			if(jApp::config()){
 				throw new jException('jelix~errors.inifile.write.error',array($filename));

@@ -57,6 +57,7 @@ class fileServer{
 					fclose($f);
 					@touch("$fn.tmp",time()+ $ttl);
 					$r=@rename("$fn.tmp",$fn);
+					chmod($fn,jApp::config()->chmodFile);
 				}
 				flock($fl,LOCK_UN);
 			}

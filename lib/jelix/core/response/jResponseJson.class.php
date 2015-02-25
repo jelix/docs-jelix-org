@@ -12,13 +12,14 @@
 */
 final class jResponseJson extends jResponse{
 	public $data=null;
+	public $options=0;
 	public function output(){
 		if($this->_outputOnlyHeaders){
 			$this->sendHttpHeaders();
 			return true;
 		}
 		$this->_httpHeaders['Content-Type']="application/json";
-		$content=json_encode($this->data);
+		$content=json_encode($this->data,$this->options);
 		$this->_httpHeaders['Content-length']=strlen($content);
 		$this->sendHttpHeaders();
 		echo $content;

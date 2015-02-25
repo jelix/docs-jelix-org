@@ -32,6 +32,12 @@ class input_htmlFormWidget extends \jelix\forms\HtmlWidget\WidgetBase{
 		$js="c = new ".$jFormsJsVarName."Control".$dt."('".$ctrl->ref."', ".$this->escJsStr($ctrl->label).");\n";
 		if($isLocale)
 			$js.="c.lang='".jApp::config()->locale."';\n";
+		$maxv=$ctrl->datatype->getFacet('maxValue');
+		if($maxv!==null)
+			$js.="c.maxValue = '$maxv';\n";
+		$minv=$ctrl->datatype->getFacet('minValue');
+		if($minv!==null)
+			$js.="c.minValue = '$minv';\n";
 		$maxl=$ctrl->datatype->getFacet('maxLength');
 		if($maxl!==null)
 			$js.="c.maxLength = '$maxl';\n";

@@ -12,7 +12,7 @@
 */
 class wikieditor_htmlFormWidget extends \jelix\forms\HtmlWidget\WidgetBase{
 	public function outputMetaContent($resp){
-		$bp=jApp::config()->urlengine['basePath'];
+		$bp=jApp::urlBasePath();
 		$confWikiEditor=&jApp::config()->wikieditors;
 		if(isset($confWikiEditor[$this->ctrl->config.'.engine.file']))
 			$resp->addJSLink($bp.$confWikiEditor[$this->ctrl->config.'.engine.file']);
@@ -51,5 +51,14 @@ class wikieditor_htmlFormWidget extends \jelix\forms\HtmlWidget\WidgetBase{
 		$this->_outputAttr($attr);
 		echo '>',htmlspecialchars($value),"</textarea>\n";
 		$this->outputJs();
+	}
+	public function outputControlValue(){
+		$attr=$this->getValueAttributes();
+		echo '<div ';
+		$this->_outputAttr($attr);
+		echo '>';
+		$value=$this->getValue();
+		$value=$this->ctrl->getDisplayValue($value);
+		echo $value,'</div>';
 	}
 }

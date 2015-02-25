@@ -73,11 +73,11 @@ class jInstaller{
 	public $nbOk=0;
 	public $nbWarning=0;
 	public $nbNotice=0;
-	public $defaultConfig;
+	public $mainConfig;
 	function __construct($reporter,$lang=''){
 		$this->reporter=$reporter;
 		$this->messages=new jInstallerMessageProvider($lang);
-		$this->defaultConfig=new jIniFileModifier(jApp::configPath('defaultconfig.ini.php'));
+		$this->mainConfig=new jIniFileModifier(jApp::mainConfigFile());
 		$this->installerIni=$this->getInstallerIni();
 		$this->readEntryPointData(simplexml_load_file(jApp::appPath('project.xml')));
 		$this->installerIni->save();
@@ -124,7 +124,7 @@ class jInstaller{
 		}
 	}
 	protected function getEntryPointObject($configFile,$file,$type){
-		return new jInstallerEntryPoint($this->defaultConfig,$configFile,$file,$type);
+		return new jInstallerEntryPoint($this->mainConfig,$configFile,$file,$type);
 	}
 	protected function getComponentModule($name,$path,$installer){
 		return new jInstallerComponentModule($name,$path,$installer);

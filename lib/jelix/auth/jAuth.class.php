@@ -5,7 +5,7 @@
 * @subpackage auth
 * @author     Laurent Jouanneau
 * @contributor Frédéric Guillot, Antoine Detante, Julien Issler, Dominique Papin, Tahina Ramaroson, Sylvain de Vathaire, Vincent Viaud
-* @copyright  2001-2005 CopixTeam, 2005-2012 Laurent Jouanneau, 2007 Frédéric Guillot, 2007 Antoine Detante
+* @copyright  2001-2005 CopixTeam, 2005-2014 Laurent Jouanneau, 2007 Frédéric Guillot, 2007 Antoine Detante
 * @copyright  2007-2008 Julien Issler, 2008 Dominique Papin, 2010 NEOV, 2010 BP2I
 *
 * This classes were get originally from an experimental branch of the Copix project (Copix 2.3dev, http://www.copix.org)
@@ -109,7 +109,7 @@ class jAuth{
 			if(!isset($config['persistant_cookie_path'])
 				||$config['persistant_cookie_path']==''){
 				if(jApp::config())
-					$config['persistant_cookie_path']=jApp::config()->urlengine['basePath'];
+					$config['persistant_cookie_path']=jApp::urlBasePath();
 				else
 					$config['persistant_cookie_path']='/';
 			}

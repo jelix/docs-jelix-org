@@ -102,14 +102,18 @@ class jDaoProperty{
 				$this->autoIncrement=true;
 			}
 		}
-		$this->isPK=in_array($this->fieldName,$tables[$this->table]['pk']);
+		$pkeys=array_map('strtolower',$tables[$this->table]['pk']);
+		$this->isPK=in_array(strtolower($this->fieldName),$pkeys);
 		if(!$this->isPK&&$this->table==$parser->getPrimaryTable()){
 			foreach($tables as $table=>$info){
 				if($table==$this->table)
 					continue;
-				if(isset($info['fk'])&&in_array($this->fieldName,$info['fk'])){
-					$this->isFK=true;
-					break;
+				if(isset($info['fk'])){
+					$fkeys=array_map('strtolower',$info['fk']);
+					if(in_array(strtolower($this->fieldName),$fkeys)){
+						$this->isFK=true;
+						break;
+					}
 				}
 			}
 		}
@@ -308,7 +312,7 @@ class jDaoMethod{
 	private $_op=array('eq'=>'=','neq'=>'<>','lt'=>'<','gt'=>'>','lteq'=>'<=','gteq'=>'>=',
 		'like'=>'LIKE','notlike'=>'NOT LIKE','isnull'=>'IS NULL','isnotnull'=>'IS NOT NULL','in'=>'IN','notin'=>'NOT IN',
 		'binary_op'=>'dummy');
-	private $_attrcond=array('property','expr','operator','driver');
+	private $_attrcond=array('property','pattern','expr','operator','driver');
 	private function _addCondition($op,$cond){
 		$attr=$this->_parser->getAttr($cond,$this->_attrcond);
 		$field_id=($attr['property']!==null? $attr['property']:'');
@@ -320,6 +324,7 @@ class jDaoMethod{
 		if(!isset($props[$field_id])){
 			throw new jDaoXmlException($this->_parser->selector,'method.property.unknown',array($this->name,$field_id));
 		}
+		$field_pattern=($attr['pattern']!==null? $attr['pattern']:'');
 		if($this->type=='update'){
 			if($props[$field_id]->table!=$this->_parser->getPrimaryTable()){
 				throw new jDaoXmlException($this->_parser->selector,'method.property.forbidden',array($this->name,$field_id));
@@ -346,7 +351,7 @@ class jDaoMethod{
 				}
 				$operator=$attr['operator'];
 			}
-			$this->_conditions->addCondition($field_id,$operator,$value);
+			$this->_conditions->addCondition($field_id,$operator,$value,$field_pattern);
 		}else if($attr['expr']!==null){
 			if($op=='isnull'||$op=='isnotnull'){
 				throw new jDaoXmlException($this->_parser->selector,'method.condition.valueexpr.notallowed',array($this->name,$op,$field_id));
@@ -365,12 +370,12 @@ class jDaoMethod{
 				}
 				$operator=$attr['operator'];
 			}
-			$this->_conditions->addCondition($field_id,$operator,$attr['expr'],true);
+			$this->_conditions->addCondition($field_id,$operator,$attr['expr'],$field_pattern,true);
 		}else{
 			if($op!='isnull'&&$op!='isnotnull'){
 				throw new jDaoXmlException($this->_parser->selector,'method.condition.valueexpr.missing',array($this->name,$op,$field_id));
 			}
-			$this->_conditions->addCondition($field_id,$operator,'',false);
+			$this->_conditions->addCondition($field_id,$operator,'',$field_pattern,false);
 		}
 	}
 	private function _addOrder($order){
@@ -1077,10 +1082,19 @@ class jDaoGenerator{
 			}
 			$first=false;
 			$prop=$fields[$cond['field_id']];
+			$pattern=(isset($cond['field_pattern'])&&!empty($cond['field_pattern']))? $cond['field_pattern'] : '%s';
 			if($withPrefix){
-				$f=$this->_encloseName($prop->table).'.'.$this->_encloseName($prop->fieldName);
+				if($pattern=='%s'){
+					$f=$this->_encloseName($prop->table).'.'.$this->_encloseName($prop->fieldName);
+				}else{
+					$f=str_replace(array("'","%s"),array("\\'",$this->_encloseName($prop->table).'.'.$this->_encloseName($prop->fieldName)),$pattern);
+				}
 			}else{
-				$f=$this->_encloseName($prop->fieldName);
+				if($pattern=='%s'){
+					$f=$this->_encloseName($prop->fieldName);
+				}else{
+					$f=str_replace(array("'","%s"),array("\\'",$this->_encloseName($prop->fieldName)),$pattern);
+				}
 			}
 			$r.=$f.' ';
 			if($cond['operator']=='IN'||$cond['operator']=='NOT IN'){

@@ -29,6 +29,12 @@ class jEvent{
 		$this->_name=$name;
 		$this->_params=& $params;
 	}
+	function __get($name){
+		return $this->getParam($name);
+	}
+	function __set($name,$value){
+		return $this->_params[$name]=$value;
+	}
 	public function getName(){
 		return $this->_name;
 	}

@@ -65,7 +65,7 @@ class jSignificantUrlsCompiler implements jISimpleCompiler{
 		$this->createUrlContent.="filemtime('".$sourceFile.'\') > '.filemtime($sourceFile);
 		$this->createUrlContentInc='';
 		$this->readProjectXml();
-		$this->retrieveModulePaths(jApp::configPath('defaultconfig.ini.php'));
+		$this->retrieveModulePaths(jApp::mainConfigFile());
 		$this->checkHttps=jApp::config()->urlengine['checkHttpsOnParsing'];
 		foreach($xml->children()as $tagname=>$tag){
 			if(!preg_match("/^(.*)entrypoint$/",$tagname,$m)){
@@ -218,7 +218,7 @@ class jSignificantUrlsCompiler implements jISimpleCompiler{
 		array_unshift($list,JELIX_LIB_PATH.'core-modules/');
 		foreach($list as $k=>$path){
 			if(trim($path)=='')continue;
-			$p=str_replace(array('lib:','app:'),array(LIB_PATH,jApp::appPath()),$path);
+			$p=jFile::parseJelixPath($path);
 			if(!file_exists($p)){
 				continue;
 			}
@@ -267,9 +267,9 @@ class jSignificantUrlsCompiler implements jISimpleCompiler{
 			}
 		}
 	}
-	protected function extractDynamicParams($url,$regexppath,$u){
-		$regexppath=preg_quote($regexppath,'!');
-		if(preg_match_all("/\\\:([a-zA-Z_0-9]+)/",$regexppath,$m,PREG_PATTERN_ORDER)){
+	protected function extractDynamicParams($url,$pathinfo,$u){
+		$regexppath=preg_quote($pathinfo,'!');
+		if(preg_match_all("/(?<!\\\\)\\\:([a-zA-Z_0-9]+)/",$regexppath,$m,PREG_PATTERN_ORDER)){
 			$u->params=$m[1];
 			foreach($url->param as $var){
 				$name=(string) $var['name'];
@@ -314,6 +314,7 @@ class jSignificantUrlsCompiler implements jISimpleCompiler{
 				$regexppath=str_replace('\:'.$name,'([^\/]+)',$regexppath);
 			}
 		}
+		$regexppath=str_replace("\\\\\\:","\:",$regexppath);
 		return $regexppath;
 	}
 	protected function appendUrlInfo($u,$path,$secondaryAction){

@@ -5,7 +5,7 @@
 * @subpackage  forms
 * @author      Laurent Jouanneau
 * @contributor Dominique Papin, Julien Issler
-* @copyright   2006-2010 Laurent Jouanneau
+* @copyright   2006-2014 Laurent Jouanneau
 * @copyright   2008 Dominique Papin
 * @copyright   2010 Julien Issler
 * @link        http://www.jelix.org

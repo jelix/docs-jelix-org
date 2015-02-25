@@ -38,11 +38,30 @@ class sqlite3DbConnection extends jDbConnection{
 	}
 	protected function _connect(){
 		$db=$this->profile['database'];
-		if(preg_match('/^(app|lib|var)\:/',$db))
-			$path=str_replace(array('app:','lib:','var:'),array(jApp::appPath(),LIB_PATH,jApp::varPath()),$db);
-		else
+		if(preg_match('/^(app|lib|var)\:/',$db)){
+			$path=jFile::parseJelixPath($db);
+		}
+		else{
 			$path=jApp::varPath('db/sqlite3/'.$db);
-		return new SQLite3($path);
+		}
+		$sqlite=new SQLite3($path);
+		if(isset($this->profile['extensions'])){
+			$list=preg_split('/ *, */',$this->profile['extensions']);
+			foreach($list as $ext){
+				try{
+					$sqlite->loadExtension($ext);
+				}catch(Exception $e){
+					throw new Exception('jDbPDOConnection: error while loading sqlite extension '.$ext);
+				}
+			}
+		}
+		if(isset($this->profile['busytimeout'])){
+			$timeout=intval($this->profile['busytimeout']);
+			if($timeout){
+				$sqlite->busyTimeout($timeout);
+			}
+		}
+		return $sqlite;
 	}
 	protected function _disconnect(){
 		return $this->_connection->close();

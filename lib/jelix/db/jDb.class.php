@@ -55,6 +55,11 @@ abstract class jDbConnection{
 			$this->_disconnect();
 		}
 	}
+	function disconnect(){
+		if($this->_connection!==null){
+			$this->_disconnect();
+		}
+	}
 	public function query($queryString,$fetchmode=self::FETCH_OBJ,$arg1=null,$ctoargs=null){
 		$this->lastQuery=$queryString;
 		if($this->_debugMode){
