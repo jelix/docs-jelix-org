@@ -11,12 +11,6 @@
 * @licence     GNU Lesser General Public Licence see LICENCE file or http://www.gnu.org/licenses/lgpl.html
 */
 
-if (!defined('T_GOTO'))
-    define('T_GOTO',333);
-if (!defined('T_NAMESPACE'))
-    define('T_NAMESPACE',377);
-if (!defined('T_USE'))
-    define('T_USE',340);
 
 
 /**

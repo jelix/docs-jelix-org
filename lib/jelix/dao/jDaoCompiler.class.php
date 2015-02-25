@@ -15,6 +15,18 @@
 * @link        http://www.jelix.org
 * @licence  http://www.gnu.org/licenses/lgpl.html GNU Lesser General Public Licence, see LICENCE file
 */
+class jDaoXmlException extends jException{
+	public function __construct($selector,$localekey,$localeParams=array()){
+		$localekey='jelix~daoxml.'.$localekey;
+		$arg=array($selector->toString(),$selector->getPath());
+		if(is_array($localeParams)){
+			$arg=array_merge($arg,$localeParams);
+		}else{
+			$arg[]=$localeParams;
+		}
+		parent::__construct($localekey,$arg);
+	}
+}
 class jDaoParser{
 	private $_properties=array();
 	private $_tables=array();
@@ -484,12 +496,12 @@ class jDaoMethod{
 		if($attr['property']!=''){
 			$prop=$this->_parser->getProperties();
 			if(isset($prop[$attr['property']])){
-				$this->_conditions->addItemOrder($attr['property'],$way);
+				$this->_conditions->addItemOrder($attr['property'],$way,true);
 			}elseif(substr($attr['property'],0,1)=='$'){
 				if(!in_array(substr($attr['property'],1),$this->_parameters)){
 					throw new jDaoXmlException($this->_parser->selector,'method.orderitem.parameter.unknown',array($this->name,$way));
 				}
-				$this->_conditions->addItemOrder($attr['property'],$way);
+				$this->_conditions->addItemOrder($attr['property'],$way,true);
 			}else{
 				throw new jDaoXmlException($this->_parser->selector,'method.orderitem.bad',array($attr['property'],$this->name));
 			}
@@ -1006,7 +1018,7 @@ class jDaoGenerator{
 		foreach($using as $id=>$field){
 			$result[]=$start . $field->$info . $end;
 		}
-		return implode($beetween,$result);;
+		return implode($beetween,$result);
 	}
 	protected function _writeFieldNamesWith($start='',$end='',$beetween='',$using=null){
 		return $this->_writeFieldsInfoWith('name',$start,$end,$beetween,$using);
@@ -1106,7 +1118,11 @@ class jDaoGenerator{
 			}
 			$value=$this->_preparePHPExpr('$'.$prefixfield.$fieldName,$field,true);
 			if($pattern!=''){
-				$values[$field->name]=sprintf($field->$pattern,'\'.'.$value.'.\'');
+				if(strpos($field->$pattern,"'")!==false&&strpos($field->$pattern,"\\'")===false){
+					$values[$field->name]=sprintf(str_replace("'","\\'",$field->$pattern),'\'.'.$value.'.\'');
+				}else{
+					$values[$field->name]=sprintf($field->$pattern,'\'.'.$value.'.\'');
+				}
 			}else{
 				$values[$field->name]='\'.'.$value.'.\'';
 			}
@@ -1179,7 +1195,7 @@ class jDaoGenerator{
 					$phpvalue='implode(\',\', array_map( '.$phpexpr.', '.$cond['value'].'))';
 					$value='(\'.'.$phpvalue.'.\')';
 				}else{
-					$value='('.$cond['value'].')';
+					$value='('.str_replace("'","\\'",$cond['value']).')';
 				}
 				$r.=$cond['operator'].' '.$value;
 			}elseif($cond['operator']=='IS NULL'||$cond['operator']=='IS NOT NULL'){
@@ -1320,17 +1336,5 @@ class jDaoCompiler  implements jISimpleCompiler{
 		$compiled='<?php '.$generator->buildClasses()."\n?>";
 		jFile::write($selector->getCompiledFilePath(),$compiled);
 		return true;
-	}
-}
-class jDaoXmlException extends jException{
-	public function __construct($selector,$localekey,$localeParams=array()){
-		$localekey='jelix~daoxml.'.$localekey;
-		$arg=array($selector->toString(),$selector->getPath());
-		if(is_array($localeParams)){
-			$arg=array_merge($arg,$localeParams);
-		}else{
-			$arg[]=$localeParams;
-		}
-		parent::__construct($localekey,$arg);
 	}
 }

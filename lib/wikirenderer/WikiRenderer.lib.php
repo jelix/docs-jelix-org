@@ -21,7 +21,7 @@
  *
  */
 define('WIKIRENDERER_PATH', dirname(__FILE__).'/');
-define('WIKIRENDERER_VERSION', '3.1.5');
+define('WIKIRENDERER_VERSION', '3.1.6');
 
 
 /**
@@ -556,13 +556,11 @@ abstract class WikiRendererConfig {
    public $simpletags = array();
 
    public $checkWikiWordFunction = null;
-   
-   /**
-    * @var string name of the class used to parse unrecognized line
-    */
-   public $defaultBlock = null;
 
    public $escapeChar = '\\';
+
+   // for htmlspecialchars
+   public $charset = 'UTF-8';
 
    /**
     * Called before the wiki text parsing
@@ -633,19 +631,10 @@ class WikiRenderer {
    protected $_currentBloc=null;
 
    /**
-    * @var WikiRendererBloc the previous opened bloc element
-    */
-   protected $_previousBloc=null;
-   
-   /**
     * @var array       list of all possible blocs
     */
    protected $_blocList= array();
 
-   /**
-    * @var WikiRendererBloc the default bloc used for unrecognized line
-    */
-   protected $_defaultBlock = null;
    /**
     * @var WikiInlineParser   the parser for inline content
     */
@@ -684,11 +673,6 @@ class WikiRenderer {
       foreach($this->config->bloctags as $name){
          $this->_blocList[]= new $name($this);
       }
-
-      if ($this->config->defaultBlock) {
-        $name = $this->config->defaultBlock;
-        $this->_defaultBlock = new $name($this);
-      }
    }
 
    /**
@@ -705,7 +689,6 @@ class WikiRenderer {
       $this->_newtext=array();
       $this->errors=array();
       $this->_currentBloc = null;
-      $this->_previousBloc = null;
 
       // we loop over all lines
       foreach($lignes as $num=>$ligne){
@@ -718,19 +701,16 @@ class WikiRenderer {
             }else{
                 $this->_newtext[count($this->_newtext)-1].=$this->_currentBloc->close();
                 $found=false;
-                
                 foreach($this->_blocList as $bloc){
-                    if($bloc->detect($ligne)){
+                    if($bloc->type != $this->_currentBloc->type && $bloc->detect($ligne)){
                         $found=true;
                         // we open the new bloc
-                        
+
                         if($bloc->closeNow()){
                             // if we have to close now the bloc, we close.
                             $this->_newtext[]=$bloc->open().$bloc->getRenderedLine().$bloc->close();
-                            $this->_previousBloc = $bloc;
                             $this->_currentBloc = null;
                         }else{
-                            $this->_previousBloc = $this->_currentBloc;
                             $this->_currentBloc = clone $bloc; // careful ! it MUST be a copy here !
                             $this->_newtext[]=$this->_currentBloc->open().$this->_currentBloc->getRenderedLine();
                         }
@@ -738,32 +718,19 @@ class WikiRenderer {
                     }
                 }
                 if(!$found){
-                    if (trim($ligne) == '') {
-                        $this->_newtext[] = '';
-                    }
-                    else if ($this->_defaultBlock) {
-                        $this->_defaultBlock->detect($ligne);
-                        $this->_newtext[] = $this->_defaultBlock->open().$this->_defaultBlock->getRenderedLine().$this->_defaultBlock->close();
-                    }
-                    else {
-                        $this->_newtext[]= 'WTF2!!!'.$this->inlineParser->parse($ligne);
-                    }
-                    $this->_previousBloc = $this->_currentBloc;
-                    $this->_currentBloc = null;
+                   $this->_newtext[]= $this->inlineParser->parse($ligne);
+                   $this->_currentBloc = null;
                 }
             }
 
-        }
-        else {
+         }else{
             $found=false;
             // no opened bloc, we saw if the line correspond to a bloc
             foreach($this->_blocList as $bloc){
                 if($bloc->detect($ligne)){
                     $found=true;
-                    
                     if($bloc->closeNow()){
                         $this->_newtext[]=$bloc->open().$bloc->getRenderedLine().$bloc->close();
-                        $this->_previousBloc = $bloc;
                     }else{
                         $this->_currentBloc = clone $bloc; // careful ! it MUST be a copy here !
                         $this->_newtext[]=$this->_currentBloc->open().$this->_currentBloc->getRenderedLine();
@@ -772,17 +739,7 @@ class WikiRenderer {
                 }
             }
             if(!$found){
-                if (trim($ligne) == '') {
-                    $this->_newtext[] = '';
-                }
-                else if ($this->_defaultBlock) {
-                    $this->_defaultBlock->detect($ligne);
-                    $this->_newtext[] = $this->_defaultBlock->open().$this->_defaultBlock->getRenderedLine().$this->_defaultBlock->close();
-                }
-                else {
-                    $this->_newtext[]='WTF!!!'.$this->inlineParser->parse($ligne);
-                }
-                
+                $this->_newtext[]= $this->inlineParser->parse($ligne);
             }
          }
          if($this->inlineParser->error){
@@ -790,7 +747,7 @@ class WikiRenderer {
          }
       }
       if($this->_currentBloc){
-          $this->_newtext[count($this->_newtext)-1].= $this->_currentBloc->close();
+          $this->_newtext[count($this->_newtext)-1].=$this->_currentBloc->close();
       }
 
       return $this->config->onParse(implode("\n",$this->_newtext));
@@ -805,13 +762,13 @@ class WikiRenderer {
        return WIKIRENDERER_VERSION;
     }
 
+    /**
+     * @return WikiRendererConfig
+     */
     public function getConfig(){
         return $this->config;
     }
 
-    public function getPreviousBloc() {
-        return $this->_previousBloc;
-    }
 }
 
 
@@ -830,13 +787,13 @@ class WikiHtmlTextLine extends WikiTag {
     public $isTextLineTag=true;
 
     protected function _doEscape($string){
-        return htmlspecialchars($string);
+        return htmlspecialchars($string, ENT_COMPAT, $this->config->charset);
     }
 }
 
 class WikiXmlTextLine extends WikiHtmlTextLine {
     protected function _doEscape($string){
-        return htmlspecialchars($string, ENT_NOQUOTES);
+        return htmlspecialchars($string, ENT_NOQUOTES, $this->config->charset);
     }
 }
 
@@ -864,27 +821,27 @@ abstract class WikiTagXhtml extends WikiTag {
             if(in_array($this->attribute[$i] , $this->ignoreAttribute))
                 continue;
             if($this->attribute[$i] != '$$')
-                $attr.=' '.$this->attribute[$i].'="'.htmlspecialchars($this->wikiContentArr[$i]).'"';
+                $attr.=' '.$this->attribute[$i].'="'.$this->_doEscape($this->wikiContentArr[$i]).'"';
             else
                 $content = $this->contents[$i];
         }
 
         foreach($this->additionnalAttributes as $name=>$value) {
-            $attr.=' '.$name.'="'.htmlspecialchars($value).'"';
+            $attr.=' '.$name.'="'.$this->_doEscape($value).'"';
         }
 
         return '<'.$this->name.$attr.'>'.$content.'</'.$this->name.'>';
    }
 
    protected function _doEscape($string){
-       return htmlspecialchars($string);
+       return htmlspecialchars($string, ENT_COMPAT, $this->config->charset);
    }
 }
 
 
 class WikiTagXml extends WikiTagXhtml {
    protected function _doEscape($string){
-       return htmlspecialchars($string, ENT_NOQUOTES);
+       return htmlspecialchars($string, ENT_NOQUOTES, $this->config->charset);
    }
 }
 

@@ -72,6 +72,8 @@ class jConfigCompiler{
 		self::getPaths($config->urlengine,$pseudoScriptName,$isCli);
 		self::_loadModuleInfo($config,$allModuleInfo);
 		self::_loadPluginsPathList($config);
+		if($config->urlengine['engine']=='simple')
+			trigger_error("The 'simple' url engine is deprecated. use 'basic_significant' or 'significant' url engine",E_USER_NOTICE);
 		$coordplugins=array();
 		foreach($config->coordplugins as $name=>$conf){
 			if(!isset($config->_pluginsPathList_coord[$name])){
@@ -236,9 +238,13 @@ class jConfigCompiler{
 						if($config->modules[$f.'.access']==3){
 							$config->_externalModulesPathList[$f]=$p.$f.'/';
 						}
-						elseif($config->modules[$f.'.access'])
+						elseif($config->modules[$f.'.access']){
 							$config->_modulesPathList[$f]=$p.$f.'/';
 							self::readModuleFile($config,$p.$f.'/');
+							if(file_exists($p.$f.'/plugins')){
+								$config->pluginsPath.=',module:'.$f;
+							}
+						}
 					}
 				}
 				closedir($handle);
@@ -365,8 +371,8 @@ class jConfigCompiler{
 			}
 			$urlconf['urlScript']=$_SERVER[$urlconf['scriptNameServerVariable']];
 		}
-		$lastslash=strrpos($urlconf['urlScript'],'/');
 		if($isCli){
+			$lastslash=strrpos($urlconf['urlScript'],DIRECTORY_SEPARATOR);
 			if($lastslash===false){
 				$urlconf['urlScriptPath']=($pseudoScriptName? jApp::appPath('/scripts/'): getcwd().'/');
 				$urlconf['urlScriptName']=$urlconf['urlScript'];
@@ -380,6 +386,7 @@ class jConfigCompiler{
 			$urlconf['urlScript']=$basepath.$snp;
 		}
 		else{
+			$lastslash=strrpos($urlconf['urlScript'],'/');
 			$urlconf['urlScriptPath']=substr($urlconf['urlScript'],0,$lastslash).'/';
 			$urlconf['urlScriptName']=substr($urlconf['urlScript'],$lastslash+1);
 			$basepath=$urlconf['basePath'];
