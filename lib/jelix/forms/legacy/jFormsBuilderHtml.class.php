@@ -21,8 +21,12 @@ class jFormsBuilderHtml extends jFormsBuilderBase{
 	public function outputAllControls(){
 		echo '<table class="jforms-table" border="0">';
 		foreach($this->_form->getRootControls()as $ctrlref=>$ctrl){
-			if($ctrl->type=='submit'||$ctrl->type=='reset'||$ctrl->type=='hidden')continue;
-			if(!$this->_form->isActivated($ctrlref))continue;
+			if($ctrl->type=='submit'||$ctrl->type=='reset'||$ctrl->type=='hidden'){
+				continue;
+			}
+			if(!$this->_form->isActivated($ctrlref)){
+				continue;
+			}
 			if($ctrl->type=='group'){
 				echo '<tr><td colspan="2">';
 				$this->outputControl($ctrl);
@@ -37,14 +41,16 @@ class jFormsBuilderHtml extends jFormsBuilderBase{
 		}
 		echo '</table> <div class="jforms-submit-buttons">';
 		if($ctrl=$this->_form->getReset()){
-			if(!$this->_form->isActivated($ctrl->ref))continue;
-			$this->outputControl($ctrl);
-			echo ' ';
+			if($this->_form->isActivated($ctrl->ref)){
+				$this->outputControl($ctrl);
+				echo ' ';
+			}
 		}
 		foreach($this->_form->getSubmits()as $ctrlref=>$ctrl){
-			if(!$this->_form->isActivated($ctrlref))continue;
-			$this->outputControl($ctrl);
-			echo ' ';
+			if($this->_form->isActivated($ctrlref)){
+				$this->outputControl($ctrl);
+				echo ' ';
+			}
 		}
 		echo "</div>\n";
 	}
@@ -212,6 +218,42 @@ class jFormsBuilderHtml extends jFormsBuilderBase{
 		echo "\n";
 		$this->{'js'.$ctrl->type}($ctrl);
 		$this->outputHelp($ctrl);
+	}
+	public function outputControlValue($ctrl,$attributes=array()){
+		if($ctrl->type=='hidden'){
+			return;
+		}
+		$separator=' ';
+		if(isset($attributes['separator'])){
+			$separator=$attributes['separator'];
+			unset($attributes['separator']);
+		}
+		$attributes['id']=$this->_name.'_'.$ctrl->ref;
+		$class='jforms-value jforms-value-'.$ctrl->type;
+		if(isset($attributes['class'])){
+			$attributes['class'].=' '.$class;
+		}
+		else{
+			$attributes['class']=$class;
+		}
+		echo '<span ';
+		$this->_outputAttr($attributes);
+		echo '>';
+		$value=$this->_form->getData($ctrl->ref);
+		$value=$ctrl->getDisplayValue($value);
+		if(is_array($value)){
+			$s='';
+			foreach($value as $v){
+				$s.=$separator.htmlspecialchars($v);
+			}
+			echo substr($s,strlen($separator));
+		}else if($ctrl->isHtmlContent()){
+			echo $value;
+		}
+		else{
+			echo htmlspecialchars($value);
+		}
+		echo '</span>';
 	}
 	protected function _outputAttr(&$attributes){
 		foreach($attributes as $name=>$val){

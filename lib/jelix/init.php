@@ -18,7 +18,7 @@
 * @link     http://www.jelix.org
 * @licence  GNU Lesser General Public Licence see LICENCE file or http://www.gnu.org/licenses/lgpl.html
 */
-define('JELIX_VERSION','1.6.4pre.3167');
+define('JELIX_VERSION','1.6.10pre.3305');
 define('JELIX_NAMESPACE_BASE','http://jelix.org/ns/');
 define('JELIX_LIB_PATH',__DIR__.'/');
 define('JELIX_LIB_CORE_PATH',JELIX_LIB_PATH.'core/');
@@ -419,149 +419,6 @@ class jException extends Exception{
 		return $this->localeKey;
 	}
 }
-class jConfig{
-	public static $fromCache=true;
-	private function __construct(){}
-	static public function load($configFile){
-		$config=array();
-		$file=jApp::tempPath().str_replace('/','~',$configFile);
-		if(BYTECODE_CACHE_EXISTS)
-			$file.='.conf.php';
-		else
-			$file.='.resultini.php';
-		self::$fromCache=true;
-		if(!file_exists($file)){
-			self::$fromCache=false;
-		}
-		else{
-			$t=filemtime($file);
-			$dc=jApp::mainConfigFile();
-			$lc=jApp::configPath('localconfig.ini.php');
-			if((file_exists($dc)&&filemtime($dc)>$t)
-				||filemtime(jApp::configPath($configFile))>$t
-				||(file_exists($lc)&&filemtime($lc)>$t)){
-				self::$fromCache=false;
-			}
-			else{
-				if(BYTECODE_CACHE_EXISTS){
-					include($file);
-					$config=(object) $config;
-				}else{
-					$config=jelix_read_ini($file);
-				}
-				if($config->compilation['checkCacheFiletime']){
-					foreach($config->_allBasePath as $path){
-						if(!file_exists($path)||filemtime($path)>$t){
-							self::$fromCache=false;
-							break;
-						}
-					}
-				}
-			}
-		}
-		if(!self::$fromCache){
-			require_once(JELIX_LIB_CORE_PATH.'jConfigCompiler.class.php');
-			return jConfigCompiler::readAndCache($configFile);
-		}
-		else{
-			return $config;
-		}
-	}
-}
-class jConfigAutoloader{
-	public function __construct($config){
-		$this->config=$config;
-	}
-	protected $config=null;
-	public function loadClass($className){
-		$path=$this->getPath($className);
-		if(is_array($path)){
-			foreach($path as $p){
-				if(file_exists($p)){
-					require($p);
-					return true;
-				}
-			}
-		}
-		else if($path){
-			require($path);
-			return true;
-		}
-		return false;
-	}
-	protected function getPath($className){
-		if(!$this->config)
-			return '';
-		$className=ltrim($className,'\\');
-		if(isset($this->config->_autoload_class[$className])){
-			return $this->config->_autoload_class[$className];
-		}
-		$lastNsPos=strripos($className,'\\');
-		if($lastNsPos!==false){
-			$namespace=substr($className,0,$lastNsPos);
-			$class=substr($className,$lastNsPos + 1);
-		}
-		else{
-			$namespace='';
-			$class=&$className;
-		}
-		foreach($this->config->_autoload_namespace as $ns=>$info){
-			if(strpos($className,$ns)===0){
-				$path='';
-				if($lastNsPos!==false){
-					if($namespace){
-						$path=str_replace('\\',DIRECTORY_SEPARATOR,$namespace). DIRECTORY_SEPARATOR;
-					}
-				}
-				list($incPath,$ext)=explode('|',$info);
-				$fileName=str_replace('_',DIRECTORY_SEPARATOR,$class). $ext;
-				return $incPath.DIRECTORY_SEPARATOR.$path.$fileName;
-			}
-		}
-		foreach($this->config->_autoload_namespacepathmap as $ns=>$info){
-			if(strpos($className,$ns)===0){
-				$path='';
-				if($lastNsPos!==false){
-					$namespace=substr($namespace,strlen($ns)+1);
-					if($namespace){
-						$path=str_replace('\\',DIRECTORY_SEPARATOR,$namespace). DIRECTORY_SEPARATOR;
-					}
-				}
-				list($incPath,$ext)=explode('|',$info);
-				$fileName=str_replace('_',DIRECTORY_SEPARATOR,$class). $ext;
-				return $incPath.DIRECTORY_SEPARATOR.$path.$fileName;
-			}
-		}
-		if(isset($this->config->_autoload_classpattern['regexp'])){
-			foreach($this->config->_autoload_classpattern['regexp'] as $k=>$reg){
-				if(preg_match($reg,$className)){
-					list($incPath,$ext)=explode('|',$this->config->_autoload_classpattern['path'][$k]);
-					return $incPath. DIRECTORY_SEPARATOR .$className.$ext;
-				}
-			}
-		}
-		$pathList=array();
-		if(isset($this->config->_autoload_includepath['path'])){
-			foreach($this->config->_autoload_includepath['path'] as $info){
-				list($incPath,$ext)=explode('|',$info);
-				if($namespace)
-					$path=str_replace('\\',DIRECTORY_SEPARATOR,$namespace). DIRECTORY_SEPARATOR;
-				else $path='';
-				$pathList[]=$incPath.DIRECTORY_SEPARATOR.$path.str_replace('_',DIRECTORY_SEPARATOR,$class). $ext;
-			}
-		}
-		if(isset($this->config->_autoload_includepathmap['path'])){
-			foreach($this->config->_autoload_includepathmap['path'] as $info){
-				list($incPath,$ext)=explode('|',$info);
-				$pathList[]=$incPath.DIRECTORY_SEPARATOR.str_replace('_',DIRECTORY_SEPARATOR,$class). $ext;
-			}
-		}
-		if(count($pathList)){
-			return $pathList;
-		}
-		return '';
-	}
-}
 class jExceptionSelector extends jException{}
 class jSelectorFactory{
 	private function __construct(){}
@@ -673,7 +530,7 @@ class jSelectorActFast extends jSelectorModule{
 	public $controller='';
 	public $method='';
 	protected $_dirname='actions/';
-	function __construct($request,$module,$action){
+	function __construct($requestType,$module,$action){
 		$this->module=$module;
 		$r=explode(':',$action);
 		if(count($r)==1){
@@ -686,7 +543,7 @@ class jSelectorActFast extends jSelectorModule{
 		if(substr($this->method,0,2)=='__')
 			throw new jExceptionSelector('jelix~errors.selector.method.invalid',$this->toString());
 		$this->resource=$this->controller.':'.$this->method;
-		$this->request=$request;
+		$this->request=$requestType;
 		$this->_createPath();
 	}
 	protected function _createPath(){
@@ -707,6 +564,13 @@ class jSelectorActFast extends jSelectorModule{
 	}
 	public function getClass(){
 		return $this->controller.'Ctrl';
+	}
+	public function isEqualTo(jSelectorActFast $otherAction){
+		return($this->module==$otherAction->module&&
+				$this->controller==$otherAction->controller&&
+				$this->method==$otherAction->method&&
+				$this->request==$otherAction->request
+				);
 	}
 }
 class jSelectorAct extends jSelectorActFast{
@@ -1280,6 +1144,7 @@ class jCoordinator{
 	public $response=null;
 	public $request=null;
 	public $action=null;
+	public $originalAction=null;
 	public $moduleName;
 	public $actionName;
 	protected $errorMessage=null;
@@ -1325,7 +1190,8 @@ class jCoordinator{
 		$this->request->init();
 		list($this->moduleName,$this->actionName)=$request->getModuleAction();
 		jApp::pushCurrentModule($this->moduleName);
-		$this->action=new jSelectorActFast($this->request->type,$this->moduleName,$this->actionName);
+		$this->action=
+		$this->originalAction=new jSelectorActFast($this->request->type,$this->moduleName,$this->actionName);
 		if($config->modules[$this->moduleName.'.access'] < 2){
 			throw new jException('jelix~errors.module.untrusted',$this->moduleName);
 		}
@@ -1389,7 +1255,7 @@ class jCoordinator{
 		jApp::popCurrentModule();
 		jSession::end();
 	}
-	private function getController($selector){
+	protected function getController($selector){
 		$ctrlpath=$selector->getPath();
 		if(!file_exists($ctrlpath)){
 			throw new jException('jelix~errors.ad.controller.file.unknown',array($this->actionName,$ctrlpath));
@@ -1406,6 +1272,12 @@ class jCoordinator{
 			throw new jException('jelix~errors.ad.controller.method.unknown',array($this->actionName,$selector->method,$class,$ctrlpath));
 		}
 		return $ctrl;
+	}
+	public function execOriginalAction(){
+		if(!$this->originalAction){
+			return false;
+		}
+		return $this->originalAction->isEqualTo($this->action);
 	}
 	function errorHandler($errno,$errmsg,$filename,$linenum,$errcontext){
 		if(error_reporting()==0)
@@ -1721,6 +1593,9 @@ abstract class jRequest{
 	public function readHttpBody(){
 	$input=file_get_contents("php://input");
 	$values=array();
+	if(!isset($_SERVER["CONTENT_TYPE"])){
+		return $input;
+	}
 	if(strpos($_SERVER["CONTENT_TYPE"],"application/x-www-form-urlencoded")===0){
 		parse_str($input,$values);
 		return $values;
@@ -2433,9 +2308,9 @@ class jIncluder{
 		require($cachefile);
 		jIncluder::$_includedFiles[$cachefile]=true;
 	}
-	public static function incAll($aType){
+	public static function incAll($aType,$force=false){
 		$cachefile=jApp::tempPath('compiled/'.$aType[3]);
-		if(isset(jIncluder::$_includedFiles[$cachefile])){
+		if(isset(jIncluder::$_includedFiles[$cachefile])&&!$force){
 			return;
 		}
 		$config=jApp::config();
@@ -2587,7 +2462,8 @@ class jSession{
 		return true;
 	}
 }
-$GLOBALS['gLibPath']=array('Db'=>JELIX_LIB_PATH.'db/','Dao'=>JELIX_LIB_PATH.'dao/',
+$GLOBALS['gLibPath']=array('Config'=>JELIX_LIB_PATH.'core/',
+'Db'=>JELIX_LIB_PATH.'db/','Dao'=>JELIX_LIB_PATH.'dao/',
 'Forms'=>JELIX_LIB_PATH.'forms/','Event'=>JELIX_LIB_PATH.'events/',
 'Tpl'=>JELIX_LIB_PATH.'tpl/','Controller'=>JELIX_LIB_PATH.'controllers/',
 'Auth'=>JELIX_LIB_PATH.'auth/','Installer'=>JELIX_LIB_PATH.'installer/',
@@ -2596,7 +2472,7 @@ function jelix_autoload($class){
 	if(strpos($class,'jelix\\')===0){
 		$f=LIB_PATH.str_replace('\\',DIRECTORY_SEPARATOR,$class).'.php';
 	}
-	else if(preg_match('/^j(Dao|Tpl|Event|Db|Controller|Forms|Auth|Installer|KV).*/i',$class,$m)){
+	else if(preg_match('/^j(Dao|Tpl|Event|Db|Controller|Forms|Auth|Config|Installer|KV).*/i',$class,$m)){
 		$f=$GLOBALS['gLibPath'][$m[1]].$class.'.class.php';
 	}
 	elseif(preg_match('/^cDao(?:Record)?_(.+)_Jx_(.+)_Jx_(.+)$/',$class,$m)){

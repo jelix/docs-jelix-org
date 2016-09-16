@@ -54,8 +54,7 @@ class minifyHTMLResponsePlugin implements jIHTMLResponsePlugin{
 		$pendingParameters=false;
 		$resultList=array();
 		foreach($list as $url=>$parameters){
-			$pathAbsolute=(strpos($url,'http://')!==false);
-			if($pathAbsolute||in_array($url,$this->$exclude)){
+			if(preg_match('#^https?\://#',$url)||in_array($url,$this->$exclude)){
 				$resultList[$url]=$parameters;
 				continue;
 			}

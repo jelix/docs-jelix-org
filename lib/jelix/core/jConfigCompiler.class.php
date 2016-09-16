@@ -25,8 +25,8 @@ class jConfigCompiler{
 		if(!is_writable(jApp::logPath())){
 			throw new Exception('Application log directory is not writable -- ('.jApp::logPath().')',4);
 		}
+		self::$commonConfig=jelix_read_ini(jApp::mainConfigFile());
 		$config=jelix_read_ini(JELIX_LIB_CORE_PATH.'defaultconfig.ini.php');
-		self::$commonConfig=clone $config;
 		@jelix_read_ini(jApp::mainConfigFile(),$config);
 		if(file_exists($configPath.'localconfig.ini.php')){
 			@jelix_read_ini($configPath.'localconfig.ini.php',$config);
@@ -116,19 +116,22 @@ class jConfigCompiler{
 			$classname=$pluginName.'ConfigCompilerPlugin';
 			$plugins[]=new $classname();
 		}
-		if(!count($plugins))
+		if(!count($plugins)){
 			return;
+		}
 		usort($plugins,function($a,$b){return $a->getPriority()< $b->getPriority();});
-		foreach($plugins as $plugin)
+		foreach($plugins as $plugin){
 			$plugin->atStart($config);
+		}
 		foreach($config->_modulesPathList as $moduleName=>$modulePath){
 			$moduleXml=simplexml_load_file($modulePath.'module.xml');
 			foreach($plugins as $plugin){
 				$plugin->onModule($config,$moduleName,$modulePath,$moduleXml);
 			}
 		}
-		foreach($plugins as $plugin)
+		foreach($plugins as $plugin){
 			$plugin->atEnd($config);
+		}
 	}
 	static protected function _loadModuleInfo($config,$allModuleInfo){
 		$installerFile=jApp::configPath('installer.ini.php');
@@ -144,88 +147,131 @@ class jConfigCompiler{
 		else
 			$installation=parse_ini_file($installerFile,true);
 		$section=$config->urlengine['urlScriptId'];
-		if(!isset($installation[$section]))
+		if(!isset($installation[$section])){
 			$installation[$section]=array();
-		$list=preg_split('/ *, */',$config->modulesPath);
-		if(isset(self::$commonConfig->modulesPath))
-			$list=array_merge($list,preg_split('/ *, */',self::$commonConfig->modulesPath));
-		array_unshift($list,JELIX_LIB_PATH.'core-modules/');
+		}
+		$modulesPaths=self::getModulesPaths($config,true);
+		$pluginsPath=preg_split('/ *, */',$config->pluginsPath);
+		foreach($modulesPaths as $f=>$p){
+			if($config->disableInstallers){
+				$installation[$section][$f . '.installed']=1;
+			}else if(!isset($installation[$section][$f.'.installed'])){
+				$installation[$section][$f . '.installed']=0;
+			}
+			if($f=='jelix'){
+				$config->modules['jelix.access']=2;
+			}else{
+				if($config->enableAllModules){
+					if($config->disableInstallers
+						||$installation[$section][$f.'.installed']
+						||$allModuleInfo){
+						$config->modules[$f . '.access']=2;
+					}else{
+						$config->modules[$f . '.access']=0;
+					}
+				}else if(!isset($config->modules[$f.'.access'])){
+					$config->modules[$f.'.access']=0;
+				}else if($config->modules[$f.'.access']==0){
+					if(isset(self::$commonConfig->modules[$f.'.access'])
+						&&self::$commonConfig->modules[$f.'.access'] > 0){
+						$config->modules[$f . '.access']=3;
+					}
+				}else if(!$installation[$section][$f.'.installed']){
+					if(!$allModuleInfo){
+						$config->modules[$f . '.access']=0;
+					}
+				}
+			}
+			if(!isset($installation[$section][$f.'.dbprofile'])){
+				$config->modules[$f.'.dbprofile']='default';
+			}else{
+				$config->modules[$f.'.dbprofile']=$installation[$section][$f . '.dbprofile'];
+			}
+			if($allModuleInfo){
+				if(!isset($installation[$section][$f.'.version'])){
+					$installation[$section][$f.'.version']='';
+				}
+				if(!isset($installation[$section][$f.'.dataversion'])){
+					$installation[$section][$f.'.dataversion']='';
+				}
+				if(!isset($installation['__modules_data'][$f.'.contexts'])){
+					$installation['__modules_data'][$f.'.contexts']='';
+				}
+				$config->modules[$f.'.version']=$installation[$section][$f.'.version'];
+				$config->modules[$f.'.dataversion']=$installation[$section][$f.'.dataversion'];
+				$config->modules[$f.'.installed']=$installation[$section][$f.'.installed'];
+				$config->_allModulesPathList[$f]=$p;
+			}
+			if($config->modules[$f.'.access']==3){
+				$config->_externalModulesPathList[$f]=$p;
+			}
+			elseif($config->modules[$f.'.access']){
+				$config->_modulesPathList[$f]=$p;
+				if(file_exists($p.'plugins')){
+					if(!in_array('module:'.$f,$pluginsPath)&&
+						!in_array('module:'.$f.'/',$pluginsPath)&&
+						!in_array('module:'.$f.'/plugins',$pluginsPath)&&
+						!in_array('module:'.$f.'/plugins/',$pluginsPath)){
+						$config->pluginsPath.=',module:'.$f;
+						$pluginsPath[]='module:'.$f;
+					}
+				}
+			}
+		}
+	}
+	static public function getModulesPaths($config,$toCompileConfig=false)
+	{
+		$list=array();
 		$pathChecked=array();
+		$modulesPaths=array();
+		if(property_exists($config,'modulesPath')){
+			$list=preg_split('/ *, */',$config->modulesPath);
+			if($toCompileConfig&&isset(self::$commonConfig->modulesPath)){
+				$list=array_merge($list,preg_split('/ *, */',self::$commonConfig->modulesPath));
+			}
+		}
 		foreach($list as $k=>$path){
 			if(trim($path)=='')continue;
 			$p=jFile::parseJelixPath($path);
 			if(!file_exists($p)){
-				throw new Exception('Error in the configuration file -- The path, '.$path.' given in the jelix config, doesn\'t exist',10);
+				throw new Exception('Error in the configuration file -- The path, ' . $path . ' given in the jelix config, doesn\'t exist',10);
 			}
-			if(substr($p,-1)!='/')
+			if(substr($p,-1)!='/'){
 				$p.='/';
-			if(in_array($p,$pathChecked))
+			}
+			if(in_array($p,$pathChecked)){
 				continue;
+			}
 			$pathChecked[]=$p;
-			if($k!=0&&$config->compilation['checkCacheFiletime'])
+			if($toCompileConfig&&$config->compilation['checkCacheFiletime']){
 				$config->_allBasePath[]=$p;
+			}
 			if($handle=opendir($p)){
 				while(false!==($f=readdir($handle))){
-					if($f[0]!='.'&&is_dir($p.$f)){
-						if($config->disableInstallers)
-							$installation[$section][$f.'.installed']=1;
-						else if(!isset($installation[$section][$f.'.installed']))
-							$installation[$section][$f.'.installed']=0;
-						if($f=='jelix'){
-							$config->modules['jelix.access']=2;
-						}
-						else{
-							if($config->enableAllModules){
-								if($config->disableInstallers
-									||$installation[$section][$f.'.installed']
-									||$allModuleInfo)
-									$config->modules[$f.'.access']=2;
-								else
-									$config->modules[$f.'.access']=0;
-							}
-							else if(!isset($config->modules[$f.'.access'])){
-								$config->modules[$f.'.access']=0;
-							}
-							else if($config->modules[$f.'.access']==0){
-								if(isset(self::$commonConfig->modules[$f.'.access'])
-									&&self::$commonConfig->modules[$f.'.access'] > 0)
-									$config->modules[$f.'.access']=3;
-							}
-							else if(!$installation[$section][$f.'.installed']){
-								if(!$allModuleInfo)
-									$config->modules[$f.'.access']=0;
-							}
-						}
-						if(!isset($installation[$section][$f.'.dbprofile']))
-							$config->modules[$f.'.dbprofile']='default';
-						else
-							$config->modules[$f.'.dbprofile']=$installation[$section][$f.'.dbprofile'];
-						if($allModuleInfo){
-							if(!isset($installation[$section][$f.'.version']))
-								$installation[$section][$f.'.version']='';
-							if(!isset($installation[$section][$f.'.dataversion']))
-								$installation[$section][$f.'.dataversion']='';
-							if(!isset($installation['__modules_data'][$f.'.contexts']))
-								$installation['__modules_data'][$f.'.contexts']='';
-							$config->modules[$f.'.version']=$installation[$section][$f.'.version'];
-							$config->modules[$f.'.dataversion']=$installation[$section][$f.'.dataversion'];
-							$config->modules[$f.'.installed']=$installation[$section][$f.'.installed'];
-							$config->_allModulesPathList[$f]=$p.$f.'/';
-						}
-						if($config->modules[$f.'.access']==3){
-							$config->_externalModulesPathList[$f]=$p.$f.'/';
-						}
-						elseif($config->modules[$f.'.access']){
-							$config->_modulesPathList[$f]=$p.$f.'/';
-							if(file_exists($p.$f.'/plugins')){
-								$config->pluginsPath.=',module:'.$f;
-							}
-						}
+					if($f[0]!='.'&&is_dir($p . $f)){
+						$modulesPaths[$f]=$p . $f . '/';
 					}
 				}
 				closedir($handle);
 			}
 		}
+		if(property_exists($config,'modules')){
+			foreach($config->modules as $key=>$path){
+				if(!preg_match('/^([a-zA-Z_0-9]+)\\.path$/',$key,$m)){
+					continue;
+				}
+				$p=jFile::parseJelixPath($path);
+				if(!file_exists($p)){
+					throw new Exception('Error in the configuration file -- The path, ' . $path . ' given in the jelix config, doesn\'t exist',10);
+				}
+				if(!is_dir($p)){
+					throw new Exception('Error in the configuration file -- The path, ' . $path . ' given in the jelix config, is not a directory',10);
+				}
+				$p=rtrim($p,'/');
+				$modulesPaths[$m[1]]=$p . '/';
+			}
+		}
+		return $modulesPaths;
 	}
 	static protected function _loadPluginsPathList($config){
 		$list=preg_split('/ *, */',$config->pluginsPath);
@@ -337,10 +383,12 @@ class jConfigCompiler{
 				}
 			}
 			$urlconf['basePath']=$basepath;
-			if($urlconf['jelixWWWPath'][0]!='/')
+			if($urlconf['jelixWWWPath'][0]!='/'){
 				$urlconf['jelixWWWPath']=$basepath.$urlconf['jelixWWWPath'];
-			if($urlconf['jqueryPath'][0]!='/')
+			}
+			if($urlconf['jqueryPath'][0]!='/'){
 				$urlconf['jqueryPath']=$basepath.$urlconf['jqueryPath'];
+			}
 			$snp=substr($urlconf['urlScript'],strlen($localBasePath));
 			if($localBasePath=='/')
 				$urlconf['documentRoot']=jApp::wwwPath();

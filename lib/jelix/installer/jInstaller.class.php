@@ -74,10 +74,22 @@ class jInstaller{
 	public $nbWarning=0;
 	public $nbNotice=0;
 	public $mainConfig;
+	public $localConfig;
 	function __construct($reporter,$lang=''){
 		$this->reporter=$reporter;
 		$this->messages=new jInstallerMessageProvider($lang);
 		$this->mainConfig=new jIniFileModifier(jApp::mainConfigFile());
+		$localConfig=jApp::configPath('localconfig.ini.php');
+		if(!file_exists($localConfig)){
+			$localConfigDist=jApp::configPath('localconfig.ini.php.dist');
+			if(file_exists($localConfigDist)){
+			copy($localConfigDist,$localConfig);
+			}
+			else{
+			file_put_contents($localConfig,';<'.'?php die(\'\');?'.'>');
+			}
+		}
+		$this->localConfig=new jIniMultiFilesModifier($this->mainConfig,$localConfig);
 		$this->installerIni=$this->getInstallerIni();
 		$this->readEntryPointData(simplexml_load_file(jApp::appPath('project.xml')));
 		$this->installerIni->save();
@@ -106,6 +118,7 @@ class jInstaller{
 				continue;
 			$configFileList[$configFile]=true;
 			$ep=$this->getEntryPointObject($configFile,$file,$type);
+			$ep->localConfigIni=new jIniMultiFilesModifier($this->localConfig,$ep->getEpConfigIni());
 			$epId=$ep->getEpId();
 			$this->epId[$file]=$epId;
 			$this->entryPoints[$epId]=$ep;
@@ -340,6 +353,7 @@ class jInstaller{
 					$installedModules[]=array($installer,$component,false);
 				}
 				$ep->configIni->save();
+				$ep->localConfigIni->save();
 				$ep->config=
 					jConfigCompiler::read($ep->configFile,true,
 										$ep->isCliScript,
@@ -373,6 +387,7 @@ class jInstaller{
 					}
 				}
 				$ep->configIni->save();
+				$ep->localConfigIni->save();
 				$ep->config=
 					jConfigCompiler::read($ep->configFile,true,
 										$ep->isCliScript,

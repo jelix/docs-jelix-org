@@ -300,12 +300,15 @@ class jDb{
 		}
 	}
 	public static function floatToStr($value){
-		if(is_float($value))
-			return rtrim(sprintf('%.20F',$value),'0');
-		else if(is_integer($value))
+		if(is_float($value)){
+			return rtrim(rtrim(sprintf("%.20F",$value),"0"),'.');
+		}
+		else if(is_integer($value)){
 			return sprintf('%d',$value);
-		else if(is_numeric($value))
+		}
+		else if(is_numeric($value)){
 			return $value;
+		}
 		return (string)(floatval($value));
 	}
 }

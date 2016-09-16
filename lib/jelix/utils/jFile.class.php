@@ -52,6 +52,7 @@ class jFile{
 		if(!file_exists($dir)){
 			self::createDir(dirname($dir),$chmod);
 			mkdir($dir,($chmod?$chmod:jApp::config()->chmodDir));
+			chmod($dir,($chmod?$chmod:jApp::config()->chmodDir));
 		}
 	}
 	public static function removeDir($path,$deleteParent=true,$except=array()){
@@ -132,6 +133,10 @@ class jFile{
 		elseif(strpos($path,jApp::wwwPath())===0){
 			$shortcutPath=jApp::wwwPath();
 			$shortcut='www:';
+		}
+		elseif(strpos($path,jApp::varPath())===0){
+			$shortcutPath=jApp::varPath();
+			$shortcut='var:';
 		}
 		elseif(strpos($path,jApp::appPath())===0){
 			$shortcutPath=jApp::appPath();

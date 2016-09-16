@@ -35,6 +35,9 @@ class pgsqlDbConnection extends jDbConnection{
 		{
 			$this->setAutoCommit(true);
 		}
+		if(version_compare(pg_parameter_status($this->_connection,"server_version"),'9.0')> -1){
+			$this->_doExec('SET bytea_output = "escape"');
+		}
 	}
 	public function encloseName($fieldName){
 		return '"'.$fieldName.'"';
@@ -73,19 +76,25 @@ class pgsqlDbConnection extends jDbConnection{
 	protected function _connect(){
 		$funcconnect=(isset($this->profile['persistent'])&&$this->profile['persistent'] ? 'pg_pconnect':'pg_connect');
 		$str='';
-		if($this->profile['host']!='')
-			$str='host=\''.$this->profile['host'].'\''.$str;
-		if(isset($this->profile['port'])){
-			$str.=' port=\''.$this->profile['port'].'\'';
+		if(isset($this->profile['service'])&&$this->profile['service']!=''){
+			$useService=true;
+			$str='service=\''.$this->profile['service'].'\''.$str;
 		}
-		if($this->profile['database']!=''){
-			$str.=' dbname=\''.$this->profile['database'].'\'';
-		}
-		if(isset($this->profile['user'])){
-			$str.=' user=\''.$this->profile['user'].'\'';
-		}
-		if(isset($this->profile['password'])){
-			$str.=' password=\''.$this->profile['password'].'\'';
+		else{
+			if($this->profile['host']!='')
+				$str='host=\''.$this->profile['host'].'\''.$str;
+			if(isset($this->profile['port'])){
+				$str.=' port=\''.$this->profile['port'].'\'';
+			}
+			if($this->profile['database']!=''){
+				$str.=' dbname=\''.$this->profile['database'].'\'';
+			}
+			if(isset($this->profile['user'])){
+				$str.=' user=\''.$this->profile['user'].'\'';
+			}
+			if(isset($this->profile['password'])){
+				$str.=' password=\''.$this->profile['password'].'\'';
+			}
 		}
 		if(isset($this->profile['timeout'])&&$this->profile['timeout']!=''){
 			$str.=' connect_timeout=\''.$this->profile['timeout'].'\'';

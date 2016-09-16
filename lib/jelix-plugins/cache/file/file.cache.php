@@ -213,17 +213,21 @@ class fileCacheDriver implements jICacheDriver{
 	}
 	protected function _getCacheFilePath($key){
 		$path=$this->_getPath($key);
-		$fileName=$this->_file_name_prefix."___".$key.self::CACHEEXT;
-		return $path . $fileName;
+		if(DIRECTORY_SEPARATOR==='\\'){
+			$key=str_replace(':','_.._',$key);
+		}
+		return $path . $key.self::CACHEEXT;
 	}
 	protected function _getPath($key){
-		$path=$this->_cache_dir;
-		$prefix=$this->_file_name_prefix;
+		$path=$this->_cache_dir.$this->_file_name_prefix. DIRECTORY_SEPARATOR;
 		if($this->_directory_level>0){
 			$hash=md5($key);
 			for($i=0;$i<$this->_directory_level;$i++){
-				$path=$path.$prefix.'__'.substr($hash,0,$i + 1). DIRECTORY_SEPARATOR;
+				$path.=substr($hash,0,$i + 1). DIRECTORY_SEPARATOR;
 			}
+		}
+		if($key[0]=='/'||$key[0]==DIRECTORY_SEPARATOR){
+			$path.=$this->_file_name_prefix. DIRECTORY_SEPARATOR;
 		}
 		return $path;
 	}

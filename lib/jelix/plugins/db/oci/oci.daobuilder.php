@@ -54,11 +54,9 @@ class ociDaoBuilder extends jDaoGenerator{
 	}
 	protected function buildInsertMethod($pkFields){
 		$pkai=$this->getAutoIncrementPKField();
-		if(is_object($pkai)){
-			if($pkai->autoIncrement){
-				throw new Exception('Please don\'t use auto-increment and use a sequence instead for the table ' .
-											$this->tableRealName);
-			}
+		if(is_object($pkai)&&$pkai->autoIncrement&&!$pkai->sequenceName){
+			throw new Exception('Please don\'t use auto-increment and use a sequence instead for the table ' .
+										$this->tableRealName);
 		}
 		$src=array();
 		$src[]='public function insert ($record){';
@@ -119,8 +117,6 @@ class ociDaoBuilder extends jDaoGenerator{
 			$src[]='    RETURNING ' . implode(',',$returningInto['field']). ' INTO ' . implode(',',$returningInto['bind']);
 		}
 		$src[]="';";
-		if($pkai!==null)
-			$src[]='}';
 		if(!empty($binds)||!empty($returningInto)){
 			$src[]='   $prep = $this->_conn->prepare ($query);';
 			if(!empty($binds)){
@@ -136,10 +132,12 @@ class ociDaoBuilder extends jDaoGenerator{
 			$src[]='   $result = $this->_conn->exec ($query);';
 		}
 		if($pkai!==null){
-			$src[]='   if(!$result)';
+			$src[]='   if (!$result) {';
 			$src[]='       return false;';
-			$src[]='   if($record->'.$pkai->name.' < 1 ) ';
+			$src[]='   }';
+			$src[]='   if ($record->'.$pkai->name.' < 1 ) {';
 			$src[]=$this->buildUpdateAutoIncrementPK($pkai);
+			$src[]='   }';
 		}
 		$fields=$this->_getPropertiesBy('FieldToUpdate');
 		if(count($fields)){

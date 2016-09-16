@@ -28,24 +28,27 @@ class jDbPDOConnection extends PDO{
 			$this->dbms=$this->driverName=substr($profile['dsn'],0,strpos($profile['dsn'],':'));
 			$dsn=$profile['dsn'];
 			unset($prof['dsn']);
-			if($this->dbms=='sqlite')
-				$dsn=jFile::parseJelixPath($dsn);
+			if($this->dbms=='sqlite'){
+				$dsn='sqlite:'.$this->_parseSqlitePath(substr($dsn,7));
+			}
 		}
 		else{
 			$this->dbms=$this->driverName=$profile['driver'];
+			if($this->dbms=='sqlite3'){
+				$this->dbms=$this->driverName='sqlite';
+			}
 			$db=$profile['database'];
 			$dsn=$this->dbms.':host='.$profile['host'].';dbname='.$db;
-			if($this->dbms!='sqlite')
+			if($this->dbms!='sqlite'){
 				$dsn=$this->dbms.':host='.$profile['host'].';dbname='.$db;
+			}
 			else{
-				if(preg_match('/^(app|lib|var)\:/',$db,$m))
-					$dsn='sqlite:' . jFile::parseJelixPath($db);
-				else
-					$dsn='sqlite:'.jApp::varPath('db/sqlite/'.$db);
+				$dsn='sqlite:'.$this->_parseSqlitePath($db);
 			}
 		}
-		if(isset($prof['usepdo']))
+		if(isset($prof['usepdo'])){
 			unset($prof['usepdo']);
+		}
 		if(isset($prof['user'])){
 			$user=$prof['user'];
 			unset($prof['user']);
@@ -58,10 +61,12 @@ class jDbPDOConnection extends PDO{
 		parent::__construct($dsn,$user,$password,$prof);
 		$this->setAttribute(PDO::ATTR_STATEMENT_CLASS,array('jDbPDOResultSet'));
 		$this->setAttribute(PDO::ATTR_ERRMODE,PDO::ERRMODE_EXCEPTION);
-		if($this->dbms=='mysql')
+		if($this->dbms=='mysql'){
 			$this->setAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY,true);
-		if($this->dbms=='oci')
+		}
+		if($this->dbms=='oci'){
 			$this->setAttribute(PDO::ATTR_CASE,PDO::CASE_LOWER);
+		}
 		if(isset($prof['force_encoding'])&&$prof['force_encoding']==true){
 			$charset=jApp::config()->charset;
 			if($this->dbms=='mysql'&&isset($this->_mysqlCharsets[$charset])){
@@ -70,6 +75,24 @@ class jDbPDOConnection extends PDO{
 			elseif($this->dbms=='pgsql'&&isset($this->_pgsqlCharsets[$charset])){
 				$this->exec("SET client_encoding to '".$this->_pgsqlCharsets[$charset]."'");
 			}
+		}
+	}
+	protected function _parseSqlitePath($path){
+		if(preg_match('/^(app|lib|var|temp|www)\:/',$path,$m)){
+			return jFile::parseJelixPath($path);
+		}
+		else if(preg_match('!^[a-z]\\:(\\\\|/)[a-z]!i',$path)||
+				$path[0]=='/'
+				){
+			if(file_exists($path)||file_exists(dirname($path))){
+				return $path;
+			}
+			else{
+				throw new Exception('jDbPDOConnection, sqlite: unknown database path scheme');
+			}
+		}
+		else{
+			return jApp::varPath('db/sqlite/'.$path);
 		}
 	}
 	public function query(){
@@ -114,8 +137,9 @@ class jDbPDOConnection extends PDO{
 	return 0;
 	}
 	public function prefixTable($table_name){
-		if(!isset($this->profile['table_prefix']))
+		if(!isset($this->profile['table_prefix'])){
 			return $table_name;
+		}
 		return $this->profile['table_prefix'].$table_name;
 	}
 	public function hasTablePrefix(){
@@ -139,8 +163,9 @@ class jDbPDOConnection extends PDO{
 		if(!$this->_tools){
 			$dbms=($this->dbms==='sqlite')? 'sqlite3' : $this->dbms;
 			$this->_tools=jApp::loadPlugin($dbms,'db','.dbtools.php',$dbms.'DbTools',$this);
-			if(is_null($this->_tools))
+			if(is_null($this->_tools)){
 				throw new jException('jelix~db.error.driver.notfound',$dbms);
+			}
 		}
 		return $this->_tools;
 	}
