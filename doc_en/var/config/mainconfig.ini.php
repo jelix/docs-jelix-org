@@ -5,7 +5,7 @@
 startModule=app
 startAction="default:index"
 
-locale=fr_FR
+locale=en_US
 charset=UTF-8
 
 ; see http://www.php.net/manual/en/timezones.php for supported values
@@ -13,7 +13,7 @@ timeZone="Europe/Paris"
 
 theme=default
 
-pluginsPath="app:../plugins/,lib:jelix-plugins/,module:gitiwiki/plugins,module:gtwdocbook/plugins"
+pluginsPath="lib:jelix-plugins/,app:../plugins/,module:gitiwiki,module:gtwdocbook"
 
 modulesPath="lib:jelix-modules/,app:../modules/"
 
@@ -40,6 +40,8 @@ junittests.access=0
 jWSDL.access=0
 
 app.access=2
+gitiwiki.access=2
+gtwdocbook.access=1
 
 [coordplugins]
 ;name = file_ini_name or 1
@@ -86,7 +88,7 @@ multiview=on
 ; : basePath="/aaa/" )
 basePath=
 
-defaultEntrypoint=index
+defaultEntrypoint=en
 
 entrypointExtension=.php
 
@@ -96,11 +98,8 @@ notfoundAct="jelix~error:notfound"
 [basic_significant_urlengine_entrypoints]
 ; for each entry point, it indicates if the entry point name
 ; should be include in the url or not
+en=on
 index=on
-xmlrpc=on
-jsonrpc=on
-rdf=on
-
 
 [jResponseHtml]
 ; list of active plugins for jResponseHtml
@@ -169,12 +168,6 @@ smtpPassword=
 ; SMTP server timeout in seconds
 smtpTimeout=10
 
-
-
-[acl2]
-; example of driver: "db"
-driver=
-
 [sessions]
 ; If several applications are installed in the same documentRoot but with
 ; a different basePath, shared_session indicates if these application
@@ -195,18 +188,8 @@ name=
 ;dao_selector = "jelix~jsession"
 ;dao_db_profile = ""
 
-
-[forms]
-; define input type for datetime widgets : "textboxes" or "menulists"
-;controls.datetime.input = "menulists"
-; define the way month labels are displayed widgets: "numbers", "names" or "shortnames"
-;controls.datetime.months.labels = "names"
-; define the default config for datepickers in jforms
-;datepicker = default
-
 [datepickers]
 ;default = jelix/js/jforms/datepickers/default/init.js
-
 
 [gitiwiki]
 booksPath="app:../books"
@@ -214,3 +197,4 @@ booksPath="app:../books"
 [gitiwikiGenerators]
 wiki="gitiwiki~gtwWikiRenderer,gitiwiki_to_xhtml"
 gtw="gitiwiki~gtwWikiRenderer,gitiwiki_to_xhtml"
+

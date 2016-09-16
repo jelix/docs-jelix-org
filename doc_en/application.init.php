@@ -8,7 +8,7 @@
 * @license    GPL
 */
 
-$appPath = dirname (__FILE__).'/';
+$appPath = __DIR__.'/';
 require (realpath($appPath.'../lib/jelix/').'/'.'init.php');
 
 jApp::initPaths(

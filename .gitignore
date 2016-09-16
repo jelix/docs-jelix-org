@@ -1,4 +1,10 @@
 *.komodoproject
 .komodotools
 books/*
+!books/.dummy
 books/pdf/*
+!books/pdf/.dummy
+.idea
+dev/.vagrant
+
+
