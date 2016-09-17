@@ -4,10 +4,10 @@ class wikipageListener extends jEventListener{
     
    function onGtwBeforeWikipage ($event) {
        
-       $repo = new gtwRepo($event->getParam('repository'));
+       $repo = new \Gitiwiki\Storage\Repository($event->getParam('repository'));
        $repoConfig = $repo->config();
 
-       $defaultRepo = new gtwRepo('default');
+       $defaultRepo = new \Gitiwiki\Storage\Repository('default');
        $defaultRepoConfig = $defaultRepo->config();
        $defaultUrl = null;
        if( $repoConfig['linkToDefault'] &&
