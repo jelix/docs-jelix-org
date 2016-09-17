@@ -18,7 +18,7 @@
 * @link     http://www.jelix.org
 * @licence  GNU Lesser General Public Licence see LICENCE file or http://www.gnu.org/licenses/lgpl.html
 */
-define('JELIX_VERSION','1.6.10pre.3305');
+define('JELIX_VERSION','1.6.10pre.3306');
 define('JELIX_NAMESPACE_BASE','http://jelix.org/ns/');
 define('JELIX_LIB_PATH',__DIR__.'/');
 define('JELIX_LIB_CORE_PATH',JELIX_LIB_PATH.'core/');
@@ -417,6 +417,54 @@ class jException extends Exception{
 	}
 	public function getLocaleKey(){
 		return $this->localeKey;
+	}
+}
+class jConfig{
+	public static $fromCache=true;
+	private function __construct(){}
+	static public function load($configFile){
+		$config=array();
+		$file=jApp::tempPath().str_replace('/','~',$configFile);
+		if(BYTECODE_CACHE_EXISTS)
+			$file.='.conf.php';
+		else
+			$file.='.resultini.php';
+		self::$fromCache=true;
+		if(!file_exists($file)){
+			self::$fromCache=false;
+		}
+		else{
+			$t=filemtime($file);
+			$dc=jApp::mainConfigFile();
+			$lc=jApp::configPath('localconfig.ini.php');
+			if((file_exists($dc)&&filemtime($dc)>$t)
+				||filemtime(jApp::configPath($configFile))>$t
+				||(file_exists($lc)&&filemtime($lc)>$t)){
+				self::$fromCache=false;
+			}
+			else{
+				if(BYTECODE_CACHE_EXISTS){
+					include($file);
+					$config=(object) $config;
+				}else{
+					$config=jelix_read_ini($file);
+				}
+				if($config->compilation['checkCacheFiletime']){
+					foreach($config->_allBasePath as $path){
+						if(!file_exists($path)||filemtime($path)>$t){
+							self::$fromCache=false;
+							break;
+						}
+					}
+				}
+			}
+		}
+		if(!self::$fromCache){
+			return jConfigCompiler::readAndCache($configFile);
+		}
+		else{
+			return $config;
+		}
 	}
 }
 class jExceptionSelector extends jException{}
