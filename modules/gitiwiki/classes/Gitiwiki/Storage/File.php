@@ -4,37 +4,39 @@
  * @package   gitiwiki
  * @subpackage gitiwiki
  * @author    Laurent Jouanneau
- * @copyright 2012 laurent Jouanneau,  2008 Patrik Fimml
+ * @copyright 2012-2013 laurent Jouanneau,  2008 Patrik Fimml
  * @link      http://jelix.org
  * @license    GNU PUBLIC LICENCE
  */
+namespace Gitiwiki\Storage;
 
-
-class gtwFile extends gtwFileBase {
+class File extends FileAbstract {
 
     protected $name;
 
     /**
-     * @var GitBlob
+     * the original git object for the content
+     * @var \Glip\GitBlob
      */
     protected $fileGitObject;
 
     /**
-     * @var GitBlob
+     * the git object for the new content
+     * @var \Glip\GitBlob
      */
     protected $newFileGitObject;
 
     protected $generator = null;
 
     /**
-     * @param gtwRepo $repo
-     * @param string $commitId the bin hash of the commit of the version of the file
-     * @param gitTree $treeGitObject
+     * @param \Gitiwiki\Storage\Repository $repo
+     * @param \Glip\SHA $commitHash the hash of the commit of the version of the file
+     * @param \Glip\GitTree $treeGitObject
      * @param string $path the path, without ending slash
      * @param string $name the filename (real filename)
      */
-    function __construct($repo, $commitId, $treeGitObject, $path, $name ) {
-        parent::__construct($repo, $commitId, $treeGitObject, $path);
+    function __construct(Repository $repo, \Glip\SHA $commitHash, \Glip\GitTree $treeGitObject, $path, $name ) {
+        parent::__construct($repo, $commitHash, $treeGitObject, $path);
         $this->name = $name;
 
         $pos = strrpos($name, '.');
@@ -45,14 +47,13 @@ class gtwFile extends gtwFileBase {
             if (isset($generatorsList[$ext])) {
                 $genParams = explode(',',$generatorsList[$ext]);
                 $class = array_shift($genParams);
-                $this->generator = jClasses::create($class);
-                $this->generator->init($genParams, $conf['branches'][$commitId]);
+                $this->generator = \jClasses::create($class);
+                $this->generator->init($genParams, $conf['branches'][$commitHash->hex()]);
             }
         }
 
-        if (isset($treeGitObject->nodes[$name])) {
-            $node = $treeGitObject->nodes[$name];
-            $this->fileGitObject = $this->repo->git()->getObject($node->object);
+        if (isset($treeGitObject[$name])) {
+            $this->fileGitObject = $treeGitObject[$name];
         }
     }
 
@@ -69,28 +70,26 @@ class gtwFile extends gtwFileBase {
     }
 
     /**
-     * @var GitTree
+     * @var \Glip\GitTree
      */
     protected $metaDirObject;
 
     /**
-     * @var GitBlob
+     * @var \Glip\GitBlob
      */
     protected $metaFileObject;
 
     protected $metaContent = array();
 
-    function setMetaDirObject($metaDirObject) {
+    function setMetaDirObject(\Glip\GitTree $metaDirObject) {
         $this->metaDirObject = $metaDirObject;
         if (!isset($metaDirObject->nodes[$this->name.'.ini']))
             return;
-        $this->metaFileObject = $this->repo->git()->getObject($metaDirObject->nodes[$this->name.'.ini']->object);
+        $this->metaFileObject = $metaDirObject->nodes[$this->name.'.ini'];
 
-        if ($this->metaFileObject) {
-            $ini = @parse_ini_string($this->metaFileObject->data, true);
-            if ($ini)
-                $this->metaContent = $ini;
-        }
+        $ini = @parse_ini_string($this->metaFileObject->data, true);
+        if ($ini)
+            $this->metaContent = $ini;
     }
 
     function getMeta($name) {
@@ -104,20 +103,22 @@ class gtwFile extends gtwFileBase {
     }
 
     function save($message, $authorName, $authorMail) {
-        throw new Exception('not implemented');
-        // Implementation: work in progress
-        
-        // FIXME : verify that the content did not change
-    
+        throw new \Exception('not implemented');
+        // FIXME : save also meta data if it has changed
+        if (!$this->newFileGitObject
+            || $this->fileGitObject->getSha() != $this->newFileGitObject->getSha())
+            return false;
+
         $conf = $this->repo->config();
         $repo = $this->repo->git();
-        $commit = $repo->getObject($this->commitId);
+        $commit = $repo->getObject($this->commitHash);
 
-        $f = fopen($repo->dir.'/refs/heads/'.$conf['branch'], 'a+b');
-        flock($f, LOCK_EX);
-        $lastCommitId = stream_get_contents($f);
+        $branch = $repo[$conf['branch']];
+        $branchTip = $branch->getTip();
 
-        $howToMerge = $this->_hasNewVersion($repo, $lastCommitId);
+        $howToMerge = $this->_hasNewVersion($repo, $branchTip);
+
+/*
 
         $pending = $this->_createCommit($repo, $commit, $message, $authorName, $authorMail);
 
@@ -133,8 +134,8 @@ class gtwFile extends gtwFileBase {
         if ($showToMerge == self::MERGE_NEEDED) {
             fclose($f);
 
-            /* create conflict branch */
-            $dir = sprintf('%s/refs/heads/%s', $repo->dir, "gtwconflict");
+            // create conflict branch
+            $dir = $repo->getDir().'/refs/heads/gtwconflict';
             if (!file_exists($dir))
                 mkdir($dir, 0755);
             if (!is_dir($dir))
@@ -145,17 +146,18 @@ class gtwFile extends gtwFileBase {
             $f = FALSE;
             for ($i = 1; !$f; $i++)
             {
-                $branch = sprintf('%s/%02d', "gtwconflict", $i);
+                $branch = sprintf('gtwconflict-%02d', $i);
+                if (file_exists($branch))
+                    continue;
                 try
                 {
-                    $f = fopen(sprintf('%s/refs/heads/%s', $repo->dir, $branch), 'xb');
+                    $f = fopen($repo->getDir().'/refs/heads/'.$branch, 'xb');
                 }
                 catch (Exception $e)
                 {
-                    /*
-                     * fopen() will raise a warning if the file already
-                     * exists, which Core will make into an Exception.
-                     */
+                    
+                    // fopen() will raise a warning if the file already
+                    // exists, which Core will make into an Exception.
                 }
             }
             flock($f, LOCK_EX);
@@ -165,11 +167,12 @@ class gtwFile extends gtwFileBase {
         ftruncate($f, 0);
         fwrite($f, sha1_hex($lastcommit->getName()));
         fclose($f);
-        
+        */
+        return true;
     }
 
     protected function _createCommit($repo, $commit, $message, $authorName, $authorMail) {
-
+/*
         // new blob to store the new content
         $blob = new GitBlob($repo);
         $blob->data = $this->fileGitObject->data;
@@ -200,9 +203,11 @@ class gtwFile extends gtwFileBase {
         array_unshift($pending, $blob);
         array_unshift($pending, $newcommit);
         return $pending;
+*/
     }
 
     protected function _createMergeCommit($repo, $newcommit, $tipCommitId, $blob) {
+/*
         $ref = sha1_bin($tipCommitId);
         $tip = $repo->getObject($ref);
 
@@ -219,14 +224,15 @@ class gtwFile extends gtwFileBase {
         $mergecommit->detail = '';
         $mergecommit->rehash();
         return array($mergecommit, $tree);
+*/
     }
 
     function moveTo($newPath, $message, $authorName, $authorMail, $commit = null) {
-        throw new Exception('not implemented');
+        throw new \Exception('not implemented');
     }
 
     function remove($message, $authorName, $authorMail) {
-        throw new Exception('not implemented');
+        throw new \Exception('not implemented');
     }
 
     protected $extraData = array();
@@ -261,25 +267,23 @@ class gtwFile extends gtwFileBase {
     }
 
     function setContent($content) {
-        $this->newFileGitObject = new GitBlob($this->repo->git());
-        $this->newFileGitObject->data = $content;
-        $this->newFileGitObject->rehash();
+        $this->newFileGitObject = new \Glip\GitBlob($this->repo->git(), null, null, $content);
     }
 
     function getTitle() {
-        throw new Exception('not implemented');
+        throw new \Exception('not implemented');
     }
 
     function setTitle($title) {
-        throw new Exception('not implemented');
+        throw new \Exception('not implemented');
     }
 
     function getDescription() {
-        throw new Exception('not implemented');
+        throw new \Exception('not implemented');
     }
 
     function setDescription() {
-        throw new Exception('not implemented');
+        throw new \Exception('not implemented');
     }
 
     function getMimeType() {
@@ -287,12 +291,12 @@ class gtwFile extends gtwFileBase {
             return 'text/html';
         }
         else {
-            return jFile::getMimeTypeFromFilename($this->name);
+            return \jFile::getMimeTypeFromFilename($this->name);
         }
     }
 
     function setMimeType($title) {
-        throw new Exception('not implemented');
+        throw new \Exception('not implemented');
     }
 
 }

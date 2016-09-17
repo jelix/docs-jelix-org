@@ -9,7 +9,7 @@
 */
 
 $appPath = __DIR__.'/';
-require (realpath($appPath.'../lib/jelix/').'/'.'init.php');
+require (__DIR__.'/../lib/jelix/init.php');
 
 jApp::initPaths(
     $appPath,

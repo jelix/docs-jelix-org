@@ -3,18 +3,13 @@
 * @package   gitiwiki
 * @subpackage gitiwiki
 * @author    Laurent Jouanneau
-* @copyright 2012 laurent Jouanneau
+* @copyright 2012-2013 laurent Jouanneau
 * @link      http://jelix.org
 * @license    GNU PUBLIC LICENCE
 */
-$dirname = dirname(__FILE__);
-require_once($dirname.'/glip/glip.php');
-require_once($dirname.'/gtwFilebase.class.php');
-require_once($dirname.'/gtwFile.class.php');
-require_once($dirname.'/gtwDirectory.class.php');
-require_once($dirname.'/gtwRedirection.class.php');
+namespace Gitiwiki\Storage;
 
-class gtwRepo {
+class Repository {
     /**
      * @var array
      * configuration parameters of the repository
@@ -22,20 +17,26 @@ class gtwRepo {
     protected $config;
 
     /**
-     * @var Git
+     * @var Glip\Git
      * the git object representing the repository
      */
     protected $repo;
 
     protected $repoName;
 
+    static protected $DEFAULT_CONFIG = array('multiviews'=>array('.gtw'),
+                                'redirection'=>array(),
+                                'ignore'=>array(),
+                                'protocol-aliases'=>array());
+    
     /**
      * @param string $repoName the name of the repository as registered in the configuration
      */
     function __construct($repoName) {
-        $conf = jApp::config();
 
-        $this->config = jProfiles::get('gtwrepo', $repoName, true);
+        $conf = \jApp::config();
+
+        $this->config = \jProfiles::get('gtwrepo', $repoName, true);
 
         if (isset($this->config['generators']) && isset($conf->{$this->config['generators']})) {
             $this->config['generators'] = $conf->{$this->config['generators']};
@@ -58,8 +59,8 @@ class gtwRepo {
             $this->config['basepath'] = trim($this->config['basepath'],'/').'/';
         }
 
-        $this->config['path'] = str_replace(array('app:'), array(jApp::appPath()), $this->config['path']);
-        $this->repo = new Git($this->config['path']);
+        $this->config['path'] = str_replace(array('app:'), array(\jApp::appPath()), $this->config['path']);
+        $this->repo = new \Glip\Git($this->config['path']);
         $this->repoName = $repoName;
     }
 
@@ -74,12 +75,14 @@ class gtwRepo {
         return $this->config;
     }
 
-    function getBranchConfig($commitId='') {
-        if (!$commitId) {
-            $commitId = $this->repo->getTip($this->config['branch']);
+    function getBranchConfig($branchName = null) {
+        if (!$branchName) {
+            $branchName = $this->config['branch'];
         }
-        $commit = $this->repo->getObject($commitId);
-        return $this->loadBranchConfig($commit);
+        $branch = $this->repo[$branchName];
+        if (!$branch)
+            return self::$DEFAULT_CONFIG;
+        return $this->loadBranchConfig($branch->getTip());
     }
 
     function getName() {
@@ -109,11 +112,18 @@ class gtwRepo {
         }
 
         if (!$commitId) {
-            $commitId = $this->repo->getTip($this->config['branch']);
+            $commit = $this->repo[$this->config['branch']]->getTip();
+            $commitHash = $commit->getSha();
+            $commitId = $commitHash->hex();
+        }
+        else {
+            $commit = $this->repo[$commitId];
+            if (! ($commit instanceof \Glip\GitCommit))
+                throw new \Exception("Bad Commit Id");
+            $commitHash = new \Glip\SHA($commitId);
         }
 
         // retrieve the object corresponding to the dir
-        $commit = $this->repo->getObject($commitId);
         $config = $this->loadBranchConfig($commit);
 
         $path = ltrim($path, '/');
@@ -125,10 +135,10 @@ class gtwRepo {
                 if (count($m) > 1) {
                     array_shift($m);
                     array_unshift($m, $target);
-                    return new gtwRedirection(call_user_func_array('sprintf',$m));
+                    return new Redirection(call_user_func_array('sprintf',$m));
                 }
                 else {
-                    return new gtwRedirection($target);
+                    return new Redirection($target);
                 }
             }
         }
@@ -160,21 +170,15 @@ class gtwRepo {
         //  $implicitName = true if the name was given, false if gtw guessed it
 
         // let's retrieve the git object corresponding to the path.
-        $hash = $commit->find($this->config['basepath'].$path.'/');
-        if (!$hash) {
-            //jLog::log("get $path : don't find the path at the given commit");
-            return null;
-        }
-
         $originalPath = $path;
         $originalName = $name;
-        $originalTreeObject = $treeObject = $this->repo->getObject($hash);
+        $originalTreeObject = $treeObject = $commit[$this->config['basepath'].$path.'/'];
         if (!$treeObject) {
             //jLog::log("get $path : don't find the tree object");
             return null;
         }
 
-        if (! ($treeObject instanceof GitTree)) {
+        if (! ($treeObject instanceof \Glip\GitTree)) {
             //jLog::log("get $path: treeobject is not a tree");
             // the path does not correspond to a directory, but to a file
             // in case when a leading / was provided, so we could ignore this / and
@@ -184,19 +188,16 @@ class gtwRepo {
                 $path = dirname($path);
                 if ($path == '.')
                     $path = '';
-                $hash = $commit->find($this->config['basepath'].$path.'/');
-                if (!$hash) {
-                    return null;
-                }
-                $treeObject = $this->repo->getObject($hash);
+
+                $treeObject = $commit[$this->config['basepath'].$path.'/'];
                 if (!$treeObject) {
                     return null;
                 }
-                return new gtwFile($this, $commitId, $treeObject, $path, $name);
+                return new File($this, $commitHash, $treeObject, $path, $name);
             }
             else {
                 // the directory of the file is not a directory. Error
-                throw new Exception ('Unexpected content at this path');
+                throw new \Exception ('Unexpected content at this path');
             }
         }
 
@@ -204,26 +205,26 @@ class gtwRepo {
         $node = null;
 
         // does the given filename correspond to a file/dir ?
-        if (isset($treeObject->nodes[$name])) {
-            $node = $treeObject->nodes[$name];
-            if (!$node->is_dir) {
+        if (isset($treeObject[$name])) {
+            $node = $treeObject[$name];
+            if (! ($node instanceof \Glip\GitTree)) {
                 // this is a file, good !
                 //jLog::log("get $path/$name : it is a file, good");
-                return new gtwFile($this, $commitId, $treeObject, $path, $name);
+                return new File($this, $commitHash, $treeObject, $path, $name);
             }
 
             // the given "path/name" is a directory
 
             if ($implicitName)
                 // error we don't expect to find a directory 'index' under the given path
-                throw new Exception ('Unexpected content at this path');
+                throw new \Exception ('Unexpected content at this path');
 
             //jLog::log("get $path/$name : it is a directory. Try multiview for $path/$name to get index (dokuwiki compatibility)");
 
             // so the path indicates a directory
             // is there a file with the same name + a known extension?
             // => compatibility with dokuwiki storage
-            $fileResult = $this->checkMultiview($treeObject, $path, $name, $commitId);
+            $fileResult = $this->checkMultiview($treeObject, $path, $name, $commitHash);
             if ($fileResult) {
                 //jLog::log("get $path/$name  : it is a directory. found $path/".$fileResult->getName());
                 // ok, we found a file
@@ -234,7 +235,7 @@ class gtwRepo {
 
             // this sub directory becomes the base directory
             // XXX: isn't better to do a redirection to the path with a trailing slash ?
-            $treeObject = $this->repo->getObject($node->object);
+            $treeObject = $node;
             $path = ltrim($path.'/'.$name, '/');
             $name = 'index';
             $node = null;
@@ -242,7 +243,7 @@ class gtwRepo {
         }
         else if ($implicitName) {
             //jLog::log("get $path/$name : not found. Try multiview.");
-            $fileResult = $this->checkMultiview($treeObject, $path, $name, $commitId);
+            $fileResult = $this->checkMultiview($treeObject, $path, $name, $commitHash);
             if ($fileResult)
                 return $fileResult;
             //jLog::log("get $path/$name with multiview not found. Try multiview on $path");
@@ -250,11 +251,8 @@ class gtwRepo {
             $path = dirname($path);
             if ($path == '.')
                 $path = '';
-            $hash = $commit->find($this->config['basepath'].$path.'/');
-            if (!$hash) {
-                return null;
-            }
-            $treeObject = $this->repo->getObject($hash);
+
+            $treeObject = $commit[$this->config['basepath'].$path.'/'];
             if (!$treeObject) {
                 return null;
             }
@@ -264,76 +262,72 @@ class gtwRepo {
         }
 
         // multiview : try to find a file with the given name + a known extension
-        $fileResult = $this->checkMultiview($treeObject, $path, $name, $commitId);
+        $fileResult = $this->checkMultiview($treeObject, $path, $name, $commitHash);
         if ($fileResult || ! $implicitName)
             return $fileResult;
         //jLog::log("get $originalPath: directory view");
-        return new gtwDirectory($this, $commitId, $originalTreeObject, $originalPath);
+        return new Directory($this, $commitHash, $originalTreeObject, $originalPath);
     }
 
-    protected function checkMultiview($treeObject, $path, $name, $commitId) {
+    protected function checkMultiview($treeObject, $path, $name, $commitHash) {
         $metaDirObject = $this->getMetaDirObject($treeObject);
-        $file = new gtwFile($this, $commitId, $treeObject, $path, $name);
-        $file->setMetaDirObject($metaDirObject);
+        $file = new File($this, $commitHash, $treeObject, $path, $name);
+        if ($metaDirObject)
+            $file->setMetaDirObject($metaDirObject);
 
         $redir = $file->getMeta('redirection');
         if ($redir) {
-            return new gtwRedirection($redir, $path);
+            return new Redirection($redir, $path);
         }
 
-        $extList = $this->config['branches'][$commitId]['multiviews'];
+        $extList = $this->config['branches'][$commitHash->hex()]['multiviews'];
         foreach($extList as $ext) {
             $n = $name.$ext;
-            $file = new gtwFile($this, $commitId, $treeObject, $path, $n);
+            $file = new File($this, $commitHash, $treeObject, $path, $n);
             if ($file->exists()) {
                 return $file;
             }
-            $file->setMetaDirObject($metaDirObject);
+            if ($metaDirObject)
+                $file->setMetaDirObject($metaDirObject);
             $redir = $file->getMeta('redirection');
             if ($redir) {
-                return new gtwRedirection($redir, $path);
+                return new Redirection($redir, $path);
             }
         }
         return null;
     }
 
     protected function getMetaDirObject($treeObject) {
-        if (!isset($treeObject->nodes['.meta'])) {
+        if (!isset($treeObject['.meta'])) {
             return null;
         }
-        $metaDirObject = $treeObject->nodes['.meta'];
-        if (!$metaDirObject->is_dir) {
-            return null;
-        }
-        $metaDirObject = $this->repo->getObject($metaDirObject->object);
-        if (!$metaDirObject || !($metaDirObject instanceof GitTree)) {
+        $metaDirObject = $treeObject['.meta'];
+        if (!$metaDirObject || !($metaDirObject instanceof \Glip\GitTree)) {
             return null;
         }
         return $metaDirObject;
     }
 
-    protected function loadBranchConfig($commit) {
-        $hash = $commit->getName();
+    /**
+     * return configuration content for a specific branch
+     *
+     * @param \Glip\GitCommit $commit
+     * @return array
+     */
+    protected function loadBranchConfig(\Glip\GitCommit $commit) {
+        $hash = $commit->getSha()->hex();
         if (isset($this->config['branches'][$hash])) {
             return $this->config['branches'][$hash];
         }
-        $c = $this->config['branches'][$hash] = array('multiviews'=>array('.gtw'),
-                                                      'redirection'=>array(),
-                                                      'ignore'=>array(),
-                                                      'protocol-aliases'=>array());
+        $c = $this->config['branches'][$hash] = self::$DEFAULT_CONFIG;
 
-        $cfhash = $commit->find($this->config['basepath'].'.config.ini');
-        if (!$cfhash){
-            return $c;
-        }
-        $object = $this->repo->getObject($cfhash);
-        if (!$object || !($object instanceof GitBlob)) {
+        $object = $commit[$this->config['basepath'].'.config.ini'];
+        if (!$object || !($object instanceof \Glip\GitBlob)) {
             return $c;
         }
 
         $c = parse_ini_string($object->data, true);
         if ($c) {
-
            if (isset($c['multiviews'])) {
                 $c['multiviews'] = preg_split("/\s*,\s*/", $c['multiviews']);
             }

@@ -8,7 +8,7 @@
 * @license    All rights reserved
 */
 
-require_once (dirname(__FILE__).'/../application.init.php');
+require_once (__DIR__.'/../application.init.php');
 
 checkAppOpened();
 

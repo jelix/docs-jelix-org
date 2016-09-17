@@ -3,28 +3,28 @@
 * @package   gitiwiki
 * @subpackage gitiwiki
 * @author    Laurent Jouanneau
-* @copyright 2012 laurent Jouanneau
+* @copyright 2012-2013 laurent Jouanneau
 * @link      http://jelix.org
 * @license    GNU PUBLIC LICENCE
 */
+namespace Gitiwiki\Storage;
 
-
-class gtwDirectory extends gtwFileBase {
+class Directory extends FileAbstract {
 
     function exists() {
         return ($this->treeGitObject != null);
     }
 
     function save($message, $authorName, $authorMail) {
-        throw new Exception('not implemented');
+        throw new \Exception('not implemented');
     }
 
     function moveTo($newPath, $message, $authorName, $authorMail, $commit = null) {
-        throw new Exception('not implemented');
+        throw new \Exception('not implemented');
     }
 
     function remove($message, $authorName, $authorMail) {
-        throw new Exception('not implemented');
+        throw new \Exception('not implemented');
     }
 
     function isStaticContent() {
@@ -50,10 +50,9 @@ class gtwDirectory extends gtwFileBase {
             return '';
         $ct = '<ul>';
         $conf = $this->repo->config();
-        $extList = $conf['branches'][$this->commitId]['multiviews'];
+        $extList = $conf['branches'][$this->commitHash->hex()]['multiviews'];
 
-        foreach($this->treeGitObject->nodes as $node) {
-            $name = $node->name;
+        foreach($this->treeGitObject as $name=>$node) {
             $pos = strrpos($name, '.');
             if ($pos !== false) {
                 $ext = substr($name, $pos);
@@ -70,10 +69,9 @@ class gtwDirectory extends gtwFileBase {
             return '';
         $ct = array();
         $conf = $this->repo->config();
-        $extList = $conf['branches'][$this->commitId]['multiviews'];
+        $extList = $conf['branches'][$this->commitHash->hex()]['multiviews'];
 
-        foreach($this->treeGitObject->nodes as $node) {
-            $name = $node->name;
+        foreach($this->treeGitObject as $name=>$node) {
             $pos = strrpos($name, '.');
             if ($pos !== false) {
                 $ext = substr($name, $pos);
