@@ -4,11 +4,6 @@ ROOTDIR="/jelixapp"
 APPDIR="$ROOTDIR/"
 VAGRANTDIR="$ROOTDIR/dev/vagrant"
 HOSTNAME="docs.jelix.local"
-#APACHEPORT="8050"
-#DISTFILESUFFIX="dist"
-#DISTFILESUFFIX="dev"
-#APPNAME=""
-
 
 # create hostname
 HOST=`grep "$HOSTNAME" /etc/hosts`
@@ -28,8 +23,8 @@ update-locale LC_ALL=fr_FR.UTF-8
 sed -i "/^# deb.*multiverse/ s/^# //" /etc/apt/sources.list
 
 # install all packages
-#apt-get update
-#apt-get -y upgrade
+apt-get update
+apt-get -y upgrade
 apt-get -y install debconf-utils
 export DEBIAN_FRONTEND=noninteractive
 
@@ -89,6 +84,6 @@ fi
 
 su vagrant -c $VAGRANTDIR/reset_app.sh
 
-su vagrant -c $APPDIR/update_repo_and_books.sh --force --no-pdf
+su vagrant -c "$APPDIR/update_repo_and_books.sh --force --no-pdf"
 
 echo "Done."
