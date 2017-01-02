@@ -9,19 +9,14 @@ Production deployment
    - run with root rights: `set_rights.sh devweb`
    - in /etc/apache2/envvars, add this line: `umask 002`
 
-- copy doc_en/var/config/defaultconfig.ini.php.dist to doc_en/var/config/defaultconfig.ini.php and change it if needed
-
-- copy doc_fr/var/config/defaultconfig.ini.php.dist to doc_en/var/config/defaultconfig.ini.php and change it if needed
-
 - copy doc_en/var/config/profiles.ini.php.dist to doc_en/var/config/profiles.ini.php and change it if needed
-
 - copy doc_fr/var/config/profiles.ini.php.dist to doc_en/var/config/profiles.ini.php and change it if needed
+- copy doc_en/var/config/localconfig.ini.php.dist to doc_en/var/config/localconfig.ini.php and change it if needed
+- copy doc_fr/var/config/localconfig.ini.php.dist to doc_en/var/config/localconfig.ini.php and change it if needed
 
 - link (or copy) lib/jelix-www to www/jelix
 
 - run the script `update_appli.sh`, it will install applications.
-
-
 
 
 To install Manuals
@@ -29,5 +24,5 @@ To install Manuals
 
 - run `install_repositories.sh`
 - or run `install_repositories.sh login`
-  where login is you github login, if you have forked manuals repositories
+  where login is your github login, if you have forked manuals repositories
 
