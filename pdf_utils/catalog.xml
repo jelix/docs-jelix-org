@@ -4,5 +4,5 @@
     "http://www.oasis-open.org/committees/entity/release/1.0/catalog.dtd">
 <catalog xmlns="urn:oasis:names:tc:entity:xmlns:xml:catalog">
     <public publicId="-//OASIS//DTD DocBook XML V4.5//EN" 
-            uri="docbook/4.5/docbookx.dtd"/>
+            uri="file:///home/sites/docs.jelix.org/pdf_utils/docbook/4.5/docbookx.dtd"/>
 </catalog>

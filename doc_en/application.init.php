@@ -9,14 +9,14 @@
 */
 
 $appPath = __DIR__.'/';
-require (__DIR__.'/../lib/jelix/init.php');
+require ($appPath.'../lib/jelix/init.php');
 
 jApp::initPaths(
     $appPath,
     $appPath.'../www/',
     $appPath.'var/',
-    $appPath.'var/log/',
+    getenv('DOCS_EN_JELIX_ORG_LOG_PATH'),
     $appPath.'var/config/',
     $appPath.'scripts/'
 );
-jApp::setTempBasePath(realpath($appPath.'../temp/doc_en/').'/');
+jApp::setTempBasePath(getenv('DOCS_EN_JELIX_ORG_TEMP_PATH'));
