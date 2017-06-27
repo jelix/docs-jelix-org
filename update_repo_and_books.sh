@@ -5,7 +5,11 @@
 FORCE=""
 NOPDF=""
 BOOKID=""
+TARGET_BRANCH=""
+MANUAL_LANG=""
+ALL_LANG="Y"
 TARGETPATH=""
+ONLYCURRENTBRANCH=""
 
 usage()
 {
@@ -18,6 +22,7 @@ usage()
     echo ""
     echo "options:"
     echo "  -f|--force  :  force the generation of the books, even if there are no changes"
+    echo "  --current-branch : only update for the current branch"
     echo "  -p|--no-pdf : generate only book informations, not pdfs"
     echo "  --output-pdf=a/path/ : indicates a path where to move books"
     echo ""
@@ -33,11 +38,17 @@ case $i in
     -p|--no-pdf)
     NOPDF="1"
     ;;
+    --current-branch)
+    ONLYCURRENTBRANCH="1"
+    ;;
     -h|--help)
     usage
     ;;
     --output-pdf=*)
         TARGETPATH=${i:13}
+    ;;
+    --book=*)
+        BOOKID=${i:7}
     ;;
     -*)
       echo "ERROR: Unknown option: $i"
@@ -46,15 +57,20 @@ case $i in
       exit 1
     ;;
     *)
-    if [ "$BOOKID" == "" ]
-    then
-        BOOKID=$i
-    else
-        echo "ERROR: Too many parameters: $i"
-        echo ""
-        usage
-        exit 1
-    fi
+    if [ "$TARGET_BRANCH" == "" ]
+        then
+            TARGET_BRANCH=$i
+        else
+            if [ "$MANUAL_LANG" == "" ]
+            then
+                MANUAL_LANG=$i
+                ALL_LANG=""
+            else
+                echo "ERROR: Too many parameters: $i"
+                echo ""
+                exit 1
+            fi
+        fi
     ;;
 esac
 done
@@ -66,19 +82,35 @@ REPOS_PATH=$ROOTPATH/repositories
 MANUAL_LOCALE=""
 BOOKGENERATED="0"
 
-
 update()
 {
 cd $REPO
+current_branch_name="$(git symbolic-ref HEAD 2>/dev/null)" ||
+current_branch_name="(unnamed branch)"     # detached HEAD
+current_branch_name=${current_branch_name##refs/heads/}
+
 for index in 1 2 3 4 5 6 7 8
 do
     br=${BRANCH[index]}
     book=${BOOK[index]}
     subdirtarget=${SUBDIR[index]}
-    if [ "$BOOKID" == "" -o "$BOOKID" == "$book" ]
+
+    if [ "$ONLYCURRENTBRANCH" == "1" ]
     then
-        updateBook
-        BOOKGENERATED="1"
+        if [ "$br" == "$current_branch_name" ]
+        then
+            if [ "$BOOKID" == "" -o "$BOOKID" == "$book" ]
+            then
+                updateBook
+                BOOKGENERATED="1"
+            fi
+        fi
+    else
+        if [ "$TARGET_BRANCH" == "$br" -o  "$TARGET_BRANCH" == "" ]
+        then
+            updateBook
+            BOOKGENERATED="1"
+        fi
     fi
 done
 cd $ROOTPATH
@@ -89,19 +121,28 @@ updateBook()
     echo ""
     echo "--------------------------------- $book -------------------------------------"
 
-    echo "checkout $br..."
-    
-    git checkout $br
-    OLDREV=`cat .git/refs/heads/$br`
-    git pull origin $br
-    NEWREV=`cat .git/refs/heads/$br`
+    if [ "$ONLYCURRENTBRANCH" == "" ]
+    then
+        echo "checkout $br..."
+
+        git checkout $br
+        OLDREV=`cat .git/refs/heads/$br`
+        git pull origin $br
+        NEWREV=`cat .git/refs/heads/$br`
+    else
+        OLDREV="0"
+        NEWREV="1"
+    fi
 
     if [ "$FORCE" != "" -o "$OLDREV" != "$NEWREV" ]; then
         echo "Generate Book $book"
         cd $ROOTPATH
-        rm -rf books/$book
-        php $APP/scripts/manage.php gitiwiki~wiki:generateBook $book index
-        php $APP/scripts/manage.php gtwdocbook~docbook:index -lang $MANUAL_LOCALE $book index.gtw
+        #rm -rf books/$book
+        #php $APP/scripts/manage.php gitiwiki~wiki:generateBook $book index
+        #php $APP/scripts/manage.php gtwdocbook~docbook:index -lang $MANUAL_LOCALE $book index.gtw
+        echo "php $APP/scripts/manage.php gitiwiki~wiki:generateBook $book index"
+        echo "php $APP/scripts/manage.php gtwdocbook~docbook:index -lang $MANUAL_LOCALE $book index.gtw"
+
         if [ "$NOPDF" == "" ]
         then
             if [ "$TARGETPATH" == "" ]; then
@@ -141,38 +182,62 @@ SUBDIR[6]="1.4.x"
 SUBDIR[7]="1.5.x"
 SUBDIR[8]="1.6.x"
 
-BOOK[1]="manual-1.7"
-BOOK[2]="manual-1.0"
-BOOK[3]="manual-1.1"
-BOOK[4]="manual-1.2"
-BOOK[5]="manual-1.3"
-BOOK[6]="manual-1.4"
-BOOK[7]="manual-1.5"
-BOOK[8]="manual-1.6"
+if [ "$BOOKID" != "" ]; then
+    # retrieve branch and manual lang
+    if [ $BOOKID == manual* ]; then
+        MANUAL_LANG=en
+    else
+        MANUAL_LANG=fr
+    fi
+    ALL_LANG=""
+    TARGET_BRANCH="jelix-"${BOOKID:7}
+    if [ $TARGET_BRANCH == "jelix-1.7" ]; then
+        TARGET_BRANCH=master
+    fi
+fi
 
-APP=doc_en
-REPO=$REPOS_PATH/en/jelix-manual-en/
-MANUAL_LOCALE="en_US"
-MANUAL_LANG="en"
-update
+echo "BOOKID=$BOOKID"
+echo "MANUAL_LANG=$MANUAL_LANG"
+echo "ALL_LANG=$ALL_LANG"
+echo "TARGET_BRANCH=$TARGET_BRANCH"
 
-BOOK[1]="manuel-1.7"
-BOOK[2]="manuel-1.0"
-BOOK[3]="manuel-1.1"
-BOOK[4]="manuel-1.2"
-BOOK[5]="manuel-1.3"
-BOOK[6]="manuel-1.4"
-BOOK[7]="manuel-1.5"
-BOOK[8]="manuel-1.6"
+if [ "$MANUAL_LANG" == "en" -o "$ALL_LANG" == "Y" ];
+then
+    BOOK[1]="manual-1.7"
+    BOOK[2]="manual-1.0"
+    BOOK[3]="manual-1.1"
+    BOOK[4]="manual-1.2"
+    BOOK[5]="manual-1.3"
+    BOOK[6]="manual-1.4"
+    BOOK[7]="manual-1.5"
+    BOOK[8]="manual-1.6"
 
-MANUAL_LOCALE="fr_FR"
-MANUAL_LANG="fr"
+    APP=doc_en
+    REPO=$REPOS_PATH/en/jelix-manual-en/
+    MANUAL_LOCALE="en_US"
+    MANUAL_LANG="en"
+    update
+fi
 
-REPO=$REPOS_PATH/fr/jelix-manuel-fr/
-APP=doc_fr
-update
+if [ "$MANUAL_LANG" == "fr" -o "$ALL_LANG" == "Y" ];
+then
+    BOOK[1]="manuel-1.7"
+    BOOK[2]="manuel-1.0"
+    BOOK[3]="manuel-1.1"
+    BOOK[4]="manuel-1.2"
+    BOOK[5]="manuel-1.3"
+    BOOK[6]="manuel-1.4"
+    BOOK[7]="manuel-1.5"
+    BOOK[8]="manuel-1.6"
 
-if [ "$BOOKID" != "" -a "$BOOKGENERATED" == "0" ]
+    APP=doc_fr
+    REPO=$REPOS_PATH/fr/jelix-manuel-fr/
+    MANUAL_LOCALE="fr_FR"
+    MANUAL_LANG="fr"
+    update
+fi
+
+if [ "$BOOKGENERATED" == "0" ]
 then
     echo "ERROR: unknown book"
     exit 1
