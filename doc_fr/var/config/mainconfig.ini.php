@@ -194,6 +194,7 @@ name=
 
 [gitiwiki]
 booksPath="app:../books"
+showRepositoriesList=on
 
 [gitiwikiGenerators]
 wiki="gitiwiki~gtwWikiRenderer,gitiwiki_to_xhtml"

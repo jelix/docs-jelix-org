@@ -5,6 +5,7 @@
 
 [gitiwiki]
 booksPath="app:../books"
+showRepositoriesList=off
 
 [gitiwikiGenerators]
 wiki="gitiwiki~gtwWikiRenderer,gitiwiki_to_xhtml"

@@ -14,6 +14,7 @@ gitSourceViewURL="https://github.com/jelix/jelix-manuel-fr/blob/%branch%/%file%"
 linkToDefault=on
 order=10
 menulabel=1.0
+robotsNoIndex=on
 
 [gtwrepo:manuel-1.1]
 path="app:../repositories/fr/jelix-manuel-fr/.git"
@@ -25,6 +26,7 @@ gitSourceViewURL="https://github.com/jelix/jelix-manuel-fr/blob/%branch%/%file%"
 linkToDefault=on
 order=11
 menulabel=1.1
+robotsNoIndex=on
 
 [gtwrepo:manuel-1.2]
 path="app:../repositories/fr/jelix-manuel-fr/.git"
@@ -36,6 +38,7 @@ gitSourceViewURL="https://github.com/jelix/jelix-manuel-fr/blob/%branch%/%file%"
 linkToDefault=on
 order=12
 menulabel=1.2
+robotsNoIndex=on
 
 [gtwrepo:manuel-1.3]
 path="app:../repositories/fr/jelix-manuel-fr/.git"
@@ -47,6 +50,7 @@ gitSourceViewURL="https://github.com/jelix/jelix-manuel-fr/blob/%branch%/%file%"
 linkToDefault=on
 order=13
 menulabel=1.3
+robotsNoIndex=on
 
 [gtwrepo:manuel-1.4]
 path="app:../repositories/fr/jelix-manuel-fr/.git"
@@ -58,6 +62,7 @@ gitSourceViewURL="https://github.com/jelix/jelix-manuel-fr/blob/%branch%/%file%"
 linkToDefault=on
 order=14
 menulabel=1.4
+robotsNoIndex=on
 
 [gtwrepo:manuel-1.5]
 path="app:../repositories/fr/jelix-manuel-fr/.git"
@@ -69,6 +74,7 @@ gitSourceViewURL="https://github.com/jelix/jelix-manuel-fr/blob/%branch%/%file%"
 linkToDefault=on
 order=15
 menulabel="1.5"
+robotsNoIndex=on
 
 [gtwrepo:manuel-1.6]
 path="app:../repositories/fr/jelix-manuel-fr/.git"
@@ -92,3 +98,4 @@ gitSourceViewURL="https://github.com/jelix/jelix-manuel-fr/blob/%branch%/%file%"
 linkToDefault=on
 order=0
 menulabel="1.7"
+robotsNoIndex=on
