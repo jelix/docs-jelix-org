@@ -3,7 +3,7 @@
 * @package   gitiwiki
 * @subpackage gitiwiki
 * @author    Laurent Jouanneau
-* @copyright 2012-2013 laurent Jouanneau
+* @copyright 2012-2018 laurent Jouanneau
 * @link      http://jelix.org
 * @license    GNU PUBLIC LICENCE
 */
@@ -14,18 +14,30 @@ class wikiCtrl extends jController {
 
     function page() {
 
-        $repo = new gtw\Repository($this->param('repository'));
+        try {
+            $repo = new gtw\Repository($this->param('repository'));
+        }
+        catch(Exception $e) {
+            $rep = $this->getResponse('html');
+            $rep->body->assign('MAIN', '<p>not found</p>');
+            $rep->setHttpStatus('404', 'Not Found');
+            return $rep;
+        }
+
         $repoConfig = $repo->config();
         if (isset($repoConfig['locale']))
             jApp::config()->locale = $repoConfig['locale'];
 
         $page = $repo->findFile($this->param('page'));
+
         if ($page === null) {
             $rep = $this->getResponse('html');
             $rep->body->assign('MAIN', '<p>not found</p>');
             $rep->setHttpStatus('404', 'Not Found');
+            return $rep;
         }
-        elseif($page instanceof gtw\Redirection) {
+
+        if ($page instanceof gtw\Redirection) {
             if (!$page->isWikiUrl()) {
                 $rep = $this->getResponse('redirectUrl');
                 $rep->url = $page->url;
@@ -43,6 +55,9 @@ class wikiCtrl extends jController {
                 $resp->content = $page->getContent();
                 $resp->mimeType = $page->getMimeType();
                 $resp->doDownload = false;
+                if ($repoConfig['robotsNoIndex']) {
+                    $resp->addHttpHeader("X-Robots-Tag", "noindex");
+                }
                 return $resp;
             }
 
@@ -98,6 +113,9 @@ class wikiCtrl extends jController {
             $rep = $this->getResponse('html');
             $rep->title = $page->getName(). ' - '.$repoConfig['title'];
             $rep->body->assign('MAIN', '<h2>'.htmlspecialchars($page->getName()).'</h2>'.$page->getHtmlContent($basePath));
+        }
+        if ($repoConfig['robotsNoIndex']) {
+            $rep->addHttpHeader("X-Robots-Tag", "noindex");
         }
         return $rep;
     }
