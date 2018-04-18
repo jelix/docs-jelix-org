@@ -98,4 +98,4 @@ gitSourceViewURL="https://github.com/jelix/jelix-manuel-fr/blob/%branch%/%file%"
 linkToDefault=on
 order=0
 menulabel="1.7"
-robotsNoIndex=on
+robotsNoIndex=off

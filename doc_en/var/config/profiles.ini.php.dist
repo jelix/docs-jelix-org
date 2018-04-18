@@ -97,4 +97,4 @@ gitSourceViewURL="https://github.com/jelix/jelix-manual-en/blob/%branch%/%file%"
 linkToDefault=on
 order=0
 menulabel="1.7"
-robotsNoIndex=on
+robotsNoIndex=off
