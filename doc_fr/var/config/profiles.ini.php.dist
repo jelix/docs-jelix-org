@@ -3,6 +3,7 @@
 
 [gtwrepo]
 default=manuel-1.6
+manuel=manuel-1.6
 
 [gtwrepo:manuel-1.0]
 path="app:../repositories/fr/jelix-manuel-fr/.git"
@@ -86,7 +87,7 @@ gitSourceViewURL="https://github.com/jelix/jelix-manuel-fr/blob/%branch%/%file%"
 linkToDefault=off
 order=16
 menulabel="Manuel 1.6"
-
+urlName=manuel
 
 [gtwrepo:manuel-1.7]
 path="app:../repositories/fr/jelix-manuel-fr/.git"
@@ -98,4 +99,4 @@ gitSourceViewURL="https://github.com/jelix/jelix-manuel-fr/blob/%branch%/%file%"
 linkToDefault=on
 order=0
 menulabel="1.7"
-robotsNoIndex=off
+robotsNoIndex=on

@@ -13,7 +13,7 @@ class wikipageListener extends jEventListener{
        if( $repoConfig['linkToDefault'] &&
            $defaultRepoConfig['branch'] != $repoConfig['branch'] &&
            $defaultRepo->findFile($event->getParam('page')) !== null ) {
-               $defaultUrl = jUrl::get( 'wiki:page', array('repository'=>$defaultRepo->getName(), 'page'=>$event->getParam('page') ) );
+               $defaultUrl = jUrl::get( 'wiki:page', array('repository'=>$defaultRepo->getNameForUrl(), 'page'=>$event->getParam('page') ) );
 
                $defaultRepoTitle = $defaultRepoConfig['title'];
 

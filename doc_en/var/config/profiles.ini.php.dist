@@ -3,6 +3,7 @@
 
 [gtwrepo]
 default=manual-1.6
+manual=manual-1.6
 
 [gtwrepo:manual-1.0]
 path="app:../repositories/en/jelix-manual-en/.git"
@@ -86,6 +87,7 @@ gitSourceViewURL="https://github.com/jelix/jelix-manual-en/blob/%branch%/%file%"
 linkToDefault=off
 order=16
 menulabel="1.6 Manual"
+urlName=manual
 
 [gtwrepo:manual-1.7]
 path="app:../repositories/en/jelix-manual-en/.git"
