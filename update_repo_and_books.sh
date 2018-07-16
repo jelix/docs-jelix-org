@@ -1,4 +1,4 @@
-#!/bin/bash
+ #!/bin/bash
 
 # This script can be called by a cron...
 
@@ -138,10 +138,10 @@ updateBook()
         echo "Generate Book $book"
         cd $ROOTPATH
         #rm -rf books/$book
-        #php $APP/scripts/manage.php gitiwiki~wiki:generateBook $book index
+        php $APP/scripts/manage.php gitiwiki~wiki:generateBook $book index
         #php $APP/scripts/manage.php gtwdocbook~docbook:index -lang $MANUAL_LOCALE $book index.gtw
-        echo "php $APP/scripts/manage.php gitiwiki~wiki:generateBook $book index"
-        echo "php $APP/scripts/manage.php gtwdocbook~docbook:index -lang $MANUAL_LOCALE $book index.gtw"
+        #echo "php $APP/scripts/manage.php gitiwiki~wiki:generateBook $book index"
+        #echo "php $APP/scripts/manage.php gtwdocbook~docbook:index -lang $MANUAL_LOCALE $book index.gtw"
 
         if [ "$NOPDF" == "" ]
         then
