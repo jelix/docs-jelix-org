@@ -1,6 +1,3 @@
-ifndef DOCS_JELIX_ORG_DEPLOY_TARGET
-    DOCS_JELIX_ORG_DEPLOY_TARGET=/tmp/docs.jelix.org
-endif
 
 distfiles= doc_en/var/config/profiles.ini.php \
            doc_fr/var/config/profiles.ini.php \
@@ -19,7 +16,7 @@ clean:
 
 .PHONY: deploy
 deploy: build
-	rsync -av --delete --ignore-times --checksum --include-from=.build-files ./ $(DOCS_JELIX_ORG_DEPLOY_SSH):$(DOCS_JELIX_ORG_DEPLOY_DIR)'
+	rsync -av --delete --ignore-times --checksum --include-from=.build-files ./ $(DOCS_JELIX_ORG_DEPLOY_SSH):$(DOCS_JELIX_ORG_DEPLOY_DIR)
 	ssh $(DOCS_JELIX_ORG_DEPLOY_SSH) 'cd $(DOCS_JELIX_ORG_DEPLOY_DIR) && ./update.sh'
 
 
