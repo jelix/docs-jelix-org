@@ -21,6 +21,7 @@ if [ ! -d repositories/en/jelix-manual-en ]; then
     git checkout -b jelix-1.4 remotes/origin/jelix-1.4
     git checkout -b jelix-1.5 remotes/origin/jelix-1.5
     git checkout -b jelix-1.6 remotes/origin/jelix-1.6
+    git checkout -b jelix-1.7 remotes/origin/jelix-1.7
     git checkout master
 
     if test $account != "jelix"; then
@@ -46,6 +47,7 @@ if [ ! -d repositories/fr/jelix-manuel-fr ]; then
     git checkout -b jelix-1.4 remotes/origin/jelix-1.4
     git checkout -b jelix-1.5 remotes/origin/jelix-1.5
     git checkout -b jelix-1.6 remotes/origin/jelix-1.6
+    git checkout -b jelix-1.7 remotes/origin/jelix-1.7
     git checkout master
 
     if test $account != "jelix"; then

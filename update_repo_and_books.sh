@@ -2,7 +2,7 @@
 
 # This script can be called by a cron...
 
-FORCE=""
+FORCE="1"
 NOPDF=""
 BOOKID=""
 TARGET_BRANCH=""
@@ -89,7 +89,7 @@ current_branch_name="$(git symbolic-ref HEAD 2>/dev/null)" ||
 current_branch_name="(unnamed branch)"     # detached HEAD
 current_branch_name=${current_branch_name##refs/heads/}
 
-for index in 1 2 3 4 5 6 7 8
+for index in 1 2 3 4 5 6 7 8 9
 do
     br=${BRANCH[index]}
     book=${BOOK[index]}
@@ -172,8 +172,9 @@ BRANCH[5]="jelix-1.3"
 BRANCH[6]="jelix-1.4"
 BRANCH[7]="jelix-1.5"
 BRANCH[8]="jelix-1.6"
+BRANCH[9]="jelix-1.7"
 
-SUBDIR[1]="1.7.x"
+SUBDIR[1]="1.8.x"
 SUBDIR[2]="1.0.x"
 SUBDIR[3]="1.1.x"
 SUBDIR[4]="1.2.x"
@@ -181,6 +182,7 @@ SUBDIR[5]="1.3.x"
 SUBDIR[6]="1.4.x"
 SUBDIR[7]="1.5.x"
 SUBDIR[8]="1.6.x"
+SUBDIR[9]="1.7.x"
 
 if [ "$BOOKID" != "" ]; then
     # retrieve branch and manual lang
@@ -203,7 +205,7 @@ echo "TARGET_BRANCH=$TARGET_BRANCH"
 
 if [ "$MANUAL_LANG" == "en" -o "$ALL_LANG" == "Y" ];
 then
-    BOOK[1]="manual-1.7"
+    BOOK[1]="manual-1.8"
     BOOK[2]="manual-1.0"
     BOOK[3]="manual-1.1"
     BOOK[4]="manual-1.2"
@@ -211,6 +213,7 @@ then
     BOOK[6]="manual-1.4"
     BOOK[7]="manual-1.5"
     BOOK[8]="manual-1.6"
+    BOOK[9]="manual-1.7"
 
     APP=doc_en
     REPO=$REPOS_PATH/en/jelix-manual-en/
@@ -221,7 +224,7 @@ fi
 
 if [ "$MANUAL_LANG" == "fr" -o "$ALL_LANG" == "Y" ];
 then
-    BOOK[1]="manuel-1.7"
+    BOOK[1]="manuel-1.8"
     BOOK[2]="manuel-1.0"
     BOOK[3]="manuel-1.1"
     BOOK[4]="manuel-1.2"
@@ -229,6 +232,7 @@ then
     BOOK[6]="manuel-1.4"
     BOOK[7]="manuel-1.5"
     BOOK[8]="manuel-1.6"
+    BOOK[9]="manuel-1.7"
 
     APP=doc_fr
     REPO=$REPOS_PATH/fr/jelix-manuel-fr/
