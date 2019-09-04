@@ -19,5 +19,7 @@ clean:
 
 .PHONY: deploy
 deploy: build
-	rsync -av --delete --ignore-times --checksum --include-from=.build-files ./ $(DOCS_JELIX_ORG_DEPLOY_TARGET)
+	rsync -av --delete --ignore-times --checksum --include-from=.build-files ./ $(DOCS_JELIX_ORG_DEPLOY_SSH):$(DOCS_JELIX_ORG_DEPLOY_DIR)'
+	ssh $(DOCS_JELIX_ORG_DEPLOY_SSH) 'cd $(DOCS_JELIX_ORG_DEPLOY_DIR) && ./update.sh'
+
 
