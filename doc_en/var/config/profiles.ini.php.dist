@@ -102,7 +102,7 @@ menulabel="1.7 Manual"
 robotsNoIndex=off
 urlName=manual
 
-[gtwrepo:manuel-1.8]
+[gtwrepo:manual-1.8]
 path="app:../repositories/en/jelix-manual-en/.git"
 generators=gitiwikiGenerators
 branch="master"
