@@ -5,6 +5,7 @@ account=${1-jelix}
 echo "Setting github account to $account..."
 
 if [ ! -d repositories/en/jelix-manual-en ]; then
+  (
     cd repositories/en/
     if test $account != "jelix"; then
       git clone git@github.com:${account}/jelix-manual-en.git
@@ -27,10 +28,11 @@ if [ ! -d repositories/en/jelix-manual-en ]; then
     if test $account != "jelix"; then
       git remote add upstream git://github.com/jelix/jelix-manual-en.git
     fi
-    cd ../../
+  )
 fi
 
 if [ ! -d repositories/fr/jelix-manuel-fr ]; then
+  (
     cd repositories/fr/
     if test $account != "jelix"; then
       git clone git@github.com:${account}/jelix-manuel-fr.git
@@ -53,6 +55,5 @@ if [ ! -d repositories/fr/jelix-manuel-fr ]; then
     if test $account != "jelix"; then
       git remote add upstream git://github.com/jelix/jelix-manuel-fr.git
     fi
-
-    cd ../..
+  )
 fi

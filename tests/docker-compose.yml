@@ -1,0 +1,38 @@
+version: '3.4'
+services:
+  php:
+    build:
+      context: ./docker-conf/phpfpm
+      args:
+        fpm_user_id: ${JELIX_USER_ID}
+        fpm_group_id: ${JELIX_GROUP_ID}
+        php_version: ${PHP_VERSION}
+    container_name: ${IMG_PREFIX}_php${APPBRANCH}
+    environment:
+      APP_WEB_PORT: "${APP_WEB_PORT}"
+      DOCS_FR_JELIX_ORG_TEMP_PATH: /srv/docs.jelix.org/temp/doc_fr/
+      DOCS_FR_JELIX_ORG_LOG_PATH: /srv/docs.jelix.org/doc_fr/var/log/
+      DOCS_EN_JELIX_ORG_TEMP_PATH: /srv/docs.jelix.org/temp/doc_en/
+      DOCS_EN_JELIX_ORG_LOG_PATH: /srv/docs.jelix.org/doc_en/var/log/
+    volumes:
+      - "../:/srv/docs.jelix.org"
+    networks:
+      - default
+  web:
+    image: nginx:alpine
+    container_name: ${IMG_PREFIX}_web${APPBRANCH}
+    hostname: docsjelix.local
+    volumes:
+      - "./docker-conf/nginx-default.conf:/etc/nginx/conf.d/default.conf"
+      - "../:/srv/docs.jelix.org"
+    command: /bin/sh -c "nginx -g 'daemon off;'"
+    ports:
+      - "${APP_WEB_PORT}:80"
+    networks:
+      default:
+         aliases:
+           - docs.jelix.local
+    depends_on:
+      - php
+
+

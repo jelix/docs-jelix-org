@@ -11,6 +11,8 @@ ALL_LANG="Y"
 TARGETPATH=""
 ONLYCURRENTBRANCH=""
 
+set -e
+
 usage()
 {
     echo "update_repo_and_book [options] [bookid]"
@@ -193,7 +195,7 @@ if [ "$BOOKID" != "" ]; then
     fi
     ALL_LANG=""
     TARGET_BRANCH="jelix-"${BOOKID:7}
-    if [ $TARGET_BRANCH == "jelix-1.7" ]; then
+    if [ $TARGET_BRANCH == "jelix-1.8" ]; then
         TARGET_BRANCH=master
     fi
 fi
