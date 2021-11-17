@@ -134,7 +134,7 @@ class Git implements \ArrayAccess
   protected function readFanout($f, $object_name, $offset)
   {
     $object_name = (string)$object_name;
-    if ($object_name{0} == "\x00")
+    if ($object_name[0] == "\x00")
     {
       $cur = 0;
       fseek($f, $offset);
@@ -142,7 +142,7 @@ class Git implements \ArrayAccess
     }
     else
     {
-      fseek($f, $offset + (ord($object_name{0}) - 1)*4);
+      fseek($f, $offset + (ord($object_name[0]) - 1)*4);
       $cur = Binary::fuint32($f);
       $after = Binary::fuint32($f);
     }
@@ -258,19 +258,19 @@ class Git implements \ArrayAccess
     $r = '';
     while ($pos < strlen($delta))
     {
-      $opcode = ord($delta{$pos++});
+      $opcode = ord($delta[$pos++]);
       if ($opcode & 0x80)
       {
         /* copy a part of $base */
         $off = 0;
-        if ($opcode & 0x01) $off = ord($delta{$pos++});
-        if ($opcode & 0x02) $off |= ord($delta{$pos++}) <<  8;
-        if ($opcode & 0x04) $off |= ord($delta{$pos++}) << 16;
-        if ($opcode & 0x08) $off |= ord($delta{$pos++}) << 24;
+        if ($opcode & 0x01) $off = ord($delta[$pos++]);
+        if ($opcode & 0x02) $off |= ord($delta[$pos++]) <<  8;
+        if ($opcode & 0x04) $off |= ord($delta[$pos++]) << 16;
+        if ($opcode & 0x08) $off |= ord($delta[$pos++]) << 24;
         $len = 0;
-        if ($opcode & 0x10) $len = ord($delta{$pos++});
-        if ($opcode & 0x20) $len |= ord($delta{$pos++}) <<  8;
-        if ($opcode & 0x40) $len |= ord($delta{$pos++}) << 16;
+        if ($opcode & 0x10) $len = ord($delta[$pos++]);
+        if ($opcode & 0x20) $len |= ord($delta[$pos++]) <<  8;
+        if ($opcode & 0x40) $len |= ord($delta[$pos++]) << 16;
         $r .= substr($base, $off, $len);
       }
       else
@@ -333,7 +333,7 @@ class Git implements \ArrayAccess
       do
       {
           $offset++;
-          $c = ord($buf{$pos++});
+          $c = ord($buf[$pos++]);
           $offset = ($offset << 7) + ($c & 0x7F);
       }
       while ($c & 0x80);
@@ -342,7 +342,9 @@ class Git implements \ArrayAccess
       unset($buf);
 
       $base_offset = $object_offset - $offset;
-      assert($base_offset >= 0);
+      if ($base_offset < 0) {
+          throw new \Exception('bad base_offset');
+      }
       list($type, $base) = $this->unpackObject($pack, $base_offset);
 
       $data = $this->applyDelta($delta, $base);

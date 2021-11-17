@@ -28,7 +28,7 @@ final class Binary
 {
     static public function uint16($str, $pos=0)
     {
-        return ord($str{$pos+0}) << 8 | ord($str{$pos+1});
+        return ord($str[$pos+0]) << 8 | ord($str[$pos+1]);
     }
 
     static public function uint32($str, $pos=0)
@@ -54,7 +54,7 @@ final class Binary
         $c = 0x80;
         for ($i = 0; $c & 0x80; $i += 7)
         {
-            $c = ord($str{$pos++});
+            $c = ord($str[$pos++]);
             $r |= (($c & 0x7F) << $i);
         }
         return $r;

@@ -172,7 +172,7 @@ class GitBranch implements \ArrayAccess
       flock($f, LOCK_SH);
       while ($head === NULL && ($line = fgets($f)) !== FALSE)
       {
-        if ($line{0} == '#')
+        if ($line[0] == '#')
           continue;
         $parts = explode(' ', trim($line));
         if (count($parts) == 2 && $parts[1] == $subpath)

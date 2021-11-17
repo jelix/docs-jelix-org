@@ -102,7 +102,10 @@ abstract class GitPathObject extends GitObject
             break;
         $r = $commit->committer->time;
     }
-    assert($r !== NULL); /* something is seriously wrong if this happens */
+
+    if ($r === NULL) { /* something is seriously wrong if this happens */
+        throw new \Exception('no time in commit');
+    }
     return $r;
   }
 }

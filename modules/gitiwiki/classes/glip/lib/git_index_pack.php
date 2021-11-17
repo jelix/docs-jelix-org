@@ -172,7 +172,9 @@ class GitIndexPack
             $checksum = $checksum{3} . $checksum{2} . $checksum{1} . $checksum{0};
         }
         $zsize = strpos($buf, $checksum);
-        assert($zsize !== false);
+        if ($zsize === false) {
+            throw new Exception("no checksum in buf");
+        }
         $zsize += 4; // add size of adler32 checksum itself
 
         // update hash of the the pack because we used regular fread() instead of $this->getBytes()
@@ -293,7 +295,9 @@ class GitIndexPack
                 $fixpos = ftell($this->f);
                 // Add object to index
                 $newhash = $this->addObject($newobj, $data);
-                assert($newhash === $hash);
+                if ($newhash !== $hash) {
+                    throw new Exception('hash not equals');
+                }
                 //resolve child deltas
                 $this->resolveObjs($objs, $newobj, $data);
                 unset($data);
