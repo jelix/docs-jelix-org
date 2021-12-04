@@ -2,7 +2,7 @@
 /* comments & extra-whitespaces have been removed by jBuildTools*/
 /**
 * @package     jelix
-* @subpackage  formwidgets
+* @subpackage  forms_widget_plugin
 * @author      Claudio Bernardes
 * @contributor Laurent Jouanneau, Julien Issler, Dominique Papin
 * @copyright   2012 Claudio Bernardes
@@ -26,7 +26,7 @@ class textarea_htmlFormWidget extends \jelix\forms\HtmlWidget\WidgetBase{
 	}
 	function outputControl(){
 		$attr=$this->getControlAttributes();
-		$value=$this->getValue($this->ctrl);
+		$value=$this->getValue();
 		if(!isset($attr['rows']))
 			$attr['rows']=$this->ctrl->rows;
 		if(!isset($attr['cols']))

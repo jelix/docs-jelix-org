@@ -2,10 +2,10 @@
 /* comments & extra-whitespaces have been removed by jBuildTools*/
 /**
 * @package    jelix
-* @subpackage plugins_cache_file
+* @subpackage cache_plugin
 * @author      Zend Technologies
 * @contributor Tahina Ramaroson, Sylvain de Vathaire, Bricet, Laurent Jouanneau
-* @copyright  2005-2008 Zend Technologies USA Inc (http://www.zend.com), 2008 Neov, 2011 Laurent Jouanneau
+* @copyright  2005-2008 Zend Technologies USA Inc (http://www.zend.com), 2008 Neov, 2011-2017 Laurent Jouanneau
 * The implementation of this class is based on Zend Cache Backend File class
 * Few lines of code was adapted for Jelix
 * @licence  see LICENCE file
@@ -115,7 +115,7 @@ class fileCacheDriver implements jICacheDriver{
 	}
 	public function increment($key,$var=1){
 		if(($oldData=$this->get($key))){
-			if(!is_numeric($oldData)){
+			if(!is_numeric($oldData)||!is_numeric($var)){
 				return false;
 			}
 			$data=$oldData + $var;
@@ -128,7 +128,7 @@ class fileCacheDriver implements jICacheDriver{
 	}
 	public function decrement($key,$var=1){
 		if($oldData=$this->get($key)){
-			if(!is_numeric($oldData)){
+			if(!is_numeric($oldData)||!is_numeric($var)){
 				return false;
 			}
 			$data=$oldData - (int)$var;

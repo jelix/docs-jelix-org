@@ -13,7 +13,7 @@
  * @contributor Yannick Le Guédart
  * @contributor Steven Jehannet, Didier Huguet
  * @contributor Philippe Villiers
- * @copyright   2005-2011 Laurent Jouanneau
+ * @copyright   2005-2018 Laurent Jouanneau
  * @copyright   2007 Loic Mathaud
  * @copyright   2007-2009 Julien Issler
  * @copyright   2008 Thomas
@@ -78,8 +78,12 @@ abstract class jDaoFactoryBase{
 		if(count($args)==1&&is_array($args[0])){
 			$args=$args[0];
 		}
-		$keys=@array_combine(static::$_pkFields,$args);
-		if($keys===false){
+		try{
+			$keys=@array_combine(static::$_pkFields,$args);
+			if($keys===false){
+				throw new jException('jelix~dao.error.keys.missing');
+			}
+		}catch(ValueError $e){
 			throw new jException('jelix~dao.error.keys.missing');
 		}
 		$q=$this->_selectClause.$this->_fromClause.$this->_whereClause;
@@ -94,8 +98,12 @@ abstract class jDaoFactoryBase{
 		if(count($args)==1&&is_array($args[0])){
 			$args=$args[0];
 		}
-		$keys=array_combine(static::$_pkFields,$args);
-		if($keys===false){
+		try{
+			$keys=@array_combine(static::$_pkFields,$args);
+			if($keys===false){
+				throw new jException('jelix~dao.error.keys.missing');
+			}
+		}catch(ValueError $e){
 			throw new jException('jelix~dao.error.keys.missing');
 		}
 		$q='DELETE FROM '.$this->_conn->encloseName($this->_tables[$this->_primaryTable]['realname']).' ';
@@ -130,7 +138,6 @@ abstract class jDaoFactoryBase{
 	final public function countBy($searchcond,$distinct=null){
 		$count='*';
 		$sqlite=false;
-		$oracle=false;
 		if($distinct!==null){
 			$props=static::$_properties;
 			if(isset($props[$distinct]))
@@ -178,9 +185,15 @@ abstract class jDaoFactoryBase{
 	}
 	final protected function _createOrderClause($daocond){
 		$order=array();
+		$isOci=($this->_conn->dbms=='oci');
 		foreach($daocond->order as $name=>$way){
 			if(isset(static::$_properties[$name])){
-				$order[]=$this->_conn->encloseName(static::$_properties[$name]['table']).'.'.$this->_conn->encloseName(static::$_properties[$name]['fieldName']).' '.$way;
+				if($isOci){
+					$order[]=$this->_conn->encloseName(static::$_properties[$name]['table']).'.'.$this->_conn->encloseName(static::$_properties[$name]['fieldName']).' '.$way;
+				}
+				else{
+					$order[]=$this->_conn->encloseName(static::$_properties[$name]['name']).' '.$way;
+				}
 			}
 		}
 		if(count($order)){
@@ -316,6 +329,10 @@ abstract class jDaoFactoryBase{
 	}
 	protected function finishInitResultSet($rs){
 		$rs->setFetchMode(8,$this->_DaoRecordClassName);
+		$profile=$this->_conn->getProfileName();
+		$rs->addModifier(function($record,$rs)use($profile){
+			$record->setDbProfile($profile);
+		});
 	}
 	protected function _callbackQuote($value){
 		return $this->_conn->quote2($value);

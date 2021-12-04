@@ -48,7 +48,7 @@ class jTplCompiler
 			'escxml'=>'htmlspecialchars','eschtml'=>'htmlspecialchars',
 			'strip_tags'=>'strip_tags','escurl'=>'rawurlencode',
 			'capitalize'=>'ucwords','stripslashes'=>'stripslashes',
-			'upperfirst'=>'ucfirst');
+			'upperfirst'=>'ucfirst','json_encode'=>'json_encode');
 	private $_blockStack=array();
 	private $_sourceFile;
 	private $_currentTag;
@@ -453,7 +453,6 @@ class jTplCompiler
 		$this->_metaBody.=$content."\n";
 	}
 	protected function _getPlugin($type,$name){
-		$foundPath='';
 		$config=jApp::config();
 		if(isset($config->{'_tplpluginsPathList_'.$this->outputType})){
 			foreach($config->{'_tplpluginsPathList_'.$this->outputType}as $path){

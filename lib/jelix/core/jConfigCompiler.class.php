@@ -37,6 +37,9 @@ class jConfigCompiler{
 			if(false===@jelix_read_ini($configPath.$configFile,$config))
 				throw new Exception("Syntax error in the configuration file -- $configFile",6);
 		}
+		if(file_exists($configPath.'liveconfig.ini.php')){
+			@jelix_read_ini($configPath.'liveconfig.ini.php',$config);
+		}
 		self::prepareConfig($config,$allModuleInfo,$isCli,$pseudoScriptName);
 		self::$commonConfig=null;
 		return $config;
@@ -45,11 +48,9 @@ class jConfigCompiler{
 		if($isCli===null)
 			$isCli=jServer::isCLI();
 		$config=self::read($configFile,false,$isCli,$pseudoScriptName);
-		$tempPath=jApp::tempPath();
-		jFile::createDir($tempPath,$config->chmodDir);
-		$filename=$tempPath.str_replace('/','~',$configFile);
+		jFile::createDir(jApp::tempPath(),$config->chmodDir);
+		$filename=self::getCacheFilename($configFile);
 		if(BYTECODE_CACHE_EXISTS){
-			$filename.='.conf.php';
 			if($f=@fopen($filename,'wb')){
 				fwrite($f,'<?php $config = '.var_export(get_object_vars($config),true).";\n?>");
 				fclose($f);
@@ -58,9 +59,24 @@ class jConfigCompiler{
 				throw new Exception('Error while writing configuration cache file -- '.$filename);
 			}
 		}else{
-			jIniFile::write(get_object_vars($config),$filename.'.resultini.php',";<?php die('');?>\n",'',$config->chmodFile);
+			jIniFile::write(get_object_vars($config),$filename,";<?php die('');?>\n",$config->chmodFile);
 		}
 		return $config;
+	}
+	static public function getCacheFilename($configFile)
+	{
+		$filename=jApp::tempPath().str_replace('/','~',$configFile);
+		list($domain,$port)=jServer::getDomainPortFromServer();
+		if($domain){
+			$filename.='.'.$domain.'-'.$port;
+		}
+		if(BYTECODE_CACHE_EXISTS){
+			$filename.='.conf.php';
+		}
+		else{
+			$filename.='.resultini.php';
+		}
+		return $filename;
 	}
 	static protected function prepareConfig($config,$allModuleInfo,$isCli,$pseudoScriptName){
 		self::checkMiscParameters($config);
@@ -75,13 +91,27 @@ class jConfigCompiler{
 		if(trim($config->startAction)==''){
 			$config->startAction=':';
 		}
-		if($config->domainName==""&&isset($_SERVER['SERVER_NAME']))
-			$config->domainName=$_SERVER['SERVER_NAME'];
+		if($config->domainName==""){
+			list($domain,$port)=jServer::getDomainPortFromServer();
+			if($domain){
+				$config->domainName=$domain;
+				$isHttps=jServer::isHttpsFromServer();
+				if($config->forceHTTPPort==''&&!$isHttps&&$port!='80'){
+					$config->forceHTTPPort=$port;
+				}
+				else if($config->forceHTTPSPort==''&&$isHttps&&$port!='443'){
+					$config->forceHTTPSPort=$port;
+				}
+			}
+		}
 		$config->_allBasePath=array();
 		if($config->urlengine['engine']=='simple')
 			trigger_error("The 'simple' url engine is deprecated. use 'basic_significant' or 'significant' url engine",E_USER_NOTICE);
 		$config->chmodFile=octdec($config->chmodFile);
 		$config->chmodDir=octdec($config->chmodDir);
+		if(!is_array($config->error_handling['sensitiveParameters'])){
+			$config->error_handling['sensitiveParameters']=preg_split('/ *, */',$config->error_handling['sensitiveParameters']);
+		}
 	}
 	static protected function checkCoordPluginsPath($config){
 		$coordplugins=array();
@@ -138,14 +168,19 @@ class jConfigCompiler{
 		if($config->disableInstallers){
 			$installation=array();
 		}
-		else if(!file_exists($installerFile)){
+		else if(file_exists($installerFile)){
+			$installation=parse_ini_file($installerFile,true);
+		}
+		else{
 			if($allModuleInfo)
 				$installation=array();
-			else
+			else{
 				throw new Exception("The application is not installed -- installer.ini.php doesn't exist!\n",9);
+			}
 		}
-		else
-			$installation=parse_ini_file($installerFile,true);
+		if($allModuleInfo){
+			$config->_allModulesPathList=array();
+		}
 		$section=$config->urlengine['urlScriptId'];
 		if(!isset($installation[$section])){
 			$installation[$section]=array();
@@ -257,7 +292,7 @@ class jConfigCompiler{
 		}
 		if(property_exists($config,'modules')){
 			foreach($config->modules as $key=>$path){
-				if(!preg_match('/^([a-zA-Z_0-9]+)\\.path$/',$key,$m)){
+				if(!preg_match('/^([a-zA-Z_0-9]+)\\.path$/',$key,$m)||$path==''){
 					continue;
 				}
 				$p=jFile::parseJelixPath($path);
@@ -348,9 +383,11 @@ class jConfigCompiler{
 				$urlconf['urlScriptPath']=getcwd().'/'.substr($urlconf['urlScript'],0,$lastslash).'/';
 				$urlconf['urlScriptName']=substr($urlconf['urlScript'],$lastslash+1);
 			}
-			$basepath=$urlconf['urlScriptPath'];
 			$snp=$urlconf['urlScriptName'];
-			$urlconf['urlScript']=$basepath.$snp;
+			$urlconf['urlScript']=$urlconf['urlScriptPath'].$snp;
+			if($urlconf['basePath']==''){
+				$urlconf['basePath']='/';
+			}
 		}
 		else{
 			$lastslash=strrpos($urlconf['urlScript'],'/');
@@ -386,9 +423,11 @@ class jConfigCompiler{
 			if($urlconf['jelixWWWPath'][0]!='/'){
 				$urlconf['jelixWWWPath']=$basepath.$urlconf['jelixWWWPath'];
 			}
+			$urlconf['jelixWWWPath']=rtrim($urlconf['jelixWWWPath'],'/').'/';
 			if($urlconf['jqueryPath'][0]!='/'){
-				$urlconf['jqueryPath']=$basepath.$urlconf['jqueryPath'];
+				$urlconf['jqueryPath']=$basepath.rtrim($urlconf['jqueryPath'],'/').'/';
 			}
+			$urlconf['jqueryPath']=rtrim($urlconf['jqueryPath'],'/').'/';
 			$snp=substr($urlconf['urlScript'],strlen($localBasePath));
 			if($localBasePath=='/')
 				$urlconf['documentRoot']=jApp::wwwPath();
@@ -409,7 +448,6 @@ class jConfigCompiler{
 		$urlconf['urlScriptIdenc']=rawurlencode($snp);
 	}
 	static public function findServerName($ext='.php',$isCli=false){
-		$varname='';
 		$extlen=strlen($ext);
 		if(strrpos($_SERVER['SCRIPT_NAME'],$ext)===(strlen($_SERVER['SCRIPT_NAME'])- $extlen)
 			||$isCli){

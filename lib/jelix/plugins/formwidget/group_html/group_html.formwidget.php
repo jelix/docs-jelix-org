@@ -2,7 +2,7 @@
 /* comments & extra-whitespaces have been removed by jBuildTools*/
 /**
 * @package     jelix
-* @subpackage  formwidgets
+* @subpackage  forms_widget_plugin
 * @author      Claudio Bernardes
 * @contributor Laurent Jouanneau, Julien Issler, Dominique Papin
 * @copyright   2012 Claudio Bernardes
@@ -41,7 +41,7 @@ class group_htmlFormWidget extends \jelix\forms\HtmlWidget\WidgetBase
 	}
 	function outputControl(){
 		$attr=$this->getControlAttributes();
-		$value=$this->getValue($this->ctrl);
+		$value=$this->getValue();
 		$jFormsJsVarName=$this->builder->getjFormsJsVarName();
 		if($this->ctrl->hasCheckbox){
 			echo '<fieldset id="',$attr['id'],'" class="jforms-ctrl-group"><legend>',
@@ -89,7 +89,7 @@ class group_htmlFormWidget extends \jelix\forms\HtmlWidget\WidgetBase
 	public function outputControlValue(){
 		$attr=$this->getValueAttributes();
 		echo '<fieldset id="',$attr['id'],'"><legend>',htmlspecialchars($this->ctrl->label),"</legend>\n";
-		if($this->ctrl->hasCheckbox&&$this->getValue($this->ctrl)!=$this->ctrl->valueOnCheck){
+		if($this->ctrl->hasCheckbox&&$this->getValue()!=$this->ctrl->valueOnCheck){
 			parent::outputControlValue();
 		}
 		else{

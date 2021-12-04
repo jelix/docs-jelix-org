@@ -5,6 +5,6 @@ books/*
 books/pdf/*
 !books/pdf/.dummy
 .idea
-dev/.vagrant
+.drafts
 
 

@@ -2,7 +2,7 @@
 /* comments & extra-whitespaces have been removed by jBuildTools*/
 /**
  * @package     jelix
- * @subpackage  cache
+ * @subpackage  cache_plugin
  * @author      Yannick Le Guédart
  * @contributor Laurent Jouanneau
  * @copyright   2009 Yannick Le Guédart, 2010-2016 Laurent Jouanneau
@@ -10,8 +10,7 @@
  * @link     http://www.jelix.org
  * @licence  http://www.gnu.org/licenses/lgpl.html GNU Lesser General Public Licence, see LICENCE file
  */
-require_once(LIB_PATH . 'php5redis/Redis.php');
-class redisCacheDriver implements jICacheDriver{
+class redis_phpCacheDriver implements jICacheDriver{
 	protected $profileName;
 	public $enabled=true;
 	public $ttl=0;
@@ -47,7 +46,7 @@ class redisCacheDriver implements jICacheDriver{
 				$this->key_prefix_flush_method=$params['key_prefix_flush_method'];
 			}
 		}
-		$this->redis=new Redis($params['host'],$params['port']);
+		$this->redis=new \PhpRedis\Redis($params['host'],$params['port']);
 		if(isset($params['db'])&&intval($params['db'])!=0){
 			$this->redis->select_db($params['db']);
 		}
@@ -68,8 +67,14 @@ class redisCacheDriver implements jICacheDriver{
 			return $res;
 		}
 	}
-	public function set($key,$value,$ttl=0){
-		if(is_resource($value)){
+	public function set($key,$value,$ttl=0)
+	{
+		if(function_exists('\\Jelix\\Utilities\\is_resource')){
+			if(\Jelix\Utilities\is_resource($value)){
+				return false;
+			}
+		}
+		else if(is_resource($value)){
 			return false;
 		}
 		$used_key=$this->getUsedKey($key);
@@ -138,7 +143,7 @@ class redisCacheDriver implements jICacheDriver{
 	}
 	public function flush(){
 		if(!$this->key_prefix){
-			return($this->redis->flushall()=='OK');
+			return($this->redis->flushdb()=='OK');
 		}
 		switch($this->key_prefix_flush_method){
 			case 'direct':
@@ -152,6 +157,7 @@ class redisCacheDriver implements jICacheDriver{
 				$this->redis->rpush('jcacheredisdelkeys',$this->key_prefix);
 				return true;
 		}
+		return false;
 	}
 	protected function getUsedKey($key){
 		if($this->key_prefix==''){
@@ -180,7 +186,7 @@ class redisCacheDriver implements jICacheDriver{
 			foreach($val as $k=>$v){
 				$val[$k]=$this->unesc($v);
 			}
-			return $val;
 		}
+		return $val;
 	}
 }

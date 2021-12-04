@@ -2,10 +2,10 @@
 /* comments & extra-whitespaces have been removed by jBuildTools*/
 /**
 * @package    jelix
-* @subpackage plugins_cache_db
+* @subpackage cache_plugin
 * @author     Tahina Ramaroson
 * @contributor Sylvain de Vathaire, Laurent Jouanneau
-* @copyright  2009 Neov, 2009 Laurent Jouanneau
+* @copyright  2009 Neov, 2009-2017 Laurent Jouanneau
 * @licence  http://www.gnu.org/licenses/lgpl.html GNU Lesser General Public Licence, see LICENCE file
 */
 class dbCacheDriver implements jICacheDriver{
@@ -82,7 +82,6 @@ class dbCacheDriver implements jICacheDriver{
 			throw new jException('jelix~cache.error.serialize.data',array($this->profil_name,$e->getMessage()));
 		}
 		$dao=jDao::get($this->_dao,$this->_dbprofile);
-		$n=0;
 		switch($ttl){
 			case -1:
 				$date=-1;
@@ -114,7 +113,7 @@ class dbCacheDriver implements jICacheDriver{
 	}
 	public function increment($key,$var=1){
 		if($oldData=$this->get($key)){
-			if(!is_numeric($oldData)){
+			if(!is_numeric($oldData)||!is_numeric($var)){
 				return false;
 			}
 			$data=$oldData + $var;
@@ -127,7 +126,7 @@ class dbCacheDriver implements jICacheDriver{
 	}
 	public function decrement($key,$var=1){
 		if(($oldData=$this->get($key))){
-			if(!is_numeric($oldData)){
+			if(!is_numeric($oldData)||!is_numeric($var)){
 				return false;
 			}
 			$data=$oldData - (int)$var;

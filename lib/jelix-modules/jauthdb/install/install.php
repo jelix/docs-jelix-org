@@ -26,7 +26,13 @@ class jauthdbModuleInstaller extends jInstallerModule {
             // the module, else we ignore it
 
             $conf = new jIniFileModifier(jApp::configPath($authconfig));
-            $driver = $conf->getValue('driver');
+
+            if (isset($this->entryPoint->getConfigObj()->coordplugin_auth['driver'])) {
+                $driver = $this->entryPoint->getConfigObj()->coordplugin_auth['driver'];
+            }
+            else {
+                $driver = $conf->getValue('driver');
+            }
 
             if ($driver == '') {
                 $driver = 'Db';
@@ -34,28 +40,34 @@ class jauthdbModuleInstaller extends jInstallerModule {
                 $conf->setValue('dao','jauthdb~jelixuser', 'Db');
                 $conf->save();
             }
-            else if ($driver != 'Db') {
-                return;
+            else {
+                $compatibleWithDb = $conf->getValue('compatiblewithdb', $driver);
+                if ($driver != 'Db' && !$compatibleWithDb) {
+                    return;
+                }
             }
 
-            $this->useDbProfile($conf->getValue('profile', 'Db'));
+            $this->useDbProfile($conf->getValue('profile', $driver));
 
             // FIXME: should use the given dao to create the table
-            $daoName = $conf->getValue('dao', 'Db');
+            $daoName = $conf->getValue('dao', $driver);
             if ($daoName == 'jauthdb~jelixuser' && $this->firstDbExec()) {
 
                 $this->execSQLScript('install_jauth.schema');
                 if ($this->getParameter('defaultuser')) {
-                    require_once(JELIX_LIB_PATH.'auth/jAuth.class.php');
-                    require_once(JELIX_LIB_PATH.'plugins/auth/db/db.auth.php');
-
-                    $confIni = parse_ini_file(jApp::configPath($authconfig), true);
-                    $authConfig = jAuth::loadConfig($confIni);
-                    $driver = new dbAuthDriver($authConfig['Db']);
-                    $passwordHash = $driver->cryptPassword('admin');
                     $cn = $this->dbConnection();
-                    $cn->exec("INSERT INTO ".$cn->prefixTable('jlx_user')." (usr_login, usr_password, usr_email ) VALUES
+                    $rs = $cn->query("SELECT usr_login FROM ".$cn->prefixTable('jlx_user')." WHERE usr_login = 'admin'");
+                    if (!$rs->fetch()) {
+                        require_once(JELIX_LIB_PATH.'auth/jAuth.class.php');
+                        require_once(JELIX_LIB_PATH.'plugins/auth/db/db.auth.php');
+
+                        $confIni = parse_ini_file(jApp::configPath($authconfig), true);
+                        $authConfig = jAuth::loadConfig($confIni);
+                        $driver = new dbAuthDriver($authConfig[$driver]);
+                        $passwordHash = $driver->cryptPassword('admin');
+                        $cn->exec("INSERT INTO ".$cn->prefixTable('jlx_user')." (usr_login, usr_password, usr_email ) VALUES
                                 ('admin', ".$cn->quote($passwordHash)." , 'admin@localhost.localdomain')");
+                    }
                 }
             }
         }

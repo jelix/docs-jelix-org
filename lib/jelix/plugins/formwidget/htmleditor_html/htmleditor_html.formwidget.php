@@ -2,31 +2,35 @@
 /* comments & extra-whitespaces have been removed by jBuildTools*/
 /**
 * @package     jelix
-* @subpackage  formwidgets
+* @subpackage  forms_widget_plugin
 * @author      Claudio Bernardes
 * @contributor Laurent Jouanneau, Julien Issler, Dominique Papin
 * @copyright   2012 Claudio Bernardes
-* @copyright   2006-2012 Laurent Jouanneau, 2008-2011 Julien Issler, 2008 Dominique Papin
+* @copyright   2006-2019 Laurent Jouanneau, 2008-2011 Julien Issler, 2008 Dominique Papin
 * @link        http://www.jelix.org
 * @licence     http://www.gnu.org/licenses/lgpl.html GNU Lesser General Public Licence, see LICENCE file
 */
 class htmleditor_htmlFormWidget extends \jelix\forms\HtmlWidget\WidgetBase{
 	public function outputMetaContent($resp){
-		$bp=jApp::urlBasePath();
 		$confHtmlEditor=&jApp::config()->htmleditors;
 		if(isset($confHtmlEditor[$this->ctrl->config.'.engine.file'])){
-			if(is_array($confHtmlEditor[$this->ctrl->config.'.engine.file'])){
-				foreach($confHtmlEditor[$this->ctrl->config.'.engine.file'] as $url){
-					$resp->addJSLink($bp.$url);
-				}
-			}else
-				$resp->addJSLink($bp.$confHtmlEditor[$this->ctrl->config.'.engine.file']);
+			$lang=jLocale::getCurrentLang();
+			$urls=$confHtmlEditor[$this->ctrl->config.'.engine.file'];
+			if(!is_array($urls)){
+				$urls=array($urls);
+			}
+			foreach($urls as $url){
+				$url=str_replace('$lang',$lang,$url);
+				$resp->addJSLink($url);
+			}
 		}
-		if(isset($confHtmlEditor[$this->ctrl->config.'.config']))
-			$resp->addJSLink($bp.$confHtmlEditor[$this->ctrl->config.'.config']);
+		if(isset($confHtmlEditor[$this->ctrl->config.'.config'])){
+			$resp->addJSLink($confHtmlEditor[$this->ctrl->config . '.config']);
+		}
 		$skin=$this->ctrl->config.'.skin.'.$this->ctrl->skin;
-		if(isset($confHtmlEditor[$skin])&&$confHtmlEditor[$skin]!='')
-			$resp->addCSSLink($bp.$confHtmlEditor[$skin]);
+		if(isset($confHtmlEditor[$skin])&&$confHtmlEditor[$skin]!=''){
+			$resp->addCSSLink($confHtmlEditor[$skin]);
+		}
 	}
 	protected function outputJs(){
 		$ctrl=$this->ctrl;

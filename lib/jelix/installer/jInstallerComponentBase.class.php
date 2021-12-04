@@ -4,7 +4,7 @@
 * @package     jelix
 * @subpackage  installer
 * @author      Laurent Jouanneau
-* @copyright   2008-2010 Laurent Jouanneau
+* @copyright   2008-2021 Laurent Jouanneau
 * @link        http://www.jelix.org
 * @licence     GNU Lesser General Public Licence see LICENCE file or http://www.gnu.org/licenses/lgpl.html
 */
@@ -43,8 +43,13 @@ abstract class jInstallerComponentBase{
 		return $this->moduleInfos[$epId]->isInstalled;
 	}
 	public function isUpgraded($epId){
-		return($this->isInstalled($epId)&&
-				(jVersionComparator::compareVersion($this->sourceVersion,$this->moduleInfos[$epId]->version)==0));
+		if(!$this->isInstalled($epId)){
+			return false;
+		}
+		if($this->moduleInfos[$epId]->version==''){
+			throw new jInstallerException("installer.ini.missing.version",array($this->name));
+		}
+		return jVersionComparator::compareVersion($this->sourceVersion,$this->moduleInfos[$epId]->version)==0;
 	}
 	public function getInstalledVersion($epId){
 		return $this->moduleInfos[$epId]->version;
@@ -75,66 +80,89 @@ abstract class jInstallerComponentBase{
 			throw new jInstallerException('install.invalid.xml.file',array($this->path.$this->identityFile));
 		}
 		$root=$xmlDescriptor->documentElement;
-		if($root->namespaceURI==$this->identityNamespace){
+		if(preg_match($this->identityNamespace,$root->namespaceURI)){
 			$xml=simplexml_import_dom($xmlDescriptor);
+			if(!isset($xml->info[0]->version[0])){
+				throw new jInstallerException('module.missing.version',array($this->name));
+			}
 			$this->sourceVersion=(string) $xml->info[0]->version[0];
+			if(trim($this->sourceVersion)==''){
+				throw new jInstallerException('module.missing.version',array($this->name));
+			}
 			if(isset($xml->info[0]->version['date']))
 				$this->sourceDate=(string) $xml->info[0]->version['date'];
 			else
 				$this->sourceDate='';
 			$this->readDependencies($xml);
 		}
+		else{
+			throw new \Exception('The file '.$this->path.$this->identityFile. ' is not an xml file with the expected namespace');
+		}
 	}
 	protected function readDependencies($xml){
 		$this->dependencies=array();
 		if(isset($xml->dependencies)){
 			foreach($xml->dependencies->children()as $type=>$dependency){
-				$minversion=isset($dependency['minversion'])?(string)$dependency['minversion']:'*';
-				if(trim($minversion)=='')
-					$minversion='*';
-				$maxversion=isset($dependency['maxversion'])?(string)$dependency['maxversion']:'*';
-				if(trim($maxversion)=='')
-					$maxversion='*';
-				$name=(string)$dependency['name'];
-				if(trim($name)==''&&$type!='jelix')
-					throw new Exception('Name is missing in a dependency declaration in module '.$this->name);
-				$id=(string)$dependency['id'];
-				if($type=='jelix'){
-					$this->jelixMinVersion=$minversion;
-					$this->jelixMaxVersion=$maxversion;
-					if($this->name!='jelix'){
-						$this->dependencies[]=array(
-							'type'=>'module',
-							'id'=>'jelix@jelix.org',
-							'name'=>'jelix',
-							'minversion'=>$this->jelixMinVersion,
-							'maxversion'=>$this->jelixMaxVersion,
-							''
-						);
-					}
+				if($type!='jelix'&&$type!='module'&&$type!='plugin'){
+					continue;
 				}
-				else if($type=='module'){
-					$this->dependencies[]=array(
-							'type'=>'module',
-							'id'=>$id,
-							'name'=>$name,
-							'minversion'=>$minversion,
-							'maxversion'=>$maxversion,
-							''
-							);
-				}
-				else if($type=='plugin'){
-					$this->dependencies[]=array(
-							'type'=>'plugin',
-							'id'=>$id,
-							'name'=>$name,
-							'minversion'=>$minversion,
-							'maxversion'=>$maxversion,
-							''
-							);
+				$dependencyInfo=$this->readComponentDependencyInfo($type,$dependency);
+				if($dependencyInfo){
+					$this->dependencies[]=$dependencyInfo;
 				}
 			}
 		}
+	}
+	protected function readComponentDependencyInfo($type,SimpleXMLElement $dependency)
+	{
+		$minversion=isset($dependency['minversion'])?(string)$dependency['minversion']:'*';
+		if(trim($minversion)=='')
+			$minversion='*';
+		$maxversion=isset($dependency['maxversion'])?(string)$dependency['maxversion']:'*';
+		if(trim($maxversion)=='')
+			$maxversion='*';
+		$name=(string)$dependency['name'];
+		if(trim($name)==''&&$type!='jelix')
+			throw new Exception('Name is missing in a dependency declaration in module '.$this->name);
+		$id=(string)$dependency['id'];
+		if($type=='jelix'){
+			$this->jelixMinVersion=$minversion;
+			$this->jelixMaxVersion=$maxversion;
+			if($this->name!='jelix'){
+				return array(
+					'type'=>'module',
+					'id'=>'jelix@jelix.org',
+					'name'=>'jelix',
+					'minversion'=>$this->jelixMinVersion,
+					'maxversion'=>$this->jelixMaxVersion,
+					'optional'=>false,
+					''
+				);
+			}
+		}
+		else if($type=='module'){
+			return array(
+				'type'=>'module',
+				'id'=>$id,
+				'name'=>$name,
+				'minversion'=>$minversion,
+				'maxversion'=>$maxversion,
+				'optional'=>(isset($dependency['optional'])?(((string)$dependency['optional'])==='true'):false),
+				''
+			);
+		}
+		else if($type=='plugin'){
+			return array(
+				'type'=>'plugin',
+				'id'=>$id,
+				'name'=>$name,
+				'minversion'=>$minversion,
+				'maxversion'=>$maxversion,
+				'optional'=>(isset($dependency['optional'])?(((string)$dependency['optional'])==='true'):false),
+				''
+			);
+		}
+		return null;
 	}
 	public function checkJelixVersion($jelixVersion){
 		return(jVersionComparator::compareVersion($this->jelixMinVersion,$jelixVersion)<=0&&

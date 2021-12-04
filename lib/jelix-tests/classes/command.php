@@ -3,8 +3,9 @@
  * PHPUnit command line execution controller.
  * 
  * This suppose that PHPUnit is installed and declared in include path
- * 
- * @package jelix-tests
+ *
+ * @package     jelix
+ * @subpackage  jelix-tests
  * @author Laurent Jouanneau
  * @contributor  Christophe Thiriot (for some code imported from his jphpunit module)
  */
@@ -47,6 +48,11 @@ class jelix_TextUI_Command extends PHPUnit_TextUI_Command {
         return $command->run($_SERVER['argv'], $exit);
     }
 
+
+    protected function showMessage($message)
+    {
+        echo $message;
+    }
 
     protected function createRunner()
     {

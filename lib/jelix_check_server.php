@@ -60,7 +60,7 @@ interface jIInstallReporter {
 /**
 * 
 * @package  jelix
-* @subpackage core
+* @subpackage installer
 * @author   Laurent Jouanneau
 * @contributor Bastien Jaillot
 * @copyright 2007-2009 Laurent Jouanneau, 2008 Bastien Jaillot
@@ -72,7 +72,7 @@ interface jIInstallReporter {
 /**
  * message provider for jInstallCheck and jInstaller
  * @package  jelix
- * @subpackage core
+ * @subpackage installer
  * @since 1.0b2
  */
 class jInstallerMessageProvider {
@@ -80,20 +80,20 @@ class jInstallerMessageProvider {
 
     protected $messages = array(
         'fr'=>array(
-     'checker.title'=>'Vérification de votre serveur pour Jelix 1.6.10pre.3307',
+     'checker.title'=>'Vérification de votre serveur pour Jelix 1.6.35-rc.3',
         'number.errors'         =>' erreurs.',
         'number.error'          =>' erreur.',
         'number.warnings'       =>' avertissements.',
         'number.warning'        =>' avertissement.',
         'number.notices'        =>' remarques.',
         'number.notice'         =>' remarque.',
-    'conclusion.error'      =>'Vous devez corriger l\'erreur pour faire fonctionner correctement une application Jelix 1.6.10pre.3307.',
-    'conclusion.errors'     =>'Vous devez corriger les erreurs pour faire fonctionner correctement une application Jelix 1.6.10pre.3307.',
-    'conclusion.warning'    =>'Une application Jelix 1.6.10pre.3307 peut à priori fonctionner, mais il est préférable de corriger l\'avertissement pour être sûr.',
-    'conclusion.warnings'   =>'Une application Jelix 1.6.10pre.3307 peut à priori fonctionner, mais il est préférable de corriger les avertissements pour être sûr.',
-    'conclusion.notice'     =>'Aucun problème pour installer une application pour Jelix  1.6.10pre.3307 malgré la remarque.',
-    'conclusion.notices'    =>'Aucun problème pour installer une application pour Jelix  1.6.10pre.3307 malgré les remarques.',
-    'conclusion.ok'         =>'Vous pouvez installer une application avec Jelix 1.6.10pre.3307',
+    'conclusion.error'      =>'Vous devez corriger l\'erreur pour faire fonctionner correctement une application Jelix 1.6.35-rc.3.',
+    'conclusion.errors'     =>'Vous devez corriger les erreurs pour faire fonctionner correctement une application Jelix 1.6.35-rc.3.',
+    'conclusion.warning'    =>'Une application Jelix 1.6.35-rc.3 peut à priori fonctionner, mais il est préférable de corriger l\'avertissement pour être sûr.',
+    'conclusion.warnings'   =>'Une application Jelix 1.6.35-rc.3 peut à priori fonctionner, mais il est préférable de corriger les avertissements pour être sûr.',
+    'conclusion.notice'     =>'Aucun problème pour installer une application pour Jelix  1.6.35-rc.3 malgré la remarque.',
+    'conclusion.notices'    =>'Aucun problème pour installer une application pour Jelix  1.6.35-rc.3 malgré les remarques.',
+    'conclusion.ok'         =>'Vous pouvez installer une application avec Jelix 1.6.35-rc.3',
         'cannot.continue'       =>'Les vérifications ne peuvent continuer : %s',
         'extension.not.installed'=>'L\'extension %s n\'est pas disponible',
         'extension.optional.not.installed'=>'L\'extension %s optionnelle n\'est pas disponible',
@@ -141,6 +141,10 @@ class jInstallerMessageProvider {
         'module.bad.dependency.version'=>'Le module %s necessite une autre version du module %s (%s - %s)',
         'module.installer.class.not.found'=>'La classe d\'installation %s pour le module %s n\'existe pas',
         'module.upgrader.class.not.found'=>'La classe de mise à jour %s pour le module %s n\'existe pas',
+        'module.upgrader.missing.version'=>'La version cible est manquante pour le script de mise à jour %s du module %s',
+        'module.missing.version'=>'La version est manquante dans le fichier module.xml du module %s',
+
+        'installer.ini.missing.version'=>'La version précédente du module %s n\'est pas indiquée dans le fichier installer.ini.php',
 
         'install.entrypoint.start'  =>'Installation pour le point d\'entrée %s',
         'install.entrypoint.end'    =>'Tous les modules sont installés ou mis à jour pour le point d\'entrée %s',
@@ -161,20 +165,20 @@ class jInstallerMessageProvider {
         ),
 
         'en'=>array(
-  'checker.title'   =>'Check your configuration server for Jelix 1.6.10pre.3307',
+  'checker.title'   =>'Check your configuration server for Jelix 1.6.35-rc.3',
         'number.errors'     =>' errors.',
         'number.error'      =>' error.',
         'number.warnings'   =>' warnings.',
         'number.warning'    =>' warning.',
         'number.notices'    =>' notices.',
         'number.notice'     =>' notice.',
-      'conclusion.error'    =>'You must fix the error in order to run an application correctly with Jelix 1.6.10pre.3307.',
-      'conclusion.errors'   =>'You must fix errors in order to run an application correctly with Jelix 1.6.10pre.3307.',
-      'conclusion.warning'  =>'Your application for Jelix 1.6.10pre.3307 may run without problems, but it is recommanded to fix the warning.',
-      'conclusion.warnings' =>'Your application for Jelix 1.6.10pre.3307 may run without problems, but it is recommanded to fix warnings.',
-      'conclusion.notice'   =>'You can install an application for Jelix 1.6.10pre.3307, although there is a notice.',
-      'conclusion.notices'  =>'You can install an application for Jelix 1.6.10pre.3307, although there are notices.',
-      'conclusion.ok'       =>'You can install an application for Jelix 1.6.10pre.3307.',
+      'conclusion.error'    =>'You must fix the error in order to run an application correctly with Jelix 1.6.35-rc.3.',
+      'conclusion.errors'   =>'You must fix errors in order to run an application correctly with Jelix 1.6.35-rc.3.',
+      'conclusion.warning'  =>'Your application for Jelix 1.6.35-rc.3 may run without problems, but it is recommanded to fix the warning.',
+      'conclusion.warnings' =>'Your application for Jelix 1.6.35-rc.3 may run without problems, but it is recommanded to fix warnings.',
+      'conclusion.notice'   =>'You can install an application for Jelix 1.6.35-rc.3, although there is a notice.',
+      'conclusion.notices'  =>'You can install an application for Jelix 1.6.35-rc.3, although there are notices.',
+      'conclusion.ok'       =>'You can install an application for Jelix 1.6.35-rc.3.',
         'cannot.continue'       =>'Cannot continue the checking: %s',
         'extension.not.installed'=>'The extension %s is not available',
         'extension.optional.not.installed'=>'the optional extension %s is not available',
@@ -222,6 +226,10 @@ class jInstallerMessageProvider {
         'module.bad.dependency.version'=>'The module %s needs another version of the module %s (%s - %s)',
         'module.installer.class.not.found'=>'The installation class %s for the module %s doesn\'t exist',
         'module.upgrader.class.not.found'=>'The upgrade class %s for the module %s doesn\'t exist',
+        'module.upgrader.missing.version'=>'Target version is missing for the upgrade script %s of the module %s',
+        'module.missing.version'=>'Version is missing from the module.xml file of the module %s',
+
+        'installer.ini.missing.version'=>'The previous version of the module %s is missing from the installer.ini.php file',
 
         'install.entrypoint.start'  =>'Installation starts for the entry point %s',
         'install.entrypoint.end'    =>'All modules are installed or upgraded for the entry point %s',
@@ -284,7 +292,7 @@ class jInstallerMessageProvider {
 * check a jelix installation
 *
 * @package  jelix
-* @subpackage core
+* @subpackage installer
 * @author   Laurent Jouanneau
 * @contributor Bastien Jaillot
 * @contributor Olivier Demah, Brice Tence, Julien Issler
@@ -297,7 +305,7 @@ class jInstallerMessageProvider {
 /**
  * check an installation of a jelix application
  * @package  jelix
- * @subpackage core
+ * @subpackage installer
  * @since 1.0b2
  */
 class jInstallCheck {
@@ -328,7 +336,7 @@ class jInstallCheck {
         $this->reporter = $reporter;
         $this->messages = new jInstallerMessageProvider($lang);
         $this->buildProperties = array(
-   'PHP_VERSION_TARGET'=>'5.3',
+   'PHP_VERSION_TARGET'=>'7.4',
         );
     }
 
@@ -411,7 +419,7 @@ class jInstallCheck {
             $this->error('php.bad.version');
             $notice = $this->messages->get('php.version.required', $this->buildProperties['PHP_VERSION_TARGET']);
             $notice.= '. '.$this->messages->get('php.version.current',phpversion());
-            $this->reporter->showNotice($notice);
+            $this->reporter->message($notice, 'notice');
             $ok=false;
         }
         else if ($this->verbose) {
@@ -433,7 +441,6 @@ class jInstallCheck {
 
         if (count($this->databases)) {
             $driversInfos = jDbParameters::getDriversInfosList();
-            $req = ($this->dbRequired?'required':'optional');
             $okdb = false;
 
             array_combine($this->databases, array_fill(0, count($this->databases), false));
@@ -661,10 +668,10 @@ class jDbParameters
      * it gives the name of the jDb driver and the database type indicated in a profile.
      * (or corresponding to the PDO dsn indicated in the profile).
      *
-     * @param  array  $profile 'driver' key is required. It should indicates 'pdo' or a jdb driver.
+     * @param  array $profile 'driver' key is required. It should indicates 'pdo' or a jdb driver.
      *    if 'pdo', a 'dsn' key is required.
-     *
      * @return array ['database type', 'native extension name', 'pdo extension name', 'jdb driver name', 'pdo driver name']
+     * @throws Exception
      */
     protected function getDatabaseInfo($profile)
     {
@@ -699,7 +706,7 @@ class jDbParameters
             if (isset(self::$JdbDriverIndex[$driver])) {
                 $info = self::$driversInfos[self::$JdbDriverIndex[$driver]];
             } else {
-                $info = array('', '', '', $driver, '', '');
+                $info = array('', '', '', $driver, '');
                 $info[0] = (isset($profile['dbtype']) ? $profile['dbtype'] : '');
                 $info[1] = (isset($profile['phpext']) ? $profile['phpext'] : '');
             }
@@ -881,6 +888,8 @@ class jDbParameters
                 $dsn .= ';Database='.$profile['database'];
                 break;
             case 'odbc':
+            default:
+                throw new Exception('PDO: cannot construct the DSN string');
                 break;
         }
 

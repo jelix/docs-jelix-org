@@ -77,7 +77,7 @@ class jDbParameters
 			if(isset(self::$JdbDriverIndex[$driver])){
 				$info=self::$driversInfos[self::$JdbDriverIndex[$driver]];
 			}else{
-				$info=array('','','',$driver,'','');
+				$info=array('','','',$driver,'');
 				$info[0]=(isset($profile['dbtype'])? $profile['dbtype'] : '');
 				$info[1]=(isset($profile['phpext'])? $profile['phpext'] : '');
 			}
@@ -243,6 +243,8 @@ class jDbParameters
 				$dsn.=';Database='.$profile['database'];
 				break;
 			case 'odbc':
+			default:
+				throw new Exception('PDO: cannot construct the DSN string');
 				break;
 		}
 		return $dsn;

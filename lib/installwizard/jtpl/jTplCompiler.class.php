@@ -100,7 +100,7 @@ class jTplCompiler
             'escxml'=>'htmlspecialchars', 'eschtml'=>'htmlspecialchars',
             'strip_tags'=>'strip_tags', 'escurl'=>'rawurlencode',
             'capitalize'=>'ucwords', 'stripslashes'=>'stripslashes',
-            'upperfirst'=>'ucfirst');
+            'upperfirst'=>'ucfirst', 'json_encode'=>'json_encode');
 
     /**
      * stack of founded blocks
@@ -277,6 +277,8 @@ class jTplCompiler
      * It is called on each template tag {xxxx }
      * @param array $matches a matched item
      * @return string the corresponding php code of the tag (with php tag).
+     * @throws Exception
+     * @throws jException
      */
     public function _callback ($matches) {
         list(,$tag, $firstcar) = $matches;
@@ -685,7 +687,6 @@ class jTplCompiler
      *                      and the name of the plugin function, or false if not found
      */
     protected function _getPlugin ($type, $name) {
-        $foundPath = '';
 
         if (isset(jTplConfig::$pluginPathList[$this->outputType])) {
             foreach (jTplConfig::$pluginPathList[$this->outputType] as $path) {

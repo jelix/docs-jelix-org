@@ -4,7 +4,7 @@
 * @package    jelix
 * @subpackage core
 * @author     Laurent Jouanneau
-* @copyright  2011-2012 Laurent Jouanneau
+* @copyright  2011-2020 Laurent Jouanneau
 * @link       http://jelix.org
 * @licence    http://www.gnu.org/licenses/lgpl.html GNU Lesser General Public Licence, see LICENCE file
 */
@@ -72,7 +72,7 @@ class jAutoloader{
 			$class=&$className;
 		}
 		foreach($this->nsPaths as $ns=>$info){
-			if(strpos($className,$ns)===0){
+			if($className==$ns||strpos($className,$ns.'\\')===0){
 				$path='';
 				list($incPath,$ext,$psr0)=$info;
 				if($lastNsPos!==false){

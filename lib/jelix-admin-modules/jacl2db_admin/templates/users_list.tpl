@@ -14,12 +14,16 @@
 <form action="{formurl 'jacl2db_admin~users:index'}" method="get">
 <fieldset><legend>{@jacl2db_admin~acl2.filter.title@}</legend>
 {formurlparam 'jacl2db_admin~users:index'}
-    <select name="grpid">
+    <label for="user-list-group">{@jacl2db_admin~acl2.filter.group@}</label>
+    <select name="grpid" id="user-list-group">
     {foreach $groups as $group}
         <option value="{$group->id_aclgrp}" {if $group->id_aclgrp == $grpid}selected="selected"{/if}>{$group->name}</option>
     {/foreach}
      </select>
-    <input type="submit" value="{@jacl2db_admin~acl2.show.button@}" />
+    - 
+    <label for="user-list-filter">{@jacl2db_admin~acl2.filter.word@}</label>
+    <input type="text" name="filter" value="{$filter|eschtml}" id="user-list-filter" />
+    <br/><input type="submit" value="{@jacl2db_admin~acl2.show.button@}" />
 </fieldset>
 </form>
 
@@ -39,7 +43,13 @@
 {foreach $users as $user}
     <tr class="{if $line}odd{else}even{/if}">
         <td>{$user->login}</td>
-        <td>{foreach $user->groups as $group} {$group->name} {/foreach}</td>
+        <td>{foreach $user->groups as $key => $group} 
+            {if $key == $last}
+                {$group->name}
+            {else}
+                {$group->name.', '}
+            {/if}
+        {/foreach}</td>
         <td><a href="{jurl 'jacl2db_admin~users:rights', array('user'=>$user->login)}">{@jacl2db_admin~acl2.rights.link@}</a></td>
     </tr>
 {assign $line = !$line}
@@ -49,7 +59,7 @@
 {/if}
 
 {if $usersCount > $listPageSize}
-<div class="record-pages-list">{@jacl2db_admin~acl2.pages.links.label@} {pagelinks 'jacl2db_admin~users:index', array('grpid'=>$grpid),  $usersCount, $offset, $listPageSize, 'idx' }</div>
+<div class="record-pages-list">{@jacl2db_admin~acl2.pages.links.label@} {pagelinks 'jacl2db_admin~users:index', array('grpid'=>$grpid, 'filter'=>$filter),  $usersCount, $offset, $listPageSize, 'idx' }</div>
 {/if}
 
 

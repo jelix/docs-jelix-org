@@ -257,6 +257,7 @@ class jDaoMethod{
 			}
 		}
 		if(strlen($params['groupby'])){
+			trigger_error("jdao: groupby attribute on method element is deprecated because its behavior is not predictable",E_USER_DEPRECATED);
 			if($this->type=='select'||$this->type=='selectfirst'){
 				$this->_groupBy=preg_split("/[\s,]+/",$params['groupby']);
 				$props=$this->_parser->getProperties();
@@ -310,7 +311,7 @@ class jDaoMethod{
 		}
 	}
 	private $_op=array('eq'=>'=','neq'=>'<>','lt'=>'<','gt'=>'>','lteq'=>'<=','gteq'=>'>=',
-		'like'=>'LIKE','notlike'=>'NOT LIKE','isnull'=>'IS NULL','isnotnull'=>'IS NOT NULL','in'=>'IN','notin'=>'NOT IN',
+		'like'=>'LIKE','notlike'=>'NOT LIKE','ilike'=>'ILIKE','isnull'=>'IS NULL','isnotnull'=>'IS NOT NULL','in'=>'IN','notin'=>'NOT IN',
 		'binary_op'=>'dummy');
 	private $_attrcond=array('property','pattern','expr','operator','driver');
 	private function _addCondition($op,$cond){
@@ -694,7 +695,6 @@ class jDaoGenerator{
 			}
 			$src[]=' function '.$method->name.' ('. $mparam.'){';
 			$limit='';
-			$glueCondition=' WHERE ';
 			switch($method->type){
 				case 'delete':
 					$this->buildDeleteUserQuery($method,$src,$primaryFields);
@@ -776,13 +776,14 @@ class jDaoGenerator{
 		$sqlSet='';
 		foreach($method->getValues()as $propname=>$value){
 			if($value[1]){
-				preg_match_all('/\$([a-zA-Z0-9_]+)/',$value[0],$varMatches,PREG_OFFSET_CAPTURE);
+				$expression=$this->parseSQLFunction($value[0]);
+				preg_match_all('/\$([a-zA-Z0-9_]+)/',$expression,$varMatches,PREG_OFFSET_CAPTURE);
 				$parameters=$method->getParameters();
 				if(count($varMatches[0])){
 					$result='';
 					$len=0;
 					foreach($varMatches[1] as $k=>$var){
-						$result.=substr($value[0],$len,$len+$varMatches[0][$k][1]);
+						$result.=substr($expression,$len,$len+$varMatches[0][$k][1]);
 						$len+=$varMatches[0][$k][1] + strlen($varMatches[0][$k][0]);
 						if(in_array($var[0],$parameters)){
 							$result.='\'.'.$this->_preparePHPExpr($varMatches[0][$k][0],$updatefields[$propname],true).'.\'';
@@ -791,10 +792,14 @@ class jDaoGenerator{
 							$result.=$varMatches[0][$k][0];
 						}
 					}
-					$value[0]=$result;
+					if($len < strlen($expression)){
+						$result.=substr($expression,$len);
+					}
+					$expression=$result;
 				}
-				$sqlSet.=', '.$this->_encloseName($updatefields[$propname]->fieldName). '= '. $value[0];
-			}else{
+				$sqlSet.=', '.$this->_encloseName($updatefields[$propname]->fieldName). '= '. $expression;
+			}
+			else{
 				$sqlSet.=', '.$this->_encloseName($updatefields[$propname]->fieldName). '= '.
 					$this->tools->escapeValue($updatefields[$propname]->unifiedType,$value[0],false,true);
 			}
@@ -902,7 +907,12 @@ class jDaoGenerator{
 				$field.=' as '.$this->_encloseName($propname);
 			}
 		}else{
-			$field=str_replace(array("'","%s"),array("\\'",$table.$this->_encloseName($fieldname)),$pattern).' as '.$this->_encloseName($propname);
+			$expression=$this->parseSQLFunction($pattern);
+			$field=str_replace(
+				array("'","%s"),
+				array("\\'",$table.$this->_encloseName($fieldname)),
+				$expression)
+				.' as '.$this->_encloseName($propname);
 		}
 		return $field;
 	}
@@ -978,8 +988,6 @@ class jDaoGenerator{
 		if($using===null){
 			$using=$this->_dataParser->getProperties();
 		}
-		$tb=$this->_dataParser->getTables();
-		$tb=$tb[$this->_dataParser->getPrimaryTable()]['realname'];
 		foreach($using as $id=>$field){
 			if(!$field->isPK)
 				continue;
@@ -1017,10 +1025,12 @@ class jDaoGenerator{
 			}
 			$value=$this->_preparePHPExpr('$'.$prefixfield.$fieldName,$field,true);
 			if($pattern!=''){
-				if(strpos($field->$pattern,"'")!==false&&strpos($field->$pattern,"\\'")===false){
-					$values[$field->name]=sprintf(str_replace("'","\\'",$field->$pattern),'\'.'.$value.'.\'');
-				}else{
-					$values[$field->name]=sprintf($field->$pattern,'\'.'.$value.'.\'');
+				$expression=$this->parseSQLFunction($field->$pattern);
+				if(strpos($expression,"'")!==false&&strpos($expression,"\\'")===false){
+					$values[$field->name]=sprintf(str_replace("'","\\'",$expression),'\'.'.$value.'.\'');
+				}
+				else{
+					$values[$field->name]=sprintf($expression,'\'.'.$value.'.\'');
 				}
 			}else{
 				$values[$field->name]='\'.'.$value.'.\'';
@@ -1048,7 +1058,6 @@ class jDaoGenerator{
 		}
 		$order=array();
 		foreach($cond->order as $name=>$way){
-			$ord='';
 			if(isset($fields[$name])){
 				if($withPrefix)
 					$ord=$this->_encloseName($fields[$name]->table).'.'.$this->_encloseName($fields[$name]->fieldName);
@@ -1082,7 +1091,9 @@ class jDaoGenerator{
 			}
 			$first=false;
 			$prop=$fields[$cond['field_id']];
-			$pattern=(isset($cond['field_pattern'])&&!empty($cond['field_pattern']))? $cond['field_pattern'] : '%s';
+			$pattern=(isset($cond['field_pattern'])&&!empty($cond['field_pattern']))?
+				$this->parseSQLFunction($cond['field_pattern']):
+				'%s';
 			if($withPrefix){
 				if($pattern=='%s'){
 					$f=$this->_encloseName($prop->table).'.'.$this->_encloseName($prop->fieldName);
@@ -1110,10 +1121,12 @@ class jDaoGenerator{
 				$r.=$cond['operator'].' ';
 			}else{
 				if($cond['isExpr']){
-					$value=str_replace("'","\\'",$cond['value']);
-					if($value[0]=='$'){
+					if($cond['value'][0]=='$'){
+						$value=str_replace("'","\\'",$cond['value']);
 						$value='\'.'.$this->_preparePHPExpr($value,$prop,!$prop->requiredInConditions,$cond['operator']).'.\'';
 					}else{
+						$value=$this->parseSQLFunction($cond['value']);
+						$value=str_replace("'","\\'",$value);
 						foreach($params as $param){
 							$value=str_replace('$'.$param,'\'.'.$this->_preparePHPExpr('$'.$param,$prop,!$prop->requiredInConditions).'.\'',$value);
 						}
@@ -1221,6 +1234,9 @@ class jDaoGenerator{
 	}
 	protected function buildUpdateAutoIncrementPK($pkai){
 		return '       $record->'.$pkai->name.'= $this->_conn->lastInsertId();';
+	}
+	protected function parseSQLFunction($expression){
+		return $this->tools->parseSQLFunctionAndConvert($expression);
 	}
 }
 class jDaoParser{

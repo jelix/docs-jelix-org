@@ -23,7 +23,6 @@ class jDbPDOConnection extends PDO{
 		$prof=$profile;
 		$user='';
 		$password='';
-		$dsn='';
 		if(isset($profile['dsn'])){
 			$this->dbms=$this->driverName=substr($profile['dsn'],0,strpos($profile['dsn'],':'));
 			$dsn=$profile['dsn'];
@@ -33,17 +32,26 @@ class jDbPDOConnection extends PDO{
 			}
 		}
 		else{
-			$this->dbms=$this->driverName=$profile['driver'];
-			if($this->dbms=='sqlite3'){
-				$this->dbms=$this->driverName='sqlite';
+			$this->dbms=$profile['driver'];
+			if($this->dbms=='mysqli'){
+				$this->dbms='mysql';
 			}
+			else if($this->dbms=='sqlite3'){
+				$this->dbms='sqlite';
+			}
+			$this->driverName=$this->dbms;
 			$db=$profile['database'];
-			$dsn=$this->dbms.':host='.$profile['host'].';dbname='.$db;
 			if($this->dbms!='sqlite'){
 				$dsn=$this->dbms.':host='.$profile['host'].';dbname='.$db;
 			}
 			else{
 				$dsn='sqlite:'.$this->_parseSqlitePath($db);
+			}
+			if($this->dbms=='pgsql'&&
+				isset($profile['pg_options'])&&
+				$profile['pg_options']!=''
+			){
+				$dsn.=';options='.$profile['pg_options'];
 			}
 		}
 		if(isset($prof['usepdo'])){
@@ -59,7 +67,12 @@ class jDbPDOConnection extends PDO{
 		}
 		unset($prof['driver']);
 		parent::__construct($dsn,$user,$password,$prof);
-		$this->setAttribute(PDO::ATTR_STATEMENT_CLASS,array('jDbPDOResultSet'));
+		if(version_compare(phpversion(),"8.0")< 0){
+			$this->setAttribute(PDO::ATTR_STATEMENT_CLASS,array('jDbPDOResultSet7'));
+		}
+		else{
+			$this->setAttribute(PDO::ATTR_STATEMENT_CLASS,array('jDbPDOResultSet'));
+		}
 		$this->setAttribute(PDO::ATTR_ERRMODE,PDO::ERRMODE_EXCEPTION);
 		if($this->dbms=='mysql'){
 			$this->setAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY,true);
@@ -95,20 +108,20 @@ class jDbPDOConnection extends PDO{
 			return jApp::varPath('db/sqlite/'.$path);
 		}
 	}
-	public function query(){
-		$args=func_get_args();
-		switch(count($args)){
-		case 1:
-			$rs=parent::query($args[0]);
-			$rs->setFetchMode(PDO::FETCH_OBJ);
+	public function getProfileName(){
+		return $this->profile['_name'];
+	}
+	public function query($queryString,$fetchmode=PDO::FETCH_OBJ,...$fetchModeArgs)
+	{
+		if(count($fetchModeArgs)===0){
+			$rs=parent::query($queryString);
+			$rs->setFetchMode($fetchmode);
 			return $rs;
-		case 2:
-			return parent::query($args[0],$args[1]);
-		case 3:
-			return parent::query($args[0],$args[1],$args[2]);
-		default:
-			throw new Exception('jDbPDOConnection: bad argument number in query');
 		}
+		if(count($fetchModeArgs)===1||$fetchModeArgs[1]===array()){
+			return parent::query($queryString,$fetchmode,$fetchModeArgs[0]);
+		}
+		return parent::query($queryString,$fetchmode,$fetchModeArgs[0],$fetchModeArgs[1]);
 	}
 	public function limitQuery($queryString,$limitOffset=null,$limitCount=null){
 		if($limitOffset!==null&&$limitCount!==null){
@@ -123,8 +136,48 @@ class jDbPDOConnection extends PDO{
 				$queryString='SELECT * FROM ( SELECT ocilimit.*, rownum rnum FROM ('.$queryString.') ocilimit WHERE
                     rownum<'.(intval($limitOffset)+intval($limitCount)).'  ) WHERE rnum >='.intval($limitOffset);
 			}
+			elseif($this->dbms=='sqlsrv'){
+		$queryString=$this->limitQuerySqlsrv($queryString,$limitOffset,$limitCount);
+		}
 		}
 		return $this->query($queryString);
+	}
+	protected function limitQuerySqlsrv($queryString,$limitOffset=null,$limitCount=null){
+		$queryString=preg_replace('/^SELECT TOP[ ]\d*\s*/i','SELECT ',trim($queryString));
+		$distinct=false;
+		list($select,$from)=preg_split('/\sFROM\s/mi',$queryString,2);
+		$fields=preg_split('/\s*,\s*/',$select);
+		$firstField=preg_replace('/^\s*SELECT\s+/','',array_shift($fields));
+		if(stripos($firstField,'DISTINCT')!==false){
+			$firstField=preg_replace('/DISTINCT/i','',$firstField);
+			$distinct=true;
+		}
+		$orderby=stristr($from,'ORDER BY');
+		if($orderby===false){
+			if(stripos($firstField,' as ')!==false){
+			list($field,$key)=preg_split('/ as /',$firstField);
+			}
+			else{
+			$key=$firstField;
+			}
+			$orderby=' ORDER BY '.strstr(strstr($key,'.'),'[').' ASC';
+			$from.=$orderby;
+		}else{
+		if(strpos($orderby,'.',8)){
+		$orderby=' ORDER BY ' . substr($orderby,strpos($orderby,'.')+ 1);
+		}
+	}
+		if(!$distinct)
+			$queryString='SELECT TOP ';
+		else
+			$queryString='SELECT DISTINCT TOP ';
+		$queryString.=($limitCount+$limitOffset). ' '.$firstField.','.implode(',',$fields).' FROM '.$from;
+		$queryString='SELECT TOP ' . $limitCount . ' * FROM (' . $queryString . ') AS inner_tbl ';
+		$order_inner=preg_replace(array('/\bASC\b/i','/\bDESC\b/i'),array('_DESC','_ASC'),$orderby);
+		$order_inner=str_replace(array('_DESC','_ASC'),array('DESC','ASC'),$order_inner);
+		$queryString.=$order_inner;
+		$queryString='SELECT TOP ' . $limitCount . ' * FROM (' . $queryString . ') AS outer_tbl '.$orderby;
+		return $queryString;
 	}
 	public function setAutoCommit($state=true){
 		$this->setAttribute(PDO::ATTR_AUTOCOMMIT,$state);

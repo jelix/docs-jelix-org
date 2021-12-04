@@ -35,6 +35,9 @@ error_message = "jauth~autherror.notlogged"
 ; action to execute on a missing authentification when on_error=2
 on_error_action = "jauth~login:out"
 
+; action to execute on a missing authentification when on_error=2 and request is ajax
+on_ajax_error_action=
+
 ; action to execute when a bad ip is checked with secure_with_ip=1 and on_error=2
 bad_ip_action = "jauth~login:out"
 
@@ -57,13 +60,19 @@ enable_after_login_override = off
 ; says if after_logout can be overloaded by a "auth_url_return" parameter in the url/form for the login
 enable_after_logout_override = off
 
+; list of domains allowed for url indicated into auth_url_return.
+; should be a string for a single domain
+url_return_external_allowed_domains=
+; or a list like that:
+;url_return_external_allowed_domains[]=
+
 ;============ Parameters for the persistance of the authentification
 
 ; enable the persistance of the authentification between two sessions
 persistant_enable=off
 
 ; key to use to crypt the password in the cookie
-; Warning: has been moved to localconfig.ini.php, section coordplugin_auth
+; Warning: has been moved to liveconfig.ini.php, section coordplugin_auth
 ;persistant_crypt_key=
 
 ; the name of the cookie which is used to store data for the authentification
@@ -94,7 +103,9 @@ dao = ""
 ; profile to use for jDb 
 profile = ""
 
-; name of the php function to crypt the password in the database
+; name of the php function used to hash password in the database
+; It is deprecated but still used to convert password hash
+; to new hashes with password_hash_method
 password_crypt_function = sha1
 ; if you want to use a salt with sha1:
 ;password_crypt_function = "1:sha1WithSalt"
@@ -118,7 +129,9 @@ uploadsDirectory= ""
 ; selector of the class
 class = ""
 
-; name of the php function to crypt the password in the database
+; name of the php function used to hash password.
+; It is deprecated but still used to convert password hash
+; to new hashes with password_hash_method
 password_crypt_function = sha1
 ; if you want to use a salt with sha1:
 ;password_crypt_function = "1:sha1WithSalt"
@@ -152,8 +165,7 @@ searchFilter=
 ; attributes to retrieve for the search, example for Active Directory: "cn,distinguishedName,name"
 searchAttributes=
 
-; name of the php function to crypt the password in the database
-password_crypt_function = sha1
-; if you want to use a salt with sha1:
-;password_crypt_function = "1:sha1WithSalt"
-;password_salt = "here_your_salt"
+; the name of the ldap property used for the login field
+uidProperty=cn
+; the objectclass to use for a user
+ldapUserObjectClass=user

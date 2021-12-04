@@ -9,7 +9,7 @@
 * @copyright   2005-2012 Laurent Jouanneau, 2008 Laurent Raufaste
 * @copyright   2011 Julien Issler
 * @copyright   2001-2005 CopixTeam
-* 
+*
 * Some of these classes were get originally from the Copix project
 * (CopixDbFactory, CopixDbConnection, Copix 2.3dev20050901, http://www.copix.org)
 * Some lines of code are still copyrighted 2001-2005 CopixTeam (LGPL licence).
@@ -53,12 +53,17 @@ abstract class jDbConnection{
 	function __destruct(){
 		if($this->_connection!==null){
 			$this->_disconnect();
+			$this->_connection=null;
 		}
 	}
 	function disconnect(){
 		if($this->_connection!==null){
 			$this->_disconnect();
+			$this->_connection=null;
 		}
+	}
+	public function getProfileName(){
+		return $this->profile['_name'];
 	}
 	public function query($queryString,$fetchmode=self::FETCH_OBJ,$arg1=null,$ctoargs=null){
 		$this->lastQuery=$queryString;
@@ -122,6 +127,16 @@ abstract class jDbConnection{
 			return $table_name;
 		return $this->profile['table_prefix'].$table_name;
 	}
+	public function unprefixTable($tableName){
+		if(!isset($this->profile['table_prefix'])||$this->profile['table_prefix']==''){
+			return $tableName;
+		}
+		$prefix=$this->profile['table_prefix'];
+		if(strpos($tableName,$prefix)!==0){
+			return $tableName;
+		}
+		return substr($tableName,strlen($prefix));
+	}
 	public function hasTablePrefix(){
 		return(isset($this->profile['table_prefix'])&&$this->profile['table_prefix']!='');
 	}
@@ -172,6 +187,64 @@ abstract class jDbConnection{
 		}
 		return $this->_schema;
 	}
+	protected function findParameters($sql,$marker){
+		$queryParts=preg_split("/([`\"'\\\\])/",$sql,-1,PREG_SPLIT_DELIM_CAPTURE);
+		$finalQuery='';
+		$ignoreNext=false;
+		$insideString=false;
+		$this->foundParameters=array();
+		$this->numericalMarker=(substr($marker,-1)=='%');
+		if($this->numericalMarker){
+			$this->parameterMarker=substr($marker,0,-1);
+		}
+		else{
+			$this->parameterMarker=$marker;
+		}
+		foreach($queryParts as $token){
+			if($token=='\\'){
+				$ignoreNext=true;
+				$finalQuery.=$token;
+			}
+			else if($token=='"'||$token=="'"||$token=='`'){
+				if($ignoreNext){
+					$ignoreNext=false;
+					$finalQuery.=$token;
+				}
+				else if($insideString==$token){
+					$insideString=false;
+					$finalQuery.=$token;
+				}
+				else if($insideString===false){
+					$insideString=$token;
+					$finalQuery.=$token;
+				}
+				else if($insideString!==false){
+					$finalQuery.=$token;
+				}
+			}
+			else if($insideString!==false){
+				$finalQuery.=$token;
+			}
+			else{
+				$finalQuery.=preg_replace_callback("/(\\:)([a-zA-Z0-9_]+)/",array($this,'_replaceParam'),$token);
+			}
+		}
+		return array($finalQuery,$this->foundParameters);
+	}
+	protected function _replaceParam($matches){
+		if($this->numericalMarker){
+			$index=array_search($matches[2],$this->foundParameters);
+			if($index===false){
+				$this->foundParameters[]=$matches[2];
+				$index=count($this->foundParameters)-1;
+			}
+			return $this->parameterMarker.($index+1);
+		}
+		else{
+			$this->foundParameters[]=$matches[2];
+			return $this->parameterMarker;
+		}
+	}
 }
 abstract class jDbResultSet implements Iterator{
 	protected $_idResult=null;
@@ -202,17 +275,18 @@ abstract class jDbResultSet implements Iterator{
 	}
 	public function fetch(){
 		$result=$this->_fetch();
-		if(!$result)
+		if(!$result){
 			return $result;
-		if(count($this->modifier)){
-			foreach($this->modifier as $m)
-				call_user_func_array($m,array($result,$this));
 		}
-		if($this->_fetchMode==jDbConnection::FETCH_OBJ)
+		if($this->_fetchMode==jDbConnection::FETCH_OBJ){
+			$this->applyModifiers($result);
 			return $result;
+		}
 		if($this->_fetchMode==jDbConnection::FETCH_CLASS){
-			if($result instanceof $this->_fetchModeParam)
+			if($result instanceof $this->_fetchModeParam){
+				$this->applyModifiers($result);
 				return $result;
+			}
 			$values=get_object_vars($result);
 			$o=$this->_fetchModeParam;
 			$result=new $o();
@@ -227,7 +301,15 @@ abstract class jDbResultSet implements Iterator{
 				$result->$k=$value;
 			}
 		}
+		$this->applyModifiers($result);
 		return $result;
+	}
+	protected function applyModifiers($result){
+		if(count($this->modifier)){
+			foreach($this->modifier as $m){
+				call_user_func_array($m,array($result,$this));
+			}
+		}
 	}
 	public function fetchAll(){
 		$result=array();
@@ -277,7 +359,7 @@ class jDb{
 		$dbw=new jDbWidget(self::getConnection($name));
 		return $dbw;
 	}
-	public function testProfile($profile){
+	public static function testProfile($profile){
 		try{
 			self::_createConnector($profile);
 			$ok=true;
@@ -299,9 +381,10 @@ class jDb{
 			return $dbh;
 		}
 	}
-	public static function floatToStr($value){
+	public static function floatToStr($value)
+	{
 		if(is_float($value)){
-			return rtrim(rtrim(sprintf("%.20F",$value),"0"),'.');
+			return var_export($value,true);
 		}
 		else if(is_integer($value)){
 			return sprintf('%d',$value);

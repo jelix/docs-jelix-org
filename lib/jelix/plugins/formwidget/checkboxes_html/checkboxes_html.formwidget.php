@@ -2,7 +2,7 @@
 /* comments & extra-whitespaces have been removed by jBuildTools*/
 /**
 * @package     jelix
-* @subpackage  formwidgets
+* @subpackage  forms_widget_plugin
 * @author      Claudio Bernardes
 * @contributor Laurent Jouanneau, Julien Issler, Dominique Papin
 * @copyright   2012 Claudio Bernardes
@@ -18,7 +18,7 @@ class checkboxes_htmlFormWidget extends \jelix\forms\HtmlWidget\WidgetBase{
 	}
 	function outputControl(){
 		$attr=$this->getControlAttributes();
-		$value=$this->getValue($this->ctrl);
+		$value=$this->getValue();
 		$attr['name']=$this->ctrl->ref.'[]';
 		unset($attr['title']);
 		if(is_array($value)&&count($value)==1)

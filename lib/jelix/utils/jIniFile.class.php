@@ -4,8 +4,8 @@
 * @package    jelix
 * @subpackage utils
 * @author     Loic Mathaud
-* @contributor Laurent Jouanneau
-* @copyright  2006 Loic Mathaud, 2008-2012 Laurent Jouanneau
+* @contributor Laurent Jouanneau, Erika31, Julien Issler
+* @copyright  2006 Loic Mathaud, 2008-2012 Laurent Jouanneau, 2017 Erika31, 2017 Julien Issler
 * @link        http://www.jelix.org
 * @licence  http://www.gnu.org/licenses/lgpl.html GNU Lesser General Public Licence, see LICENCE file
 */
@@ -33,7 +33,7 @@ class jIniFile{
 			fwrite($f,$header.$result);
 			fclose($f);
 			if($chmod){
-				chmod($f,$chmod);
+				chmod($filename,$chmod);
 			}
 		}else{
 			if(jApp::config()){
@@ -49,9 +49,12 @@ class jIniFile{
 			foreach($value as $v)
 				$res.=self::_iniValue($key.'[]',$v);
 			return $res;
-		}else if($value==''
-				||is_numeric($value)
-				||(preg_match("/^[\w-.]*$/",$value)&&strpos("\n",$value)===false)){
+		}elseif($value==''
+			||is_numeric($value)
+			||(is_string($value)&&
+				preg_match("/^[\w\\-\\.]*$/",$value)&&
+				strpos("\n",$value)===false)
+		){
 			return $key.'='.$value."\n";
 		}else if($value===false){
 			return $key."=0\n";

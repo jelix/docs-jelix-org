@@ -2,7 +2,7 @@
 /* comments & extra-whitespaces have been removed by jBuildTools*/
 /**
 * @package     jelix
-* @subpackage  formwidgets
+* @subpackage  forms_widget_plugin
 * @author      Claudio Bernardes
 * @contributor Laurent Jouanneau, Julien Issler, Dominique Papin
 * @copyright   2012 Claudio Bernardes
@@ -35,7 +35,7 @@ class listbox_htmlFormWidget extends \jelix\forms\HtmlWidget\WidgetBase{
 	function outputControl(){
 		$ctrl=$this->ctrl;
 		$attr=$this->getControlAttributes();
-		$value=$this->getValue($ctrl);
+		$value=$this->getValue();
 		if(isset($attr['readonly'])){
 			$attr['disabled']='disabled';
 			unset($attr['readonly']);
@@ -48,14 +48,23 @@ class listbox_htmlFormWidget extends \jelix\forms\HtmlWidget\WidgetBase{
 			echo '<select';
 			$this->_outputAttr($attr);
 			echo ">\n";
-			if($ctrl->emptyItemLabel!==null)
-				echo '<option value=""',(in_array('',$value,true)?' selected="selected"':''),'>',htmlspecialchars($ctrl->emptyItemLabel),"</option>\n";
-			if(is_array($value)&&count($value)==1)
+			if($ctrl->emptyItemLabel!==null){
+				if(is_array($value)){
+					$selected=in_array('',$value,true);
+				}
+				else{
+					$selected=$value=='';
+				}
+				echo '<option value=""',($selected?' selected="selected"':''),'>',htmlspecialchars($ctrl->emptyItemLabel),"</option>\n";
+			}
+			if(is_array($value)&&count($value)==1){
 				$value=$value[0];
+			}
 			if(is_array($value)){
 				$value=array_map(function($v){return (string) $v;},$value);
 				$this->fillSelect($ctrl,$value);
-			}else{
+			}
+			else{
 				$this->fillSelect($ctrl,(string)$value);
 			}
 			echo "</select>\n";

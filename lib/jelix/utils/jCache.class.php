@@ -1,14 +1,17 @@
 <?php
 /* comments & extra-whitespaces have been removed by jBuildTools*/
 /**
-* @package     jelix
-* @subpackage  cache
-* @author      Tahina Ramaroson
-* @contributor Sylvain de Vathaire, Brice Tence, Laurent Jouanneau
-* @copyright   2009 Neov, 2010 Brice Tence, 2011 Laurent Jouanneau
-* @link        http://jelix.org
-* @licence     GNU Lesser General Public Licence see LICENCE file or http://www.gnu.org/licenses/lgpl.html
-*/
+ * @package     jelix
+ * @subpackage  cache
+ *
+ * @author      Tahina Ramaroson
+ * @contributor Sylvain de Vathaire, Brice Tence, Laurent Jouanneau
+ *
+ * @copyright   2009 Neov, 2010 Brice Tence, 2011-2021 Laurent Jouanneau
+ *
+ * @see        http://jelix.org
+ * @licence     GNU Lesser General Public Licence see LICENCE file or http://www.gnu.org/licenses/lgpl.html
+ */
 interface jICacheDriver{
 	function __construct($params);
 	public function get($key);
@@ -21,6 +24,12 @@ interface jICacheDriver{
 	public function flush();
 }
 class jCache{
+	protected static function isResource($value){
+		if(function_exists('\\Jelix\\Utilities\\is_resource')){
+			return \Jelix\Utilities\is_resource($value);
+		}
+		return is_resource($value);
+	}
 	public static function get($key,$profile=''){
 		$drv=self::getDriver($profile);
 		if(!$drv->enabled){
@@ -38,7 +47,7 @@ class jCache{
 	}
 	public static function set($key,$value,$ttl=null,$profile=''){
 		$drv=self::getDriver($profile);
-		if(!$drv->enabled||is_resource($value)){
+		if(!$drv->enabled||self::isResource($value)){
 			return false;
 		}
 		self::_checkKey($key);
@@ -86,7 +95,7 @@ class jCache{
 				$lockTtl=max(30,min($lockTtl,$drv->ttl));
 				$drv->set($lockKey,true,$lockTtl);
 				$data=self::_doFunctionCall($fn,$fnargs);
-				if(!is_resource($data)){
+				if(!self::isResource($data)){
 					if(is_null($ttl)){
 						$ttl=$drv->ttl;
 					}elseif(is_string($ttl)){
@@ -134,7 +143,7 @@ class jCache{
 	}
 	public static function replace($key,$value,$ttl=null,$profile=''){
 		$drv=self::getDriver($profile);
-		if(!$drv->enabled||is_resource($value)){
+		if(!$drv->enabled||self::isResource($value)){
 			return false;
 		}
 		self::_checkKey($key);
@@ -153,7 +162,7 @@ class jCache{
 	}
 	public static function add($key,$value,$ttl=null,$profile=''){
 		$drv=self::getDriver($profile);
-		if(!$drv->enabled||is_resource($value)){
+		if(!$drv->enabled||self::isResource($value)){
 			return false;
 		}
 		self::_checkKey($key);
@@ -203,9 +212,16 @@ class jCache{
 		return $driver;
 	}
 	protected static function _checkKey($key){
-		if(!preg_match('/^[a-z0-9_\\/:\\.\\-]+$/i',$key)||strlen($key)> 255){
+		if(!preg_match('/^[\\w0-9_\\/:\\.\\-@#&]+$/iu',$key)||strlen($key)> 255){
 			throw new jException('jelix~cache.error.invalid.key',$key);
 		}
+	}
+	public static function normalizeKey($key){
+		if(preg_match('/[^\\w0-9_\\/:\\.\\-@#&]/iu',$key)){
+			$key=preg_replace('/[^\\w0-9_\\/:\\.\\-@#&]/iu','_',$key)
+				.'#'.sha1($key);
+		}
+		return $key;
 	}
 	protected static function _doFunctionCall($fn,$fnargs){
 		if(!is_callable($fn)){

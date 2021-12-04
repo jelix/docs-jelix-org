@@ -9,7 +9,7 @@
 * @contributor Laurent Raufaste
 * @contributor Julien Issler
 * @contributor Alexandre Zanelli
-* @copyright  2001-2005 CopixTeam, 2005-2012 Laurent Jouanneau, 2007-2008 Laurent Raufaste
+* @copyright  2001-2005 CopixTeam, 2005-2020 Laurent Jouanneau, 2007-2008 Laurent Raufaste
 * @copyright  2009 Julien Issler
 * This class was get originally from the Copix project (CopixDBConnectionPostgreSQL, Copix 2.3dev20050901, http://www.copix.org)
 * Few lines of code are still copyrighted 2001-2005 CopixTeam (LGPL licence).
@@ -58,7 +58,7 @@ class pgsqlDbConnection extends jDbConnection{
 		return $this->_doExec('ROLLBACK');
 	}
 	public function prepare($query){
-		$id=(string)mktime();
+		$id=microtime();
 		$res=pg_prepare($this->_connection,$id,$query);
 		if($res){
 			$rs=new pgsqlDbResultSet($res,$id,$this->_connection);
@@ -77,8 +77,10 @@ class pgsqlDbConnection extends jDbConnection{
 		$funcconnect=(isset($this->profile['persistent'])&&$this->profile['persistent'] ? 'pg_pconnect':'pg_connect');
 		$str='';
 		if(isset($this->profile['service'])&&$this->profile['service']!=''){
-			$useService=true;
 			$str='service=\''.$this->profile['service'].'\''.$str;
+			if(isset($this->profile['database'])&&$this->profile['database']!=''){
+				$str.=' dbname=\''.$this->profile['database'].'\'';
+			}
 		}
 		else{
 			if($this->profile['host']!='')
@@ -99,14 +101,28 @@ class pgsqlDbConnection extends jDbConnection{
 		if(isset($this->profile['timeout'])&&$this->profile['timeout']!=''){
 			$str.=' connect_timeout=\''.$this->profile['timeout'].'\'';
 		}
-		if($cnx=@$funcconnect($str)){
+		if(isset($this->profile['pg_options'])&&$this->profile['pg_options']!=''){
+			$str.=' options=\''.$this->profile['pg_options'].'\'';
+		}
+		if(isset($this->profile['force_new'])&&$this->profile['force_new']){
+			$cnx=@$funcconnect($str,PGSQL_CONNECT_FORCE_NEW);
+		}
+		else{
+			$cnx=@$funcconnect($str);
+		}
+		if($cnx){
 			if(isset($this->profile['force_encoding'])&&$this->profile['force_encoding']==true
 				&&isset($this->_charsets[jApp::config()->charset])){
 				pg_set_client_encoding($cnx,$this->_charsets[jApp::config()->charset]);
 			}
 		}
 		else{
-			throw new jException('jelix~db.error.connection',$this->profile['host']);
+			if(isset($this->profile['service'])){
+				$uri=$this->profile['service'];
+			}else{
+				$uri=$this->profile['host'];
+			}
+			throw new jException('jelix~db.error.connection',$uri);
 		}
 		if(isset($this->profile['search_path'])&&trim($this->profile['search_path'])!=''){
 			$sql='SET search_path TO '.$this->profile['search_path'];
@@ -117,14 +133,13 @@ class pgsqlDbConnection extends jDbConnection{
 		return $cnx;
 	}
 	protected function _disconnect(){
-		return pg_close($this->_connection);
+		return @pg_close($this->_connection);
 	}
 	protected function _doQuery($queryString){
 		if($qI=@pg_query($this->_connection,$queryString)){
 			$rs=new pgsqlDbResultSet($qI);
 			$rs->_connector=$this;
 		}else{
-			$rs=false;
 			throw new jException('jelix~db.error.query.bad',pg_last_error($this->_connection).'('.$queryString.')');
 		}
 		return $rs;
@@ -175,7 +190,7 @@ class pgsqlDbConnection extends jDbConnection{
 		switch($id){
 			case self::ATTR_CLIENT_VERSION:
 				$v=pg_version($this->_connection);
-				return(array_key_exists($v['client'])? $v['client'] : '');
+				return(array_key_exists('client',$v)? $v['client'] : '');
 			case self::ATTR_SERVER_VERSION:
 				return pg_parameter_status($this->_connection,"server_version");
 				break;
@@ -183,5 +198,23 @@ class pgsqlDbConnection extends jDbConnection{
 		return "";
 	}
 	public function setAttribute($id,$value){
+	}
+	protected $serverVersion=0;
+	public function getServerMajorVersion(){
+		if($this->serverVersion===0){
+			$version=$this->getAttribute($this::ATTR_SERVER_VERSION);
+			if($version!=''){
+				$version=explode('.',$version);
+				$this->serverVersion=intval($version[0]);
+			}
+		}
+		return $this->serverVersion;
+	}
+	public function getSearchPath()
+	{
+		if(isset($this->profile['search_path'])&&trim($this->profile['search_path'])!=''){
+			return preg_split('/\s*,\s*/',trim($this->profile['search_path']));
+		}
+		return array('public');
 	}
 }

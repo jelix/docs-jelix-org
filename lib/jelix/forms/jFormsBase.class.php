@@ -7,13 +7,13 @@
 * @contributor Dominique Papin
 * @contributor Bastien Jaillot, Steven Jehannet
 * @contributor Christophe Thiriot, Julien Issler, Olivier Demah
-* @copyright   2006-2010 Laurent Jouanneau, 2007 Dominique Papin, 2008 Bastien Jaillot
+* @copyright   2006-2020 Laurent Jouanneau, 2007 Dominique Papin, 2008 Bastien Jaillot
 * @copyright   2008-2009 Julien Issler, 2009 Olivier Demah, 2010 Steven Jehannet
 * @link        http://www.jelix.org
 * @licence     http://www.gnu.org/licenses/lgpl.html GNU Lesser General Public Licence, see LICENCE file
 */
-require(JELIX_LIB_PATH.'forms/jFormsControl.class.php');
-require(JELIX_LIB_PATH.'forms/jFormsDatasource.class.php');
+require_once(JELIX_LIB_PATH.'forms/jFormsControl.class.php');
+require_once(JELIX_LIB_PATH.'forms/jFormsDatasource.class.php');
 require_once(JELIX_LIB_UTILS_PATH.'jDatatype.class.php');
 class jExceptionForms extends jException{
 }
@@ -50,6 +50,9 @@ abstract class jFormsBase{
 				throw new jException("jelix~formserr.invalid.token");
 		}
 		foreach($this->rootControls as $name=>$ctrl){
+			if($ctrl instanceof jFormsControlSecret||$ctrl instanceof jFormsControlSecretConfirm){
+				jApp::config()->error_handling['sensitiveParameters'][]=$ctrl->ref;
+			}
 			if(!$this->container->isActivated($name)||$this->container->isReadOnly($name))
 				continue;
 			$ctrl->setValueFromRequest($req);
@@ -85,8 +88,13 @@ abstract class jFormsBase{
 				if(count($this->container->data[$name])==1){
 					$object->$name=$this->container->data[$name][0];
 				}
-				else
-					continue;
+				else{
+					if(jApp::config()->forms['flagPrepareObjectFromControlsContactArrayValues']){
+						$object->$name=implode('_',$this->container->data[$name]);
+					}else{
+						continue;
+					}
+				}
 			}
 			else{
 				$object->$name=$this->container->data[$name];
@@ -124,10 +132,18 @@ abstract class jFormsBase{
 		}
 	}
 	public function initFromDao($daoSelector,$key=null,$dbProfile=''){
-		if($key===null)
-			$key=$this->container->formId;
-		$dao=jDao::create($daoSelector,$dbProfile);
-		$daorec=$dao->get($key);
+		if(is_object($daoSelector)){
+			$daorec=$daoSelector;
+			$daoSelector=$daorec->getSelector();
+			$dao=jDao::get($daoSelector,$dbProfile);
+		}
+		else{
+			$dao=jDao::create($daoSelector,$dbProfile);
+			if($key===null){
+				$key=$this->container->formId;
+			}
+			$daorec=$dao->get($key);
+		}
 		if(!$daorec){
 			if(is_array($key))
 				$key=var_export($key,true);
@@ -236,8 +252,12 @@ abstract class jFormsBase{
 		$this->container->errors[$field]=$mesg;
 	}
 	public function setData($name,$value){
-		if(!isset($this->controls[$name]))
-			throw new jExceptionForms('jelix~formserr.unknown.control2',array($name,$this->sel));
+		if(!isset($this->controls[$name])){
+			throw new jExceptionForms(
+				'jelix~formserr.unknown.control2',
+				array($name,$this->sel)
+			);
+		}
 		$this->controls[$name]->setData($value);
 	}
 	public function getData($name){
@@ -278,38 +298,23 @@ abstract class jFormsBase{
 	public function initModifiedControlsList(){
 		$this->container->originalData=$this->container->data;
 	}
-	public function getModifiedControls(){
+	public function getModifiedControls()
+	{
 		if(count($this->container->originalData)){
 			$result=array();
 			$orig=& $this->container->originalData;
-			foreach($this->container->data as $k=>$v1){
-				if(!array_key_exists($k,$orig)){
+			foreach($this->controls as $ref=>$ctrl){
+				if(!array_key_exists($ref,$orig)){
 					continue;
 				}
-				if($this->_diffValues($orig[$k],$v1)){
-					$result[$k]=$orig[$k];
-					continue;
+				if($ctrl->isModified()){
+					$result[$ref]=$orig[$ref];
 				}
 			}
 			return $result;
 		}
 		else
 			return $this->container->data;
-	}
-	protected function _diffValues(&$v1,&$v2){
-		if(is_array($v1)&&is_array($v2)){
-			$comp=array_merge(array_diff($v1,$v2),array_diff($v2,$v1));
-			return !empty($comp);
-		}
-		elseif(empty($v1)&&empty($v2)){
-			return false;
-		}
-		elseif(is_array($v1)||is_array($v2)){
-			return true;
-		}
-		else{
-			return !($v1==$v2);
-		}
 	}
 	public function getReset(){return $this->reset;}
 	public function id(){return $this->container->formId;}
@@ -350,18 +355,8 @@ abstract class jFormsBase{
 		}
 		if(!isset($this->controls[$controlName])||$this->controls[$controlName]->type!='upload')
 			throw new jExceptionForms('jelix~formserr.invalid.upload.control.name',array($controlName,$this->sel));
-		if(!isset($_FILES[$controlName])||$_FILES[$controlName]['error']!=UPLOAD_ERR_OK)
-			return false;
-		if($this->controls[$controlName]->maxsize&&$_FILES[$controlName]['size'] > $this->controls[$controlName]->maxsize){
-			return false;
-		}
 		jFile::createDir($path);
-		if($alternateName==''){
-			$path.=$_FILES[$controlName]['name'];
-		}else{
-			$path.=$alternateName;
-		}
-		return move_uploaded_file($_FILES[$controlName]['tmp_name'],$path);
+		return $this->controls[$controlName]->saveFile($path,$alternateName);
 	}
 	public function saveAllFiles($path=''){
 		if($path==''){
@@ -369,14 +364,11 @@ abstract class jFormsBase{
 		}else if(substr($path,-1,1)!='/'){
 			$path.='/';
 		}
-		if(count($this->uploads))
+		if(count($this->uploads)){
 			jFile::createDir($path);
+		}
 		foreach($this->uploads as $ref=>$ctrl){
-			if(!isset($_FILES[$ref])||$_FILES[$ref]['error']!=UPLOAD_ERR_OK)
-				continue;
-			if($ctrl->maxsize&&$_FILES[$ref]['size'] > $ctrl->maxsize)
-				continue;
-			move_uploaded_file($_FILES[$ref]['tmp_name'],$path.$_FILES[$ref]['name']);
+			$ctrl->saveFile($path);
 		}
 	}
 	public function addControl($control){

@@ -41,13 +41,19 @@ class jIniFileModifier{
 				}else{
 					$currentValue[2].=$line."\n";
 				}
-			}else if(preg_match('/^\s*([a-z0-9_.-]+)(\[\])?\s*=\s*(")?([^"]*)(")?(\s*)/i',$line,$m)){
+			}elseif(preg_match('/^\s*([\\w0-9_.\\-]+)(\\[[^\\[\\]]*\\])?\s*=\s*(")?([^"]*)(")?(\s*)/ui',$line,$m)){
 				list($all,$name,$foundkey,$firstquote,$value,$secondquote,$lastspace)=$m;
 				if($foundkey!=''){
-					if(isset($arrayContents[$currentSection][$name]))
-						$key=count($arrayContents[$currentSection][$name]);
-					else
-						$key=0;
+					$key=substr($foundkey,1,-1);
+					if($key==''){
+						if(isset($arrayContents[$currentSection][$name])){
+							$key=count(
+								$arrayContents[$currentSection][$name]
+							);
+						}else{
+							$key=0;
+						}
+					}
 					$currentValue=array(self::TK_ARR_VALUE,$name,$value,$key);
 					$arrayContents[$currentSection][$name][$key]=$value;
 				}
@@ -61,9 +67,12 @@ class jIniFileModifier{
 						$currentValue[2]=trim($value);
 					$this->content[$currentSection][]=$currentValue;
 				}
-			}else if(preg_match('/^(\s*;.*)$/',$line,$m)){
+			}elseif(preg_match('/^(\\s*;.*)$/',$line,$m)){
 				$this->content[$currentSection][]=array(self::TK_COMMENT,$m[1]);
-			}else if(preg_match('/^(\s*\[([a-z0-9_.\-@:]+)\]\s*)/i',$line,$m)){
+			}elseif(preg_match('/^(\\s*\\[([^\\]]+)\\]\\s*)/ui',$line,$m)){
+				if(strpos($m[2],';')){
+					throw new Exception("Invalid syntax for the section name: \"".$m[2].'"');
+				}
 				$currentSection=$m[2];
 				$this->content[$currentSection]=array(
 					array(self::TK_SECTION,$m[1]),
@@ -73,31 +82,61 @@ class jIniFileModifier{
 			}
 		}
 	}
-	public function setValue($name,$value,$section=0,$key=null){
+	public function setValue($name,$value,$section=0,$key=null)
+	{
+		if(!preg_match('/^[^\\[\\]]*$/',$name)){
+			throw new \Exception("Invalid value name $name");
+		}
+		if(is_array($value)){
+			if($key!==null){
+				throw new \Exception("You cannot indicate a key for an array value");
+			}
+			$this->_setArrayValue($name,$value,$section);
+		}
+		else{
+			$this->_setValue($name,$value,$section,$key);
+		}
+	}
+	protected function _setValue($name,$value,$section=0,$key=null){
+		if(is_string($key)&&!preg_match('/^[^\\[\\]]*$/',$key)){
+			throw new \Exception("Invalid key $key for the value $name");
+		}
 		$foundValue=false;
 		$lastKey=-1;
 		if(isset($this->content[$section])){
 			$deleteMode=false;
 			foreach($this->content[$section] as $k=>$item){
 				if($deleteMode){
-					if($item[0]==self::TK_ARR_VALUE&&$item[1]==$name)
+					if($item[0]==self::TK_ARR_VALUE&&$item[1]==$name){
 						$this->content[$section][$k]=array(self::TK_WS,'--');
+						$this->modified=true;
+					}
 					continue;
 				}
 				if(($item[0]!=self::TK_VALUE&&$item[0]!=self::TK_ARR_VALUE)
 					||$item[1]!=$name)
 					continue;
 				if($item[0]==self::TK_ARR_VALUE&&$key!==null){
-					if($item[3]!=$key||$key===''){
-						$lastKey=$item[3];
+					if($item[3]!==$key||$key===''){
+						if(is_numeric($item[3])){
+							$lastKey=$item[3];
+						}
 						continue;
 					}
 				}
 				if($key!==null){
-					if($key==='')
+					if($key===''){
 						$key=0;
-					$this->content[$section][$k]=array(self::TK_ARR_VALUE,$name,$value,$key);
+					}
+					if($item[0]==self::TK_VALUE||!$this->_compareNewValue($item[2],$value)){
+						$this->content[$section][$k]=array(self::TK_ARR_VALUE,$name,$value,$key);
+						$this->modified=true;
+					}
 				}else{
+					if(!$this->_compareNewValue($item[2],$value)){
+						$this->content[$section][$k]=array(self::TK_VALUE,$name,$value);
+						$this->modified=true;
+					}
 					$this->content[$section][$k]=array(self::TK_VALUE,$name,$value);
 					if($item[0]==self::TK_ARR_VALUE){
 						$deleteMode=true;
@@ -116,61 +155,65 @@ class jIniFileModifier{
 			if($key===null){
 				$this->content[$section][]=array(self::TK_VALUE,$name,$value);
 			}else{
-				if($lastKey!=-1)
-					$lastKey++;
-				else
-					$lastKey=0;
-				$this->content[$section][]=array(self::TK_ARR_VALUE,$name,$value,$lastKey);
+				if($key===''){
+					if($lastKey!=-1){
+						$key=++$lastKey;
+					}else{
+						$key=0;
+					}
+				}
+				$this->content[$section][]=array(self::TK_ARR_VALUE,$name,$value,$key);
+			}
+			$this->modified=true;
+		}
+	}
+	protected function _compareNewValue($iniValue,$newValue){
+		$iniVal=$this->convertValue($iniValue);
+		$newVal=$this->convertValue($newValue);
+		return($iniVal==$newVal);
+	}
+	protected function _setArrayValue($name,$value,$section=0){
+		$foundKeys=array_combine(array_keys($value),
+									array_fill(0,count($value),false));
+		if(isset($this->content[$section])){
+			foreach($this->content[$section] as $k=>$item){
+				if(($item[0]!=self::TK_VALUE&&$item[0]!=self::TK_ARR_VALUE)
+					||$item[1]!=$name){
+					continue;
+				}
+				if($item[0]==self::TK_ARR_VALUE){
+					if(isset($value[$item[3]])){
+						$foundKeys[$item[3]]=true;
+						$this->content[$section][$k][2]=$value[$item[3]];
+					}
+					else{
+						$this->content[$section][$k]=array(self::TK_WS,'--');
+					}
+				}
+				else{
+					$this->content[$section][$k]=array(self::TK_WS,'--');
+				}
+			}
+		}else{
+			$this->content[$section]=array(array(self::TK_SECTION,'['.$section.']'));
+		}
+		foreach($value as $k=>$v){
+			if(!$foundKeys[$k]){
+				$this->content[$section][]=array(self::TK_ARR_VALUE,$name,$v,$k);
 			}
 		}
 		$this->modified=true;
 	}
 	public function setValues($values,$section=0){
 		foreach($values as $name=>$val){
-			if(is_array($val)){
-				$i=0;
-				foreach($val as $arval){
-					$this->setValue($name,$arval,$section,$i++);
-				}
-			}
-			else
-				$this->setValue($name,$val,$section);
+			$this->setValue($name,$val,$section);
 		}
 	}
 	public function removeValue($name,$section=0,$key=null,$removePreviousComment=true){
-		$foundValue=false;
 		if($section===0&&$name=='')
 			return;
 		if($name==''){
-			if($section===0||!isset($this->content[$section]))
-				return;
-			if($removePreviousComment){
-				$previousSection=-1;
-				foreach($this->content as $s=>$c){
-					if($s===$section){
-						break;
-					}
-					else{
-						$previousSection=$s;
-					}
-				}
-				if($previousSection!=-1){
-					$s=$this->content[$previousSection];
-					end($s);
-					$tok=current($s);
-					while($tok!==false){
-						if($tok[0]!=self::TK_WS&&$tok[0]!=self::TK_COMMENT){
-							break;
-						}
-						if($tok[0]==self::TK_COMMENT&&strpos($tok[1],'<?')===false){
-							$this->content[$previousSection][key($s)]=array(self::TK_WS,'--');
-						}
-						$tok=prev($s);
-					}
-				}
-			}
-			unset($this->content[$section]);
-			$this->modified=true;
+			$this->removeSection($section,$removePreviousComment);
 			return;
 		}
 		if(isset($this->content[$section])){
@@ -202,6 +245,7 @@ class jIniFileModifier{
 						continue;
 					}
 				}
+				$this->modified=true;
 				if(count($previousComment)){
 					$kc=array_pop($previousComment);
 					while($kc!==null&&$this->content[$section][$kc][0]==self::TK_WS){
@@ -220,14 +264,43 @@ class jIniFileModifier{
 					$this->content[$section][$k]=array(self::TK_WS,'--');
 					if($item[0]==self::TK_ARR_VALUE){
 						$deleteMode=true;
-						$foundValue=true;
 						continue;
 					}
 				}
-				$foundValue=true;
 				break;
 			}
 		}
+	}
+	public function removeSection($section=0,$removePreviousComment=true)
+	{
+		if($section===0||!isset($this->content[$section])){
+			return;
+		}
+		if($removePreviousComment){
+			$previousSection=-1;
+			foreach($this->content as $s=>$c){
+				if($s===$section){
+					break;
+				}else{
+					$previousSection=$s;
+				}
+			}
+			if($previousSection!=-1){
+				$s=$this->content[$previousSection];
+				end($s);
+				$tok=current($s);
+				while($tok!==false){
+					if($tok[0]!=self::TK_WS&&$tok[0]!=self::TK_COMMENT){
+						break;
+					}
+					if($tok[0]==self::TK_COMMENT&&strpos($tok[1],'<?')===false){
+						$this->content[$previousSection][key($s)]=array(self::TK_WS,'--');
+					}
+					$tok=prev($s);
+				}
+			}
+		}
+		unset($this->content[$section]);
 		$this->modified=true;
 	}
 	public function getValue($name,$section=0,$key=null){
@@ -247,23 +320,11 @@ class jIniFileModifier{
 				}
 				else{
 					$isArray=true;
-					$arrayValue[]=$item[2];
+					$arrayValue[$item[3]]=$this->convertValue($item[2]);
 					continue;
 				}
 			}
-			if(preg_match('/^-?[0-9]$/',$item[2])){
-				return intval($item[2]);
-			}
-			else if(preg_match('/^-?[0-9\.]$/',$item[2])){
-				return floatval($item[2]);
-			}
-			else if(strtolower($item[2])==='true'||strtolower($item[2])==='on'){
-				return true;
-			}
-			else if(strtolower($item[2])==='false'||strtolower($item[2])==='off'){
-				return false;
-			}
-			return $item[2];
+			return $this->convertValue($item[2]);
 		}
 		if($isArray)
 			return $arrayValue;
@@ -277,20 +338,7 @@ class jIniFileModifier{
 		foreach($this->content[$section] as $k=>$item){
 			if($item[0]!=self::TK_VALUE&&$item[0]!=self::TK_ARR_VALUE)
 				continue;
-			if(preg_match('/^-?[0-9]$/',$item[2])){
-				$val=intval($item[2]);
-			}
-			else if(preg_match('/^-?[0-9\.]$/',$item[2])){
-				$val=floatval($item[2]);
-			}
-			else if(strtolower($item[2])==='true'||strtolower($item[2])==='on'){
-				$val=true;
-			}
-			else if(strtolower($item[2])==='false'||strtolower($item[2])==='off'){
-				$val=false;
-			}
-			else
-				$val=$item[2];
+			$val=$this->convertValue($item[2]);
 			if($item[0]==self::TK_VALUE){
 				$values[$item[1]]=$val;
 			}
@@ -299,6 +347,22 @@ class jIniFileModifier{
 			}
 		}
 		return $values;
+	}
+	protected function convertValue($value)
+	{
+		if(!is_string($value)){
+			return $value;
+		}
+		if(preg_match('/^-?[0-9]$/',$value)){
+			return intval($value);
+		}elseif(preg_match('/^-?[0-9\.]$/',$value)){
+			return floatval($value);
+		}elseif(strtolower($value)==='true'||strtolower($value)==='on'||strtolower($value)==='yes'){
+			return true;
+		}elseif(strtolower($value)==='false'||strtolower($value)==='off'||strtolower($value)==='no'||strtolower($value)==='none'){
+			return false;
+		}
+		return $value;
 	}
 	public function save($chmod=null){
 		if($this->modified){
@@ -325,10 +389,13 @@ class jIniFileModifier{
 		array_shift($list);
 		return $list;
 	}
-	protected function generateIni(){
+	protected function generateIni()
+	{
 		$content='';
+		$lastToken=null;
 		foreach($this->content as $sectionname=>$section){
 			foreach($section as $item){
+				$lastToken=$item[0];
 				switch($item[0]){
 				case self::TK_SECTION:
 					if($item[1]!='0')
@@ -344,20 +411,35 @@ class jIniFileModifier{
 						$content.=$item[1].'='.$this->getIniValue($item[2])."\n";
 					break;
 				case self::TK_ARR_VALUE:
+					if(is_numeric($item[3])){
 						$content.=$item[1].'[]='.$this->getIniValue($item[2])."\n";
+					}
+					else{
+						$content.=$item[1].'['.$item[3].']='.$this->getIniValue($item[2])."\n";
+					}
 					break;
 				}
 			}
 		}
+		if($lastToken===self::TK_WS){
+			$content=substr($content,0,-1);
+		}
 		return $content;
 	}
 	protected function getIniValue($value){
-		if($value===''||is_numeric(trim($value))||(preg_match("/^[\w-.]*$/",$value)&&strpos("\n",$value)===false)){
+		if(is_bool($value)){
+			if($value===false){
+				return "off";
+			}else{
+				return "on";
+			}
+		}
+		if($value===''||
+			is_numeric(trim($value))||
+			(is_string($value)&&preg_match('/^[\\w\\-\\.]*$/u',$value)&&
+				strpos("\n",$value)===false)
+		){
 			return $value;
-		}else if($value===false){
-			$value="0";
-		}else if($value===true){
-			$value="1";
 		}else{
 			$value='"'.$value.'"';
 		}
@@ -401,8 +483,10 @@ class jIniFileModifier{
 		$this->modified=true;
 		return true;
 	}
-	protected function mergeValues($values,$sectionTarget){
+	protected function mergeValues($values,$sectionTarget)
+	{
 		$previousItems=array();
+		$arrayValuesToReplace=array();
 		foreach($values as $k=>$item){
 			switch($item[0]){
 				case self::TK_SECTION:
@@ -427,13 +511,27 @@ class jIniFileModifier{
 							$lastNonValues=-1;
 							continue;
 						}
+						if($item[0]==self::TK_ARR_VALUE&&$item2[0]==$item[0]){
+							if($item[3]!==$item2[3]){
+								$lastNonValues=-1;
+								continue;
+							}
+						}
 						$found=true;
-						$this->content[$sectionTarget][$j][2]=$item[2];
 						$this->modified=true;
+						if($item2[0]!=$item[0]){
+							if($item2[0]==self::TK_VALUE){
+								$this->content[$sectionTarget][$j]=$item;
+							}
+							else{
+								$arrayValuesToReplace[$item[1]]=$item[2];
+							}
+							continue;
+						}
+						$this->content[$sectionTarget][$j][2]=$item[2];
 						break;
 					}
 					if(!$found){
-						$atTheEnd=false;
 						$previousItems[]=$item;
 						if($lastNonValues > 0){
 							$previousItems=array_splice($this->content[$sectionTarget],$lastNonValues,$j,$previousItems);
@@ -444,6 +542,9 @@ class jIniFileModifier{
 					$previousItems=array();
 					break;
 			}
+		}
+		foreach($arrayValuesToReplace as $name=>$value){
+			$this->setValue($name,$value,$sectionTarget);
 		}
 	}
 	public function renameValue($name,$newName,$section=0){
@@ -458,7 +559,9 @@ class jIniFileModifier{
 			}
 			$this->content[$section][$k][1]=$newName;
 			$this->modified=true;
-			break;
+			if($item[0]==self::TK_VALUE){
+				break;
+			}
 		}
 		return true;
 	}

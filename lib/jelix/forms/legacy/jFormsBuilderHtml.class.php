@@ -5,7 +5,7 @@
 * @subpackage  forms
 * @author      Laurent Jouanneau
 * @contributor Julien Issler, Dominique Papin
-* @copyright   2006-2012 Laurent Jouanneau
+* @copyright   2006-2020 Laurent Jouanneau
 * @copyright   2008-2011 Julien Issler, 2008 Dominique Papin
 * @link        http://www.jelix.org
 * @licence     http://www.gnu.org/licenses/lgpl.html GNU Lesser General Public Licence, see LICENCE file
@@ -61,7 +61,6 @@ class jFormsBuilderHtml extends jFormsBuilderBase{
 		}
 		$config=jApp::config();
 		$www=$config->urlengine['jelixWWWPath'];
-		$bp=$config->urlengine['basePath'];
 		$resp->addJSLink($www.'js/jforms_light.js');
 		$resp->addCSSLink($www.'design/jform.css');
 		$heConf=&$config->htmleditors;
@@ -69,19 +68,23 @@ class jFormsBuilderHtml extends jFormsBuilderBase{
 			if($v instanceof jFormsBase&&count($edlist=$v->getHtmlEditors())){
 				foreach($edlist as $ed){
 					if(isset($heConf[$ed->config.'.engine.file'])){
-						$file=$heConf[$ed->config.'.engine.file'];
-						if(is_array($file)){
-							foreach($file as $url){
-								$resp->addJSLink($bp.$url);
-							}
-						}else
-							$resp->addJSLink($bp.$file);
+						$lang=jLocale::getCurrentLang();
+						$urls=$heConf[$ed->config.'.engine.file'];
+						if(!is_array($urls)){
+							$urls=array($urls);
+						}
+						foreach($urls as $url){
+							$url=str_replace('$lang',$lang,$url);
+							$resp->addJSLink($url);
+						}
 					}
-					if(isset($heConf[$ed->config.'.config']))
-						$resp->addJSLink($bp.$heConf[$ed->config.'.config']);
+					if(isset($heConf[$ed->config.'.config'])){
+						$resp->addJSLink($heConf[$ed->config . '.config']);
+					}
 					$skin=$ed->config.'.skin.'.$ed->skin;
-					if(isset($heConf[$skin])&&$heConf[$skin]!='')
-						$resp->addCSSLink($bp.$heConf[$skin]);
+					if(isset($heConf[$skin])&&$heConf[$skin]!=''){
+						$resp->addCSSLink($heConf[$skin]);
+					}
 				}
 			}
 		}
@@ -135,9 +138,8 @@ class jFormsBuilderHtml extends jFormsBuilderBase{
 		if(count($errors)){
 			$ctrls=$this->_form->getControls();
 			echo '<ul id="'.$this->_name.'_errors" class="jforms-error-list">';
-			$errRequired='';
 			foreach($errors as $cname=>$err){
-				if(!$this->_form->isActivated($ctrls[$cname]->ref))continue;
+				if(!array_key_exists($cname,$ctrls)||!$this->_form->isActivated($ctrls[$cname]->ref))continue;
 				if($err===jForms::ERRDATA_REQUIRED){
 					if($ctrls[$cname]->alertRequired){
 						echo '<li>',$ctrls[$cname]->alertRequired,'</li>';
@@ -188,7 +190,7 @@ class jFormsBuilderHtml extends jFormsBuilderBase{
 		$hint=($ctrl->hint==''?'':' title="'.htmlspecialchars($ctrl->hint).'"');
 		$id=$this->_name.'_'.$ctrl->ref;
 		$idLabel=' id="'.$id.'_label"';
-		if($ctrl->type=='output'||$ctrl->type=='checkboxes'||$ctrl->type=='radiobuttons'||$ctrl->type=='date'||$ctrl->type=='datetime'||$ctrl->type=='choice'){
+		if($ctrl->type=='output'||$ctrl->type=='checkboxes'||$ctrl->type=='radiobuttons'||$ctrl->type=='date'||$ctrl->type=='datetime'||$ctrl->type=='time'||$ctrl->type=='choice'){
 			echo '<span class="jforms-label',$required,$inError,'"',$idLabel,$hint,'>',htmlspecialchars($ctrl->label),$reqhtml,"</span>\n";
 		}else if($ctrl->type!='submit'&&$ctrl->type!='reset'){
 			echo '<label class="jforms-label',$required,$inError,'" for="',$id,'"',$idLabel,$hint,'>',htmlspecialchars($ctrl->label),$reqhtml,"</label>\n";
@@ -269,12 +271,12 @@ class jFormsBuilderHtml extends jFormsBuilderBase{
 		}
 		if($ctrl->required){
 			$this->jsContent.="c.required = true;\n";
-			if($ctrl->alertRequired){
-				$this->jsContent.="c.errRequired=".$this->escJsStr($ctrl->alertRequired).";\n";
-			}
-			else{
-				$this->jsContent.="c.errRequired=".$this->escJsStr(jLocale::get('jelix~formserr.js.err.required',$ctrl->label)).";\n";
-			}
+		}
+		if($ctrl->alertRequired){
+			$this->jsContent.="c.errRequired=".$this->escJsStr($ctrl->alertRequired).";\n";
+		}
+		else{
+			$this->jsContent.="c.errRequired=".$this->escJsStr(jLocale::get('jelix~formserr.js.err.required',$ctrl->label)).";\n";
 		}
 		if($ctrl->alertInvalid){
 			$this->jsContent.="c.errInvalid=".$this->escJsStr($ctrl->alertInvalid).";\n";
@@ -408,10 +410,10 @@ class jFormsBuilderHtml extends jFormsBuilderBase{
 			}
 		}
 	}
-	protected function _outputDateControlHour($ctrl,$attr,$value){
+	protected function _outputDateControlHour($ctrl,$attr,$value,$configParameter='controls.datetime.input'){
 		$attr['name']=$ctrl->ref.'[hour]';
 		$attr['id'].='hour';
-		if(jApp::config()->forms['controls.datetime.input']=='textboxes'){
+		if(jApp::config()->forms[$configParameter]=='textboxes'){
 			$attr['value']=$value;
 			echo '<input type="text" size="2" maxlength="2"';
 			$this->_outputAttr($attr);
@@ -428,10 +430,10 @@ class jFormsBuilderHtml extends jFormsBuilderBase{
 			echo '</select>';
 		}
 	}
-	protected function _outputDateControlMinutes($ctrl,$attr,$value){
+	protected function _outputDateControlMinutes($ctrl,$attr,$value,$configParameter='controls.datetime.input'){
 		$attr['name']=$ctrl->ref.'[minutes]';
 		$attr['id'].='minutes';
-		if(jApp::config()->forms['controls.datetime.input']=='textboxes'){
+		if(jApp::config()->forms[$configParameter]=='textboxes'){
 			$attr['value']=$value;
 			echo '<input type="text" size="2" maxlength="2"';
 			$this->_outputAttr($attr);
@@ -448,12 +450,12 @@ class jFormsBuilderHtml extends jFormsBuilderBase{
 			echo '</select>';
 		}
 	}
-	protected function _outputDateControlSeconds($ctrl,$attr,$value){
+	protected function _outputDateControlSeconds($ctrl,$attr,$value,$configParameter='controls.datetime.input'){
 		$attr['name']=$ctrl->ref.'[seconds]';
 		$attr['id'].='seconds';
 		if(!$ctrl->enableSeconds)
 			echo '<input type="hidden" id="'.$attr['id'].'" name="'.$attr['name'].'" value="'.$value.'"'.$this->_endt;
-		else if(jApp::config()->forms['controls.datetime.input']=='textboxes'){
+		else if(jApp::config()->forms[$configParameter]=='textboxes'){
 			$attr['value']=$value;
 			echo '<input type="text"';
 			$this->_outputAttr($attr);
@@ -473,7 +475,7 @@ class jFormsBuilderHtml extends jFormsBuilderBase{
 	protected function outputDate($ctrl,&$attr){
 		$attr['id']=$this->_name.'_'.$ctrl->ref.'_';
 		$v=array('year'=>'','month'=>'','day'=>'');
-		if(preg_match('#^(\d{4})?-(\d{2})?-(\d{2})?$#',$this->_form->getData($ctrl->ref),$matches)){
+		if(preg_match('#^(\d{4})?-(\d{2})?-(\d{2})?($|\\s|T)#',$this->_form->getData($ctrl->ref),$matches)){
 			if(isset($matches[1]))
 				$v['year']=$matches[1];
 			if(isset($matches[2]))
@@ -507,7 +509,7 @@ class jFormsBuilderHtml extends jFormsBuilderBase{
 	protected function outputDatetime($ctrl,&$attr){
 		$attr['id']=$this->_name.'_'.$ctrl->ref.'_';
 		$v=array('year'=>'','month'=>'','day'=>'','hour'=>'','minutes'=>'','seconds'=>'');
-		if(preg_match('#^(\d{4})?-(\d{2})?-(\d{2})? (\d{2})?:(\d{2})?(:(\d{2})?)?$#',$this->_form->getData($ctrl->ref),$matches)){
+		if(preg_match('#^(\d{4})?-(\d{2})?-(\d{2})?(?: |T)(\d{2})?:(\d{2})?(:(\d{2})?)?(?:$|\\s|\\.)#',$this->_form->getData($ctrl->ref),$matches)){
 			if(isset($matches[1]))
 				$v['year']=$matches[1];
 			if(isset($matches[2]))
@@ -520,6 +522,17 @@ class jFormsBuilderHtml extends jFormsBuilderBase{
 				$v['minutes']=$matches[5];
 			if(isset($matches[7]))
 				$v['seconds']=$matches[7];
+		}
+		else if(preg_match('#^(\d{4})?-(\d{2})?-(\d{2})?($|\\s)#',$this->_form->getData($ctrl->ref),$matches)){
+			if(isset($matches[1]))
+				$v['year']=$matches[1];
+			if(isset($matches[2]))
+				$v['month']=$matches[2];
+			if(isset($matches[3]))
+				$v['day']=$matches[3];
+			$v['hour']="00";
+			$v['minutes']="00";
+			$v['seconds']="00";
 		}
 		$f=jLocale::get('jelix~format.datetime');
 		for($i=0;$i<strlen($f);$i++){
@@ -548,6 +561,43 @@ class jFormsBuilderHtml extends jFormsBuilderBase{
 			$this->jsContent.="c.minDate = '".$minDate->toString(jDateTime::DB_DTFORMAT)."';\n";
 		if($maxDate)
 			$this->jsContent.="c.maxDate = '".$maxDate->toString(jDateTime::DB_DTFORMAT)."';\n";
+		$this->commonJs($ctrl);
+	}
+	protected function outputTime($ctrl,&$attr){
+		$attr['id']=$this->_name.'_'.$ctrl->ref.'_';
+		$v=array('hour'=>'','minutes'=>'','seconds'=>'');
+		if(preg_match('#^(\d{2}):(\d{2})(:(\d{2}))?(?:$|\\s|\\.)#',$this->_form->getData($ctrl->ref),$matches)){
+			$v['hour']=$matches[1];
+			$v['minutes']=$matches[2];
+			if(isset($matches[3])){
+				$v['seconds']=$matches[4];
+			}
+			else{
+				$v['seconds']='00';
+			}
+		}
+		$f=jLocale::get('jelix~format.time');
+		for($i=0;$i < strlen($f);++$i){
+			if($f[$i]=='H'){
+				$this->_outputDateControlHour($ctrl,$attr,$v['hour'],'controls.time.input');
+			}elseif($f[$i]=='i'){
+				$this->_outputDateControlMinutes($ctrl,$attr,$v['minutes'],'controls.time.input');
+			}elseif($f[$i]=='s'){
+				$this->_outputDateControlSeconds($ctrl,$attr,$v['seconds'],'controls.time.input');
+			}else{
+				echo ' ';
+			}
+		}
+	}
+	protected function jsTime($ctrl){
+		$this->jsContent.="c = new ".$this->jFormsJsVarName."ControlTime2('".$ctrl->ref."', ".$this->escJsStr($ctrl->label).");\n";
+		$this->jsContent.="c.multiFields = true;\n";
+		$minDate=$ctrl->datatype->getFacet('minValue');
+		$maxDate=$ctrl->datatype->getFacet('maxValue');
+		if($minDate)
+			$this->jsContent.="c.minDate = '".$minDate->toString(jDateTime::DB_TFORMAT)."';\n";
+		if($maxDate)
+			$this->jsContent.="c.maxDate = '".$maxDate->toString(jDateTime::DB_TFORMAT)."';\n";
 		$this->commonJs($ctrl);
 	}
 	protected function outputCheckbox($ctrl,&$attr){
@@ -836,6 +886,7 @@ class jFormsBuilderHtml extends jFormsBuilderBase{
 		echo '<span class="jforms-value"',$hint,'>',htmlspecialchars($attr['value']),'</span>';
 	}
 	protected function jsOutput($ctrl){
+		$this->jsContent.='c=null;';
 	}
 	protected function outputButton($ctrl,&$attr){
 		unset($attr['readonly']);
@@ -846,6 +897,7 @@ class jFormsBuilderHtml extends jFormsBuilderBase{
 		echo '>',htmlspecialchars($ctrl->label),'</button>';
 	}
 	protected function jsButton($ctrl){
+		$this->jsContent.='c=null;';
 	}
 	protected function outputUpload($ctrl,&$attr){
 		$attr['type']='file';
@@ -892,8 +944,8 @@ class jFormsBuilderHtml extends jFormsBuilderBase{
 	protected function jsReset($ctrl){
 	}
 	protected function outputCaptcha($ctrl,&$attr){
-		$ctrl->initExpectedValue();
-		echo '<span class="jforms-captcha-question">',htmlspecialchars($ctrl->question),'</span> ';
+		$data=$ctrl->initCaptcha();
+		echo '<span class="jforms-captcha-question">',htmlspecialchars($data['question']),'</span> ';
 		unset($attr['readonly']);
 		$attr['type']='text';
 		$attr['value']='';
@@ -987,11 +1039,6 @@ class jFormsBuilderHtml extends jFormsBuilderBase{
 	}
 	protected function outputHelp($ctrl){
 		if($ctrl->help){
-			if($ctrl->type=='checkboxes'||($ctrl->type=='listbox'&&$ctrl->multiple)){
-				$name=$ctrl->ref.'[]';
-			}else{
-				$name=$ctrl->ref;
-			}
 			echo '<span class="jforms-help" id="'. $this->_name.'_'.$ctrl->ref.'-help">&nbsp;<span>'.htmlspecialchars($ctrl->help).'</span></span>';
 		}
 	}

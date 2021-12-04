@@ -4,7 +4,7 @@
 * @package    jelix
 * @subpackage core
 * @author     Laurent Jouanneau
-* @copyright  2012 Laurent Jouanneau
+* @copyright  2012-2020 Laurent Jouanneau
 * @link       http://jelix.org
 * @licence    http://www.gnu.org/licenses/lgpl.html GNU Lesser General Public Licence, see LICENCE file
 */
@@ -46,7 +46,7 @@ class jConfigAutoloader{
 			$class=&$className;
 		}
 		foreach($this->config->_autoload_namespace as $ns=>$info){
-			if(strpos($className,$ns)===0){
+			if($className==$ns||strpos($className,$ns.'\\')===0){
 				$path='';
 				if($lastNsPos!==false){
 					if($namespace){
@@ -59,7 +59,7 @@ class jConfigAutoloader{
 			}
 		}
 		foreach($this->config->_autoload_namespacepathmap as $ns=>$info){
-			if(strpos($className,$ns)===0){
+			if(strpos($className,$ns.'\\')===0){
 				$path='';
 				if($lastNsPos!==false){
 					$namespace=substr($namespace,strlen($ns)+1);

@@ -2,7 +2,7 @@
 /* comments & extra-whitespaces have been removed by jBuildTools*/
 /**
 * @package    jelix
-* @subpackage  kvdb
+* @subpackage  cache_plugin
 * @author      Zend Technologies
 * @contributor Tahina Ramaroson, Sylvain de Vathaire, Laurent Jouanneau
 * @copyright  2005-2008 Zend Technologies USA Inc (http://www.zend.com), 2008 Neov, 2010-2011 Laurent Jouanneau
@@ -117,7 +117,7 @@ class fileKVDriver extends jKVDriver implements jIKVPersistent,jIKVttl{
 		$oldData=$this->get($key);
 		if($oldData===null)
 			return false;
-		if(!is_numeric($oldData)){
+		if(!is_numeric($oldData)||!is_numeric($var)){
 			return false;
 		}
 		$data=$oldData + $var;
@@ -130,7 +130,7 @@ class fileKVDriver extends jKVDriver implements jIKVPersistent,jIKVttl{
 		$oldData=$this->get($key);
 		if($oldData===null)
 			return false;
-		if(!is_numeric($oldData)){
+		if(!is_numeric($oldData)||!is_numeric($var)){
 			return false;
 		}
 		$data=$oldData - (int)$var;
@@ -188,9 +188,16 @@ class fileKVDriver extends jKVDriver implements jIKVPersistent,jIKVttl{
 		}
 		return $content;
 	}
-	protected function _setFileContent($filePath,$dataToWrite,$mtime){
-		if(is_resource($dataToWrite))
+	protected function _setFileContent($filePath,$dataToWrite,$mtime)
+	{
+		if(function_exists('\\Jelix\\Utilities\\is_resource')){
+			if(\Jelix\Utilities\is_resource($dataToWrite)){
+				return false;
+			}
+		}
+		else if(is_resource($dataToWrite)){
 			return false;
+		}
 		try{
 			$dataToWrite=serialize($dataToWrite);
 		}

@@ -2,7 +2,7 @@
 /* comments & extra-whitespaces have been removed by jBuildTools*/
 /**
 * @package     jelix
-* @subpackage  forms
+* @subpackage  forms_legacybuilder_plugin
 * @author      Laurent Jouanneau
 * @contributor Julien Issler, Dominique Papin, Olivier Demah
 * @copyright   2006-2015 Laurent Jouanneau
@@ -25,10 +25,8 @@ class htmlJformsBuilder extends jFormsBuilderHtml{
 		$confDate=&jApp::config()->datepickers;
 		$confWikiEditor=&jApp::config()->wikieditors;
 		$www=$confUrlEngine['jelixWWWPath'];
-		$jq=$confUrlEngine['jqueryPath'];
-		$bp=$confUrlEngine['basePath'];
-		$resp->addJSLink($jq.'jquery.js');
-		$resp->addJSLink($jq.'include/jquery.include.js');
+		$resp->addJSLink(jApp::config()->jquery['jquery']);
+		$resp->addJSLink($www.'jquery/include/jquery.include.js');
 		$resp->addJSLink($www.'js/jforms_jquery.js');
 		$resp->addCSSLink($www.'design/jform.css');
 		foreach($t->_vars as $k=>$v){
@@ -36,36 +34,50 @@ class htmlJformsBuilder extends jFormsBuilderHtml{
 				continue;
 			foreach($v->getHtmlEditors()as $ed){
 				if(isset($confHtmlEditor[$ed->config.'.engine.file'])){
-					if(is_array($confHtmlEditor[$ed->config.'.engine.file'])){
-						foreach($confHtmlEditor[$ed->config.'.engine.file'] as $url){
-							$resp->addJSLink($bp.$url);
-						}
-					}else
-						$resp->addJSLink($bp.$confHtmlEditor[$ed->config.'.engine.file']);
+					$lang=jLocale::getCurrentLang();
+					$urls=$confHtmlEditor[$ed->config.'.engine.file'];
+					if(!is_array($urls)){
+						$urls=array($urls);
+					}
+					foreach($urls as $url){
+						$url=str_replace('$lang',$lang,$url);
+						$resp->addJSLink($url);
+					}
 				}
-				if(isset($confHtmlEditor[$ed->config.'.config']))
-					$resp->addJSLink($bp.$confHtmlEditor[$ed->config.'.config']);
+				if(isset($confHtmlEditor[$ed->config.'.config'])){
+					$resp->addJSLink($confHtmlEditor[$ed->config.'.config']);
+				}
 				$skin=$ed->config.'.skin.'.$ed->skin;
-				if(isset($confHtmlEditor[$skin])&&$confHtmlEditor[$skin]!='')
-					$resp->addCSSLink($bp.$confHtmlEditor[$skin]);
+				if(isset($confHtmlEditor[$skin])&&$confHtmlEditor[$skin]!=''){
+					$resp->addCSSLink($confHtmlEditor[$skin]);
+				}
 			}
 			$datepicker_default_config=jApp::config()->forms['datepicker'];
+			$timepicker_default_config=jApp::config()->forms['timepicker'];
 			foreach($v->getControls()as $ctrl){
 				if($ctrl instanceof jFormsControlDate||get_class($ctrl->datatype)=='jDatatypeDate'||get_class($ctrl->datatype)=='jDatatypeLocaleDate'){
-					$config=isset($ctrl->datepickerConfig)?$ctrl->datepickerConfig:$datepicker_default_config;
-					$resp->addJSLink($bp.$confDate[$config]);
+					$config=$ctrl->datepickerConfig!=''?$ctrl->datepickerConfig:$datepicker_default_config;
+					if($config){
+						$resp->addJSLink($confDate[$config]);
+					}
+				}
+				if($ctrl instanceof jFormsControlTime||get_class($ctrl->datatype)=='jDatatypeTime'||get_class($ctrl->datatype)=='jDatatypeLocaleTime'){
+					$config=$ctrl->timepickerConfig!='' ? $ctrl->timepickerConfig : $timepicker_default_config;
+					if($config){
+						$resp->addJSLink(jApp::config()->timepickers[$config]);
+					}
 				}
 			}
 			foreach($v->getWikiEditors()as $ed){
 				if(isset($confWikiEditor[$ed->config.'.engine.file']))
-					$resp->addJSLink($bp.$confWikiEditor[$ed->config.'.engine.file']);
+					$resp->addJSLink($confWikiEditor[$ed->config.'.engine.file']);
 				if(isset($confWikiEditor[$ed->config.'.config.path'])){
-					$p=$bp.$confWikiEditor[$ed->config.'.config.path'];
+					$p=$confWikiEditor[$ed->config.'.config.path'];
 					$resp->addJSLink($p.jApp::config()->locale.'.js');
 					$resp->addCSSLink($p.'style.css');
 				}
 				if(isset($confWikiEditor[$ed->config.'.skin']))
-					$resp->addCSSLink($bp.$confWikiEditor[$ed->config.'.skin']);
+					$resp->addCSSLink($confWikiEditor[$ed->config.'.skin']);
 			}
 		}
 	}
@@ -77,6 +89,7 @@ jFormsJQ.selectFillUrl=\''.jUrl::get('jelix~jforms:getListData').'\';
 jFormsJQ.config = {locale:'.$this->escJsStr(jApp::config()->locale).
 	',basePath:'.$this->escJsStr($conf['basePath']).
 	',jqueryPath:'.$this->escJsStr($conf['jqueryPath']).
+	',jqueryFile:'.$this->escJsStr(jApp::config()->jquery['jquery']).
 	',jelixWWWPath:'.$this->escJsStr($conf['jelixWWWPath']).'};
 jFormsJQ.tForm = new jFormsJQForm(\''.$this->_name.'\',\''.$this->_form->getSelector().'\',\''.$this->_form->getContainer()->formId.'\');
 jFormsJQ.tForm.setErrorDecorator(new '.$this->options['errorDecorator'].'());
@@ -90,12 +103,12 @@ jFormsJQ.declareForm(jFormsJQ.tForm);
 		}
 		if($ctrl->required){
 			$this->jsContent.="c.required = true;\n";
-			if($ctrl->alertRequired){
-				$this->jsContent.="c.errRequired=".$this->escJsStr($ctrl->alertRequired).";\n";
-			}
-			else{
-				$this->jsContent.="c.errRequired=".$this->escJsStr(jLocale::get('jelix~formserr.js.err.required',$ctrl->label)).";\n";
-			}
+		}
+		if($ctrl->alertRequired){
+			$this->jsContent.="c.errRequired=".$this->escJsStr($ctrl->alertRequired).";\n";
+		}
+		else{
+			$this->jsContent.="c.errRequired=".$this->escJsStr(jLocale::get('jelix~formserr.js.err.required',$ctrl->label)).";\n";
 		}
 		if($ctrl->alertInvalid){
 			$this->jsContent.="c.errInvalid=".$this->escJsStr($ctrl->alertInvalid).";\n";
@@ -105,8 +118,16 @@ jFormsJQ.declareForm(jFormsJQ.tForm);
 		}
 		if($this->isRootControl)$this->jsContent.="jFormsJQ.tForm.addControl(c);\n";
 		if($ctrl instanceof jFormsControlDate||get_class($ctrl->datatype)=='jDatatypeDate'||get_class($ctrl->datatype)=='jDatatypeLocaleDate'){
-			$config=isset($ctrl->datepickerConfig)?$ctrl->datepickerConfig:jApp::config()->forms['datepicker'];
-			$this->jsContent.='jelix_datepicker_'.$config."(c, jFormsJQ.config);\n";
+			$config=$ctrl->datepickerConfig!=''?$ctrl->datepickerConfig:jApp::config()->forms['datepicker'];
+			if($config){
+				$this->jsContent.='jelix_datepicker_'.$config."(c, jFormsJQ.config);\n";
+			}
+		}
+		if($ctrl instanceof jFormsControlTime||get_class($ctrl->datatype)=='jDatatypeTime'||get_class($ctrl->datatype)=='jDatatypeLocaleTime'){
+			$config=$ctrl->timepickerConfig!='' ? $ctrl->timepickerConfig : jApp::config()->forms['timepicker'];
+			if($config){
+				$this->jsContent.='jelix_timepicker_'.$config."(c, jFormsJQ.config);\n";
+			}
 		}
 	}
 	protected function jsMenulist($ctrl){

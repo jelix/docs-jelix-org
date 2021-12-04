@@ -5,26 +5,30 @@
 * @subpackage forms
 * @author     Laurent Jouanneau
 * @contributor Loic Mathaud, Dominique Papin, Julien Issler
-* @contributor Uriel Corfa (Emotic SARL), Thomas, Olivier Demah
-* @copyright   2006-2012 Laurent Jouanneau
+* @contributor Uriel Corfa (Emotic SARL), Thomas, Olivier Demah, Adrien Lagroy de Croutte
+* @copyright   2006-2017 Laurent Jouanneau
 * @copyright   2007 Loic Mathaud, 2007-2008 Dominique Papin
 * @copyright   2007 Emotic SARL
 * @copyright   2008-2015 Julien Issler, 2009 Thomas, 2009 Olivier Demah
+ * @copyright 2020 Adrien Lagroy de Croutte
 * @link        http://www.jelix.org
 * @licence    GNU Lesser General Public Licence see LICENCE file or http://www.gnu.org/licenses/lgpl.html
 */
 require_once(JELIX_LIB_PATH.'forms/jFormsCompiler_jf_1_0.class.php');
-class jFormsCompiler_jf_1_1 extends jFormsCompiler_jf_1_0{
+class jFormsCompiler_jf_1_1 extends jFormsCompiler_jf_1_0
+{
 	const NS='http://jelix.org/ns/forms/1.1';
 	protected $allowedType=array('string','boolean','decimal','integer','hexadecimal',
 									'datetime','date','time','localetimeshort','localedatetime','localedate','localetime',
 									'url','email','ipv4','ipv6','html','xhtml');
-	protected function _compile($xml,&$source){
+	protected function _compile($xml,&$source)
+	{
 		if(isset($xml['allowAnyOrigin'])&&$xml['allowAnyOrigin']=='true'){
 			$source[]='$this->securityLevel=0;';
 		}
 	}
-	protected function generateInput(&$source,$control,&$attributes){
+	protected function generateInput(&$source,$control,&$attributes)
+	{
 		if(isset($attributes['pattern'])){
 			if(isset($attributes['type'])&&$attributes['type']!='string'){
 				throw new jException('jelix~formserr.attribute.not.allowed',array('pattern','input',$this->sourceFile));
@@ -34,12 +38,14 @@ class jFormsCompiler_jf_1_1 extends jFormsCompiler_jf_1_0{
 		}
 		return parent::generateInput($source,$control,$attributes);
 	}
-	protected function generateCheckbox(&$source,$control,&$attributes){
+	protected function generateCheckbox(&$source,$control,&$attributes)
+	{
 		$ret=parent::generateCheckbox($source,$control,$attributes);
 		$this->readOnCheckValue($source,$control);
 		return $ret;
 	}
-	protected function readOnCheckValue(&$source,$control){
+	protected function readOnCheckValue(&$source,$control)
+	{
 		if(isset($control->oncheckvalue)){
 			$check=$control->oncheckvalue;
 			if(isset($check['locale'])){
@@ -63,7 +69,8 @@ class jFormsCompiler_jf_1_1 extends jFormsCompiler_jf_1_0{
 			}
 		}
 	}
-	protected function generateMenulist(&$source,$control,&$attributes){
+	protected function generateMenulist(&$source,$control,&$attributes)
+	{
 		parent::generateMenulist($source,$control,$attributes);
 		if(isset($control->emptyitem)){
 			if(isset($control->emptyitem['locale'])){
@@ -76,7 +83,8 @@ class jFormsCompiler_jf_1_1 extends jFormsCompiler_jf_1_0{
 		}
 		return false;
 	}
-	protected function generateDate(&$source,$control,&$attributes){
+	protected function generateDate(&$source,$control,&$attributes)
+	{
 		$this->attrDefaultvalue($source,$attributes);
 		$this->attrReadOnly($source,$attributes);
 		$this->attrRequired($source,$attributes);
@@ -97,7 +105,8 @@ class jFormsCompiler_jf_1_1 extends jFormsCompiler_jf_1_0{
 		}
 		return false;
 	}
-	protected function generateDatetime(&$source,$control,&$attributes){
+	protected function generateDatetime(&$source,$control,&$attributes)
+	{
 		$this->attrDefaultvalue($source,$attributes);
 		$this->attrReadOnly($source,$attributes);
 		$this->attrRequired($source,$attributes);
@@ -113,8 +122,9 @@ class jFormsCompiler_jf_1_1 extends jFormsCompiler_jf_1_0{
 			unset($attributes['maxdate']);
 		}
 		if(isset($attributes['seconds'])){
-			if($attributes['seconds']=="true")
+			if($attributes['seconds']=="true"){
 				$source[]='$ctrl->enableSeconds = true;';
+			}
 			unset($attributes['seconds']);
 		}
 		if(isset($attributes['datepicker'])){
@@ -123,18 +133,50 @@ class jFormsCompiler_jf_1_1 extends jFormsCompiler_jf_1_0{
 		}
 		return false;
 	}
-	protected function generateTextarea(&$source,$control,&$attributes){
+	protected function generateTime(&$source,$control,&$attributes)
+	{
+		$this->attrDefaultvalue($source,$attributes);
+		$this->attrReadOnly($source,$attributes);
+		$this->attrRequired($source,$attributes);
+		$this->readLabel($source,$control,'time');
+		$this->readEmptyValueLabel($source,$control);
+		$this->readHelpHintAlert($source,$control);
+		if(isset($attributes['mintime'])){
+			$source[]='$ctrl->datatype->addFacet(\'minValue\',\''.$attributes['mintime'].'\');';
+			unset($attributes['mintime']);
+		}
+		if(isset($attributes['maxtime'])){
+			$source[]='$ctrl->datatype->addFacet(\'maxValue\',\''.$attributes['maxtime'].'\');';
+			unset($attributes['maxtime']);
+		}
+		if(isset($attributes['seconds'])){
+			if($attributes['seconds']=="true"){
+				$source[]='$ctrl->enableSeconds = true;';
+			}
+			unset($attributes['seconds']);
+		}
+		if(isset($attributes['timepicker'])){
+			$source[]='$ctrl->timepickerConfig = \''.$attributes['timepicker'].'\';';
+			unset($attributes['timepicker']);
+		}
+		return false;
+	}
+	protected function generateTextarea(&$source,$control,&$attributes)
+	{
 		if(isset($attributes['type'])){
 			if($attributes['type']!='html'&&$attributes['type']!='xhtml'){
-				throw new jException('jelix~formserr.datatype.unknown',
-									array($attributes['type'],'textarea',$this->sourceFile));
+				throw new jException(
+					'jelix~formserr.datatype.unknown',
+					array($attributes['type'],'textarea',$this->sourceFile)
+				);
 			}
 			$source[]='$ctrl->datatype= new jDatatypeHtml('.($attributes['type']=='xhtml'?'true':'').');';
 			unset($attributes['type']);
 		}
 		return $this->_generateTextareaHtmlEditor($source,$control,$attributes);
 	}
-	protected function _generateTextareaHtmlEditor(&$source,$control,&$attributes){
+	protected function _generateTextareaHtmlEditor(&$source,$control,&$attributes)
+	{
 		$this->attrRequired($source,$attributes);
 		$this->attrDefaultvalue($source,$attributes);
 		$this->attrReadOnly($source,$attributes);
@@ -151,19 +193,24 @@ class jFormsCompiler_jf_1_1 extends jFormsCompiler_jf_1_0{
 		$this->readHelpHintAlert($source,$control);
 		if(isset($attributes['rows'])){
 			$rows=intval($attributes['rows']);
-			if($rows < 2)$rows=2;
+			if($rows < 2){
+				$rows=2;
+			}
 			$source[]='$ctrl->rows='.$rows.';';
 			unset($attributes['rows']);
 		}
 		if(isset($attributes['cols'])){
 			$cols=intval($attributes['cols']);
-			if($cols < 2)$cols=2;
+			if($cols < 2){
+				$cols=2;
+			}
 			$source[]='$ctrl->cols='.$cols.';';
 			unset($attributes['cols']);
 		}
 		return false;
 	}
-	protected function generateSecret(&$source,$control,&$attributes){
+	protected function generateSecret(&$source,$control,&$attributes)
+	{
 		if(isset($attributes['minlength'])){
 			$source[]='$ctrl->datatype->addFacet(\'minLength\','.intval($attributes['minlength']).');';
 			unset($attributes['minlength']);
@@ -178,7 +225,8 @@ class jFormsCompiler_jf_1_1 extends jFormsCompiler_jf_1_0{
 		}
 		return parent::generateSecret($source,$control,$attributes);
 	}
-	protected function generateHtmleditor(&$source,$control,&$attributes){
+	protected function generateHtmleditor(&$source,$control,&$attributes)
+	{
 		if(isset($attributes['xhtml'])){
 			$source[]='$ctrl->datatype= new jDatatypeHtml('.($attributes['xhtml']=='true'?'true':'false').', true);';
 			unset($attributes['xhtml']);
@@ -194,7 +242,8 @@ class jFormsCompiler_jf_1_1 extends jFormsCompiler_jf_1_0{
 		}
 		return false;
 	}
-	protected function generateWikieditor(&$source,$control,&$attributes){
+	protected function generateWikieditor(&$source,$control,&$attributes)
+	{
 		$this->_generateTextareaHtmlEditor($source,$control,$attributes);
 		if(isset($attributes['config'])){
 			$source[]='$ctrl->config=\''.str_replace("'","\\'",$attributes['config']).'\';';
@@ -202,21 +251,28 @@ class jFormsCompiler_jf_1_1 extends jFormsCompiler_jf_1_0{
 		}
 		return false;
 	}
-	protected function generateHidden(&$source,$control,&$attributes){
+	protected function generateHidden(&$source,$control,&$attributes)
+	{
 		$this->attrDefaultvalue($source,$attributes);
 		return false;
 	}
-	protected function generateCaptcha(&$source,$control,&$attributes){
+	protected function generateCaptcha(&$source,$control,&$attributes)
+	{
 		$this->readLabel($source,$control,'captcha');
 		$this->readHelpHintAlert($source,$control);
+		if(isset($attributes['validator'])){
+			$source[]='$ctrl->setValidator(\'' . str_replace("'","\\'",$attributes['validator']). '\');';
+		}
 		return false;
 	}
-	protected function generateButton(&$source,$control,&$attributes){
+	protected function generateButton(&$source,$control,&$attributes)
+	{
 		$this->attrDefaultvalue($source,$attributes);
 		$this->readLabel($source,$control,'button');
 		return false;
 	}
-	protected function generateGroup(&$source,$control,&$attributes){
+	protected function generateGroup(&$source,$control,&$attributes)
+	{
 		$this->readLabel($source,$control,'group');
 		$this->attrReadOnly($source,$attributes);
 		$hasCheckbox=false;
@@ -235,18 +291,18 @@ class jFormsCompiler_jf_1_1 extends jFormsCompiler_jf_1_0{
 			if(isset($control->onuncheckvalue)){
 				throw new jException('jelix~formserr.control.not.allowed',array('onuncheckvalue','group',$this->sourceFile));
 			}
-		}
-		else{
+		}else{
 			$tagtoIgnore=array('label','oncheckvalue','onuncheckvalue');
 			$this->readOnCheckValue($source,$control);
 			$this->attrDefaultvalue($source,$attributes);
 		}
 		$source[]='$topctrl = $ctrl;';
-		$ctrlcount=$this->readChildControls($source,'group',$control,$tagtoIgnore);
+		$this->readChildControls($source,'group',$control,$tagtoIgnore);
 		$source[]='$ctrl = $topctrl;';
 		return false;
 	}
-	protected function generateChoice(&$source,$control,&$attributes){
+	protected function generateChoice(&$source,$control,&$attributes)
+	{
 		$this->attrRequired($source,$attributes);
 		$this->readLabel($source,$control,'choice');
 		$this->readEmptyValueLabel($source,$control);
@@ -278,70 +334,79 @@ class jFormsCompiler_jf_1_1 extends jFormsCompiler_jf_1_0{
 				throw new jException('jelix~formserr.tag.missing',array('label','item of choice',$this->sourceFile));
 			}
 			if(isset($item->label['locale'])){
-				$label='';
 				$labellocale=(string)$item->label['locale'];
 				$source[]='$topctrl->createItem(\''.str_replace("'","\\'",$value).'\', jLocale::get(\''.$labellocale.'\'));';
 			}else{
 				$label=(string)$item->label;
-				$labellocale='';
 				$source[]='$topctrl->createItem(\''.str_replace("'","\\'",$value).'\', \''.str_replace("'","\\'",$label).'\');';
 			}
-			$ctrlcount=$this->readChildControls($source,'choice',$item,array('label'),str_replace("'","\\'",$value));
+			$this->readChildControls($source,'choice',$item,array('label'),str_replace("'","\\'",$value));
 		}
 		$source[]='$topctrl->defaultValue=\''.str_replace('\'','\\\'',$selectedvalue).'\';';
 		$source[]='$ctrl = $topctrl;';
 		return false;
 	}
-	protected function readChildControls(&$source,$controltype,$xml,$ignore,$itemname=''){
-		if($itemname!='')
+	protected function readChildControls(&$source,$controltype,$xml,$ignore,$itemname='')
+	{
+		if($itemname!=''){
 			$itemname=",'$itemname'";
+		}
 		$ctrlcount=0;
 		foreach($xml->children()as $ctrltype=>$control){
-			if(in_array($ctrltype,$ignore))
+			if(in_array($ctrltype,$ignore)){
 				continue;
+			}
 			if(!in_array($ctrltype,array('input','textarea','output','checkbox','checkboxes','radiobuttons','button',
-						'menulist','listbox','secret','upload','hidden','htmleditor','date','datetime','wikieditor'))){
+						'menulist','listbox','secret','upload','hidden','htmleditor','date','datetime','wikieditor','time'))){
 				throw new jException('jelix~formserr.control.not.allowed',array($ctrltype,$controltype,$this->sourceFile));
 			}
 			$ctrlcount++;
 			$src=array();
 			$twocontrols=$this->_generatePHPControl($src,$ctrltype,$control);
 			$src[]='$topctrl->addChildControl($ctrl'.$itemname.');';
-			if($twocontrols)
+			if($twocontrols){
 				$src[]='$topctrl->addChildControl($ctrl2'.$itemname.');';
+			}
 			$source[]=implode("\n",$src);
 		}
 		return $ctrlcount;
 	}
-	protected function readDatasource(&$source,$control,$controltype,&$attributes,$hasSelectedValues=false){
+	protected function readDatasource(&$source,$control,$controltype,&$attributes,$hasSelectedValues=false)
+	{
 		if(isset($control->datasource)){
 			$attrs=array();
 			foreach($control->datasource->attributes()as $name=>$value){
 				$attrs[$name]=(string)$value;
 			}
 			if(isset($attrs['dao'])){
-				if(isset($attrs['profile']))
+				if(isset($attrs['profile'])){
 					$profile=',\''.$attrs['profile'].'\'';
-				else
+				}else{
 					$profile=',\'\'';
+				}
 				if(isset($attrs['valueproperty'])){
 					$daovalue=$attrs['valueproperty'];
-				}else
+				}else{
 					$daovalue='';
-				if(!isset($attrs['method']))
+				}
+				if(!isset($attrs['method'])){
 					throw new jException('jelix~formserr.attribute.missing',array('method','datasource',$this->sourceFile));
-				if(!isset($attrs['labelproperty']))
+				}
+				if(!isset($attrs['labelproperty'])){
 					throw new jException('jelix~formserr.attribute.missing',array('labelproperty','datasource',$this->sourceFile));
-				if(isset($attrs['criteria']))
+				}
+				if(isset($attrs['criteria'])){
 					$criteria=',\''.$attrs['criteria'].'\',null';
-				elseif(isset($attrs['criteriafrom']))
+				}elseif(isset($attrs['criteriafrom'])){
 					$criteria=',null,\''.$attrs['criteriafrom'].'\'';
-				else
+				}else{
 					$criteria=',null,null';
-				if(isset($attrs['labelseparator']))
+				}
+				if(isset($attrs['labelseparator'])){
 					$labelSeparator=',\''.$attrs['labelseparator'].'\'';
-				else
+				}else{
 					$labelSeparator='';
+				}
 				$source[]='$ctrl->datasource = new jFormsDaoDatasource(\''.$attrs['dao'].'\',\''.
 								$attrs['method'].'\',\''.$attrs['labelproperty'].'\',\''.$daovalue.'\''.$profile.$criteria.$labelSeparator.');';
 				if(isset($attrs['labelmethod'])){
@@ -353,7 +418,7 @@ class jFormsCompiler_jf_1_1 extends jFormsCompiler_jf_1_0{
 				if(isset($attrs['groupby'])&&trim($attrs['groupby'])!=''){
 					$source[]='$ctrl->datasource->setGroupBy(\''.trim($attrs['groupby']).'\');';
 				}
-			}else if(isset($attrs['class'])){
+			}elseif(isset($attrs['class'])){
 				$class=new jSelectorClass($attrs['class']);
 				$source[]='jClasses::inc(\''.$attrs['class'].'\');';
 				$source[]='$datasource = new '.$class->className.'($this->id());';
@@ -378,12 +443,12 @@ class jFormsCompiler_jf_1_1 extends jFormsCompiler_jf_1_0{
 			$groups=array();
 			$selectedvalues=array();
 			foreach($control->children()as $tag=>$elem){
-				if($tag!='item'&&$tag!='itemsgroup')
+				if($tag!='item'&&$tag!='itemsgroup'){
 					continue;
+				}
 				if($tag=='item'){
 					$nogroup.=$this->readItem($elem,$hasSelectedValues,$controltype,$selectedvalues);
-				}
-				else{
+				}else{
 					$group='$ctrl->datasource->data[';
 					if(isset($elem['locale'])){
 						$group.="jLocale::get('".(string)$elem['locale']."')]=array(";
@@ -403,8 +468,7 @@ class jFormsCompiler_jf_1_1 extends jFormsCompiler_jf_1_0{
 				$source[]='$ctrl->datasource->data[\'\'] = array('.$nogroup.');';
 				$source[]=implode("\n",$groups);
 				$source[]='$ctrl->datasource->setGroupBy(true);';
-			}
-			elseif($nogroup){
+			}elseif($nogroup){
 				$source[]='$ctrl->datasource->data = array('.$nogroup.');';
 			}
 			if($controltype=='submit'&&(count($groups)||$nogroup)){
@@ -420,7 +484,8 @@ class jFormsCompiler_jf_1_1 extends jFormsCompiler_jf_1_0{
 			}
 		}
 	}
-	protected function readItem($item,$hasSelectedValues,$controltype,&$selectedvalues){
+	protected function readItem($item,$hasSelectedValues,$controltype,&$selectedvalues)
+	{
 		$value="'".str_replace("'","\\'",(string)$item['value'])."'=>";
 		if(isset($item['locale'])){
 			$value.="jLocale::get('".(string)$item['locale']."'),";

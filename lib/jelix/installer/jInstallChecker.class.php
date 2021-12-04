@@ -4,7 +4,7 @@
 * check a jelix installation
 *
 * @package  jelix
-* @subpackage core
+* @subpackage installer
 * @author   Laurent Jouanneau
 * @contributor Bastien Jaillot
 * @contributor Olivier Demah, Brice Tence, Julien Issler
@@ -88,7 +88,7 @@ class jInstallCheck{
 			$this->error('php.bad.version');
 			$notice=$this->messages->get('php.version.required',$this->buildProperties['PHP_VERSION_TARGET']);
 			$notice.='. '.$this->messages->get('php.version.current',phpversion());
-			$this->reporter->showNotice($notice);
+			$this->reporter->message($notice,'notice');
 			$ok=false;
 		}
 		else if($this->verbose){
@@ -107,7 +107,6 @@ class jInstallCheck{
 		}
 		if(count($this->databases)){
 			$driversInfos=jDbParameters::getDriversInfosList();
-			$req=($this->dbRequired?'required':'optional');
 			$okdb=false;
 			array_combine($this->databases,array_fill(0,count($this->databases),false));
 			$alreadyExtensionsChecked=array();
@@ -271,14 +270,6 @@ class jInstallCheck{
 	}
 	function checkPhpSettings(){
 		$ok=true;
-		if(file_exists(jApp::configPath("mainconfig.ini.php")))
-			$defaultconfig=parse_ini_file(jApp::configPath("mainconfig.ini.php"),true);
-		else
-			$defaultconfig=array();
-		if(file_exists(jApp::configPath("index/config.ini.php")))
-			$indexconfig=parse_ini_file(jApp::configPath("index/config.ini.php"),true);
-		else
-			$indexconfig=array();
 		if(ini_get('magic_quotes_gpc')==1){
 			$this->error('ini.magic_quotes_gpc');
 			$ok=false;

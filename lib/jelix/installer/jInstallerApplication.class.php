@@ -4,12 +4,13 @@
 * @package    jelix
 * @subpackage installer
 * @author     Laurent Jouanneau
-* @copyright  2011 Laurent Jouanneau
+* @copyright  2011-2021 Laurent Jouanneau
 * @link       http://jelix.org
 * @licence    http://www.gnu.org/licenses/lgpl.html GNU Lesser General Public Licence, see LICENCE file
 */
 class jInstallerApplication{
 	protected $projectXml=null;
+	protected $localFrameworkConfig=array();
 	protected $projectXmlFilename='project.xml';
 	protected $entryPointList=null;
 	protected $appName='';
@@ -17,6 +18,7 @@ class jInstallerApplication{
 		if($projectFile!='')
 			$this->projectXmlFilename=$projectFile;
 		$this->loadProjectXml();
+		$this->loadFrameworkConfig();
 	}
 	protected function loadProjectXml(){
 		$doc=new DOMDocument();
@@ -33,21 +35,45 @@ class jInstallerApplication{
 		}
 		$this->projectXml=$doc;
 	}
-	public function getEntryPointsList(){
-		if($this->entryPointList!==null)
+	protected function loadFrameworkConfig()
+	{
+		$localFmkFile=jApp::configPath('localframework.ini.php');
+		if(!file_exists($localFmkFile)){
+			return;
+		}
+		$localFmkConfig=parse_ini_file($localFmkFile,true);
+		foreach($localFmkConfig as $section=>$epConfig){
+			if(!is_array($epConfig)){
+				continue;
+			}
+			if(!preg_match('/^entrypoint:(.*)$/',$section,$m)){
+				continue;
+			}
+			$epConfig['file']=$m[1];
+			$this->localFrameworkConfig[]=$epConfig;
+		}
+	}
+	public function getEntryPointsList()
+	{
+		if($this->entryPointList!==null){
 			return $this->entryPointList;
+		}
+		$this->entryPointList=array();
+		$mainConfig=new jIniFileModifier(jApp::mainConfigFile());
+		$this->fillEntryPointsListFromXml($mainConfig);
+		$this->fillEntryPointsListFromIni($mainConfig);
+		return $this->entryPointList;
+	}
+	protected function fillEntryPointsListFromXml($mainConfig)
+	{
 		$listEps=$this->projectXml->documentElement->getElementsByTagName("entrypoints");
 		if(!$listEps->length){
-			$this->entryPointList=array();
-			return $this->entryPointList;
+			return;
 		}
 		$listEp=$listEps->item(0)->getElementsByTagName("entry");
 		if(!$listEp->length){
-			$this->entryPointList=array();
-			return $this->entryPointList;
+			return;
 		}
-		$mainConfig=new jIniFileModifier(jApp::mainConfigFile());
-		$this->entryPointList=array();
 		for($i=0;$i < $listEp->length;$i++){
 			$epElt=$listEp->item($i);
 			$ep=new jInstallerEntryPoint($mainConfig,
@@ -56,7 +82,19 @@ class jInstallerApplication{
 											$epElt->getAttribute("type"));
 			$this->entryPointList[]=$ep;
 		}
-		return $this->entryPointList;
+	}
+	protected function fillEntryPointsListFromIni($mainConfig)
+	{
+		if(!count($this->localFrameworkConfig)){
+			return;
+		}
+		foreach($this->localFrameworkConfig as $epConfig){
+			$ep=new jInstallerEntryPoint($mainConfig,
+											$epConfig['config'],
+											$epConfig['file'],
+											$epConfig['type']);
+			$this->entryPointList[]=$ep;
+		}
 	}
 	public function getEntryPointInfo($name){
 		if(($p=strpos($name,'.php'))!==false)

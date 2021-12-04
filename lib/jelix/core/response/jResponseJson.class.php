@@ -4,9 +4,10 @@
 * @package     jelix
 * @subpackage  core_response
 * @author      Laurent Jouanneau
-* @contributor Loic Mathaud
+* @contributor Loic Mathaud, Julien Issler
 * @copyright   2006-2011 Laurent Jouanneau
 * @copyright   2007-2008 Loic Mathaud
+* @copyright   2017 Julien Issler
 * @link        http://www.jelix.org
 * @licence     GNU Lesser General Public Licence see LICENCE file or http://www.gnu.org/licenses/lgpl.html
 */
@@ -20,7 +21,6 @@ final class jResponseJson extends jResponse{
 		}
 		$this->_httpHeaders['Content-Type']="application/json";
 		$content=json_encode($this->data,$this->options);
-		$this->_httpHeaders['Content-length']=strlen($content);
 		$this->sendHttpHeaders();
 		echo $content;
 		return true;
@@ -39,7 +39,6 @@ final class jResponseJson extends jResponse{
 		$this->_httpStatusMsg='Internal Server Error';
 		$this->_httpHeaders['Content-Type']="application/json";
 		$content=json_encode($message);
-		$this->_httpHeaders['Content-length']=strlen($content);
 		$this->sendHttpHeaders();
 		echo $content;
 	}

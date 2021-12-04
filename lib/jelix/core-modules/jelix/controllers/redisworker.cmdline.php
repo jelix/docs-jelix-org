@@ -2,7 +2,7 @@
 /* comments & extra-whitespaces have been removed by jBuildTools*/
 /**
 * @package     jelix-modules
-* @subpackage  jelix
+* @subpackage  jelix-module
 * @author      Laurent Jouanneau
 * @copyright   2016 Laurent Jouanneau
 * @licence     http://www.gnu.org/licenses/gpl.html GNU General Public Licence, see LICENCE file
@@ -19,15 +19,29 @@ class redisworkerCtrl extends jControllerCmdLine{
 	public function deljcache(){
 		$rep=$this->getResponse();
 		$redisPlugin=jCache::getDriver($this->param('profile'));
-		if(get_class($redisPlugin)!='redisCacheDriver'){
+		if(get_class($redisPlugin)!='redis_phpCacheDriver'&&get_class($redisPlugin)!='redis_extCacheDriver'){
 			$rep->addContent("Error, wrong profile. Not a redis cache.\n");
-			$this->setExitCode(1);
+			$rep->setExitCode(1);
 			return $rep;
 		}
 		$rep->addContent("--- Starting worker...\n");
 		$redis=$redisPlugin->getRedis();
+		if(get_class($redisPlugin)=='redis_phpCacheDriver'){
+			$this->deletionLoop('jcacheredisdelkeys',$rep,$redis,false);
+		}
+		else if(get_class($redisPlugin)=='redis_extCacheDriver'){
+			$this->deletionLoop('jcacheredisdelkeys',$rep,$redis,true);
+		}
+		return $rep;
+	}
+	protected function deletionLoop($key,$rep,$redis,$isExt){
 		while(true){
-			$prefixKey=$redis->lpop('jcacheredisdelkeys');
+			if($isExt){
+				$prefixKey=$redis->lPop($key);
+			}
+			else{
+				$prefixKey=$redis->lpop($key);
+			}
 			if(!$prefixKey){
 				sleep(1);
 				continue;
@@ -35,26 +49,22 @@ class redisworkerCtrl extends jControllerCmdLine{
 			$rep->addContent("flush $prefixKey\n");
 			$redis->flushByPrefix($prefixKey);
 		}
-		return $rep;
 	}
 	public function deljkvdb(){
 		$rep=$this->getResponse();
 		$redisDriver=jKvDb::getConnection($this->param('profile'));
-		if(get_class($redisDriver)!='redisKVDriver'){
+		if(get_class($redisDriver)!='redis_phpKVDriver'&&get_class($redisDriver)!='redis_extKVDriver'){
 			$rep->addContent("Error, wrong profile. Not a redis jKvDb driver.\n");
-			$this->setExitCode(1);
+			$rep->setExitCode(1);
 			return $rep;
 		}
 		$rep->addContent("--- Starting worker...\n");
-		$redis=$redisPlugin->getRedis();
-		while(true){
-			$prefixKey=$redis->lpop('jkvdbredisdelkeys');
-			if(!$prefixKey){
-				sleep(1);
-				continue;
-			}
-			$rep->addContent("flush $prefixKey\n");
-			$redis->flushByPrefix($prefixKey);
+		$redis=$redisDriver->getRedis();
+		if(get_class($redisDriver)=='redis_phpKVDriver'){
+			$this->deletionLoop('jkvdbredisdelkeys',$rep,$redis,false);
+		}
+		else if(get_class($redisDriver)=='redis_extKVDriver'){
+			$this->deletionLoop('jkvdbredisdelkeys',$rep,$redis,true);
 		}
 		return $rep;
 	}

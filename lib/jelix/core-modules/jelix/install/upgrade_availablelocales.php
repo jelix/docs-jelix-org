@@ -2,8 +2,8 @@
 /* comments & extra-whitespaces have been removed by jBuildTools*/
 
 /**
-* @package     jelix
-* @subpackage  core
+ * @package    jelix-modules
+ * @subpackage jelix-module
 * @author      Laurent Jouanneau
 * @copyright   2012 Laurent Jouanneau
 * @link        http://www.jelix.org
@@ -23,10 +23,14 @@ class jelixModuleUpgrader_availablelocales extends jInstallerModule{
 			return;
 		$ini=new jIniFileModifier(jApp::configPath($autoLocaleFile));
 		$availableLocales=$ini->getValue('availableLanguageCode');
-		if($isMaster)
-			$this->config->getMaster()->setValue('availableLocales',$availableLocales);
-		else
-			$this->config->getOverrider()->setValue('availableLocales',$availableLocales);
+		if($availableLocales){
+			if($isMaster){
+				$this->config->getMaster()->setValue('availableLocales',$availableLocales);
+			}
+			else{
+				$this->config->getOverrider()->setValue('availableLocales',$availableLocales);
+			}
+		}
 		$ini->removeValue('availableLanguageCode');
 		$ini->save();
 	}

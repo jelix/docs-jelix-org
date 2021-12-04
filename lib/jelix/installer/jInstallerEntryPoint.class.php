@@ -4,7 +4,7 @@
 * @package     jelix
 * @subpackage  installer
 * @author      Laurent Jouanneau
-* @copyright   2009-2010 Laurent Jouanneau
+* @copyright   2009-2021 Laurent Jouanneau
 * @link        http://jelix.org
 * @licence     GNU Lesser General Public Licence see LICENCE file or http://www.gnu.org/licenses/lgpl.html
 */
@@ -13,6 +13,7 @@ class jInstallerEntryPoint{
 	public $configFile;
 	public $configIni;
 	public $localConfigIni;
+	public $liveConfigIni;
 	protected $epConfigIni;
 	public $isCliScript;
 	public $scriptName;
@@ -50,5 +51,11 @@ class jInstallerEntryPoint{
 	}
 	function setConfigObj($config){
 		$this->config=$config;
+	}
+	function getSingleMainConfigIni(){
+		return $this->localConfigIni->getMaster()->getMaster();
+	}
+	function getSingleLocalConfigIni(){
+		return $this->localConfigIni->getMaster();
 	}
 }

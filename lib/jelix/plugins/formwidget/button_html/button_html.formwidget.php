@@ -2,7 +2,7 @@
 /* comments & extra-whitespaces have been removed by jBuildTools*/
 /**
 * @package     jelix
-* @subpackage  formwidgets
+* @subpackage  forms_widget_plugin
 * @author      Claudio Bernardes
 * @contributor Laurent Jouanneau, Julien Issler, Dominique Papin
 * @copyright   2012 Claudio Bernardes
@@ -15,9 +15,10 @@ class button_htmlFormWidget extends \jelix\forms\HtmlWidget\WidgetBase{
 		$attr=$this->getControlAttributes();
 		unset($attr['readonly']);
 		unset($attr['class']);
-		$attr['value']=$this->getValue($this->ctrl);
+		$attr['value']=$this->getValue();
 		echo '<button ';
 		$this->_outputAttr($attr);
 		echo '>',htmlspecialchars($this->ctrl->label),'</button>';
+		$this->parentWidget->addJs('c=null;');
 	}
 }

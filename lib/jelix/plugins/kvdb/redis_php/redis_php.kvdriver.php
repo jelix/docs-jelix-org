@@ -2,16 +2,15 @@
 /* comments & extra-whitespaces have been removed by jBuildTools*/
 /**
  * @package     jelix
- * @subpackage  kvdb
+ * @subpackage  kvdb_plugin
  * @author      Yannick Le Guédart
  * @contributor Laurent Jouanneau
- * @copyright   2009 Yannick Le Guédart, 2010-2016 Laurent Jouanneau
+ * @copyright   2009 Yannick Le Guédart, 2010-2021 Laurent Jouanneau
  *
  * @link     http://www.jelix.org
  * @licence  http://www.gnu.org/licenses/lgpl.html GNU Lesser General Public Licence, see LICENCE file
  */
-require_once(LIB_PATH . 'php5redis/Redis.php');
-class redisKVDriver extends jKVDriver implements jIKVSet,jIKVttl{
+class redis_phpKVDriver extends jKVDriver implements jIKVSet,jIKVttl{
 	protected $key_prefix='';
 	protected $key_prefix_flush_method='direct';
 	protected function _connect(){
@@ -32,7 +31,7 @@ class redisKVDriver extends jKVDriver implements jIKVSet,jIKVttl{
 				$this->key_prefix_flush_method=$this->_profile['key_prefix_flush_method'];
 			}
 		}
-		$cnx=new Redis($this->_profile['host'],$this->_profile['port']);
+		$cnx=new \PhpRedis\Redis($this->_profile['host'],$this->_profile['port']);
 		if(isset($this->_profile['db'])&&intval($this->_profile['db'])!=0){
 			$cnx->select_db($this->_profile['db']);
 		}
@@ -68,13 +67,13 @@ class redisKVDriver extends jKVDriver implements jIKVSet,jIKVttl{
 			return $res;
 	}
 	public function set($key,$value){
-		if(is_resource($value))
+		if($this->isResource($value))
 			return false;
 		$res=$this->_connection->set($this->getUsedKey($key),$this->esc($value));
 		return($res==='OK');
 	}
 	public function insert($key,$value){
-		if(is_resource($value))
+		if($this->isResource($value))
 			return false;
 		$key=$this->getUsedKey($key);
 		if($this->_connection->exists($key)==1)
@@ -83,7 +82,7 @@ class redisKVDriver extends jKVDriver implements jIKVSet,jIKVttl{
 		return($res==='OK');
 	}
 	public function replace($key,$value){
-		if(is_resource($value))
+		if($this->isResource($value))
 			return false;
 		$key=$this->getUsedKey($key);
 		if($this->_connection->exists($key)==0)
@@ -96,7 +95,7 @@ class redisKVDriver extends jKVDriver implements jIKVSet,jIKVttl{
 	}
 	public function flush(){
 		if(!$this->key_prefix){
-			return($this->_connection->flushall()=='OK');
+			return($this->_connection->flushdb()=='OK');
 		}
 		switch($this->key_prefix_flush_method){
 			case 'direct':
@@ -110,9 +109,10 @@ class redisKVDriver extends jKVDriver implements jIKVSet,jIKVttl{
 				$this->_connection->rpush('jkvdbredisdelkeys',$this->key_prefix);
 				return true;
 		}
+		return false;
 	}
 	public function append($key,$value){
-		if(is_resource($value))
+		if($this->isResource($value))
 			return false;
 		$key=$this->getUsedKey($key);
 		$val=$this->_connection->get($key);
@@ -125,7 +125,7 @@ class redisKVDriver extends jKVDriver implements jIKVSet,jIKVttl{
 		else return $val;
 	}
 	public function prepend($key,$value){
-		if(is_resource($value))
+		if($this->isResource($value))
 			return false;
 		$key=$this->getUsedKey($key);
 		$val=$this->_connection->get($key);
@@ -138,10 +138,10 @@ class redisKVDriver extends jKVDriver implements jIKVSet,jIKVttl{
 		else return $val;
 	}
 	public function increment($key,$incvalue=1){
-		$usedkey=$this->getUsedKey($key);
 		$val=$this->get($key);
 		if($val===null||!is_numeric($val)||!is_numeric($incvalue))
 			return false;
+		$usedkey=$this->getUsedKey($key);
 		if(intval($val)==$val)
 			return $this->_connection->incr($usedkey,intval($incvalue));
 		else{
@@ -152,10 +152,10 @@ class redisKVDriver extends jKVDriver implements jIKVSet,jIKVttl{
 		}
 	}
 	public function decrement($key,$decvalue=1){
-		$usedkey=$this->getUsedKey($key);
 		$val=$this->get($key);
 		if($val===null||!is_numeric($val)||!is_numeric($decvalue))
 			return false;
+		$usedkey=$this->getUsedKey($key);
 		if(intval($val)==$val)
 			return $this->_connection->decr($usedkey,intval($decvalue));
 		else{
@@ -166,7 +166,7 @@ class redisKVDriver extends jKVDriver implements jIKVSet,jIKVttl{
 		}
 	}
 	public function setWithTtl($key,$value,$ttl){
-		if(is_resource($value))
+		if($this->isResource($value))
 			return false;
 		if($ttl!=0&&$ttl > 2592000){
 			$ttl-=time();
@@ -198,19 +198,82 @@ class redisKVDriver extends jKVDriver implements jIKVSet,jIKVttl{
 			foreach($val as $k=>$v){
 				$val[$k]=$this->unesc($v);
 			}
-			return $val;
 		}
+		return $val;
 	}
 	public function sAdd($skey,$value){
 		return $this->_connection->sadd($this->getUsedKey($skey),$value);
 	}
 	public function sRemove($skey,$value){
-		return $this->_connection->srem($this->getUsedKey($skey),$decvalue);
+		return $this->_connection->srem($this->getUsedKey($skey),$value);
 	}
 	public function sCount($skey){
 		return $this->_connection->scard($this->getUsedKey($skey));
 	}
 	public function sPop($skey){
 		return $this->_connection->spop($this->getUsedKey($skey));
+	}
+	public function hDel($key,$hKey){
+		$key=$this->getUsedKey($key);
+		if(is_array($hKey)){
+			$count=0;
+			foreach($hKey as $hk){
+				$count+=$this->_connection->hDel($key,$hk);
+			}
+			return $count;
+		}
+		return $this->_connection->hDel($key,$hKey);
+	}
+	public function hExists($key,$hKey){
+		return !!$this->_connection->hExists($this->getUsedKey($key),$hKey);
+	}
+	public function hGet($key,$hKey){
+		return $this->_connection->hGet($this->getUsedKey($key),$hKey);
+	}
+	public function hGetAll($key){
+		$list=$this->_connection->hGetAll($this->getUsedKey($key));
+		$result=array();
+		for($i=0;$i < count($list);$i+=2){
+			$result[$list[$i]]=$list[$i+1];
+		}
+		return $result;
+	}
+	public function hKeys($key){
+		return $this->_connection->hKeys($this->getUsedKey($key));
+	}
+	public function hLen($key){
+		return $this->_connection->hLen($this->getUsedKey($key));
+	}
+	public function hMGet($key,$keys){
+		$args=$keys;
+		array_unshift($args,$this->getUsedKey($key));
+		$list=call_user_func_array(array($this->_connection,'hMGet'),$args);
+		$result=array();
+		foreach($list as $k=>$item){
+			$result[$keys[$k]]=$item;
+		}
+		return $result;
+	}
+	public function hMSet($key,$values){
+		$args=array();
+		foreach($values as $k=>$val){
+			$args[]=$k;
+			$args[]=$val;
+		}
+		array_unshift($args,$this->getUsedKey($key));
+		$ret=call_user_func_array(array($this->_connection,'hMSet'),$args);
+		return($ret=='OK');
+	}
+	public function hSet($key,$hKey,$value){
+		return $this->_connection->hSet($this->getUsedKey($key),$hKey,$value);
+	}
+	public function hSetNx($key,$hKey,$value){
+		return !! $this->_connection->hSetNx($this->getUsedKey($key),$hKey,$value);
+	}
+	public function hVals($key){
+		return $this->_connection->hVals($this->getUsedKey($key));
+	}
+	public function hStrLen($key){
+		return $this->_connection->hStrLen($this->getUsedKey($key));
 	}
 }

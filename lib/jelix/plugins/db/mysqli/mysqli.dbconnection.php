@@ -63,7 +63,28 @@ class mysqliDbConnection extends jDbConnection{
 	}
 	protected function _connect(){
 		$host=($this->profile['persistent'])? 'p:'.$this->profile['host'] : $this->profile['host'];
-		$cnx=@new mysqli($host,$this->profile['user'],$this->profile['password'],$this->profile['database']);
+		if(isset($this->profile['ssl'])&&$this->profile['ssl'])
+		{
+			$cnx=mysqli_init();
+			if(!$cnx){
+				throw new jException('jelix~db.error.connection',$this->profile['host']);
+			}
+			mysqli_ssl_set(
+				$cnx,
+				(isset($this->profile['ssl_key_pem'])? $this->profile['ssl_key_pem'] : NULL),
+				(isset($this->profile['ssl_cert_pem'])? $this->profile['ssl_cert_pem'] : NULL),
+				(isset($this->profile['ssl_cacert_pem'])? $this->profile['ssl_cacert_pem'] : NULL),
+				NULL,
+				NULL);
+			if(!mysqli_real_connect($cnx,$host,$this->profile['user'],
+						$this->profile['password'],$this->profile['database']))
+			{
+				throw new jException('jelix~db.error.connection',$this->profile['host']);
+			}
+		}
+		else{
+			$cnx=@new mysqli($host,$this->profile['user'],$this->profile['password'],$this->profile['database']);
+		}
 		if($cnx->connect_errno){
 			throw new jException('jelix~db.error.connection',$this->profile['host']);
 		}
@@ -121,14 +142,23 @@ class mysqliDbConnection extends jDbConnection{
 	}
 	public function setAttribute($id,$value){
 	}
-	public function execMulti($queries){
+	public function execMulti($queries)
+	{
 		$query_res=$this->_connection->multi_query($queries);
+		if($query_res===false){
+			throw new \Exception("Mysql multi_query error: ".$this->_connection->error);
+		}
+		$nbCmd=1;
 		while($this->_connection->more_results()){
-			$this->_connection->next_result();
+			$nbCmd ++;
+			$query_res=$this->_connection->next_result();
+			if($query_res===false){
+				throw new \Exception("Mysql multi_query error: ".$this->_connection->error);
+			}
 			if($discard=$this->_connection->store_result()){
 				$discard->free();
 			}
 		}
-		return $query_res;
+		return $nbCmd;
 	}
 }

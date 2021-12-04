@@ -2,8 +2,8 @@
 /* comments & extra-whitespaces have been removed by jBuildTools*/
 
 /**
-* @package     jelix
-* @subpackage  core
+ * @package    jelix-modules
+ * @subpackage jelix-module
 * @author      Laurent Jouanneau
 * @copyright   2012 Laurent Jouanneau
 * @link        http://www.jelix.org
@@ -27,7 +27,6 @@ class jelixModuleUpgrader_modulejacl2 extends jInstallerModule{
 			return;
 		$jacl2File=jApp::configPath($jacl2File);
 		if(!file_exists($jacl2File)){
-			$jacl2File='';
 			$message=$module."~errors.action.right.needed";
 			if($this->entryPoint->type!='classic')
 				$onerror=1;

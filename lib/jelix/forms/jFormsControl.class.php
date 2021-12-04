@@ -4,15 +4,16 @@
 * @package     jelix
 * @subpackage  forms
 * @author      Laurent Jouanneau
-* @contributor Loic Mathaud, Dominique Papin, Julien Issler, Olivier Demah
-* @copyright   2006-2008 Laurent Jouanneau, 2007-2008 Dominique Papin
+* @contributor Loic Mathaud, Dominique Papin, Julien Issler, Olivier Demah, Adrien Lagroy de Croutte
+* @copyright   2006-2018 Laurent Jouanneau, 2007-2008 Dominique Papin
 * @copyright   2007 Loic Mathaud
 * @copyright   2008 Julien Issler
-* @copyright   2009 Olivier Demah
+* @copyright   2009 Olivier Demah, 2020 Adrien Lagroy de Croutte
 * @link        http://www.jelix.org
 * @licence     http://www.gnu.org/licenses/lgpl.html GNU Lesser General Public Licence, see LICENCE file
 */
-abstract class jFormsControl{
+abstract class jFormsControl
+{
 	public $type=null;
 	public $ref='';
 	public $datatype;
@@ -28,26 +29,38 @@ abstract class jFormsControl{
 	public $emptyValueLabel=null;
 	protected $form;
 	protected $container;
-	function __construct($ref){
+	protected $attributes=array();
+	public function __construct($ref)
+	{
 		$this->ref=$ref;
 		$this->datatype=new jDatatypeString();
 	}
-	function setForm($form){
+	public function getWidgetType()
+	{
+		return $this->type;
+	}
+	public function setForm($form)
+	{
 		$this->form=$form;
 		$this->container=$form->getContainer();
-		if($this->initialReadOnly)
+		if($this->initialReadOnly){
 			$this->container->setReadOnly($this->ref,true);
-		if(!$this->initialActivation)
+		}
+		if(!$this->initialActivation){
 			$this->container->deactivate($this->ref,true);
+		}
 	}
-	function isContainer(){
+	public function isContainer()
+	{
 		return false;
 	}
-	function check(){
+	public function check()
+	{
 		$value=$this->container->data[$this->ref];
 		if(trim($value)==''){
-			if($this->required)
+			if($this->required){
 				return $this->container->errors[$this->ref]=jForms::ERRDATA_REQUIRED;
+			}
 			if(!$this->datatype->allowWhitespace()){
 				$this->container->data[$this->ref]=trim($value);
 			}
@@ -58,35 +71,86 @@ abstract class jFormsControl{
 		}
 		return null;
 	}
-	function setData($value){
+	public function setData($value)
+	{
 		$this->container->data[$this->ref]=$value;
 	}
-	function setReadOnly($r=true){
+	public function setReadOnly($r=true)
+	{
 		$this->container->setReadOnly($this->ref,$r);
 	}
-	function setValueFromRequest($request){
+	public function setValueFromRequest($request)
+	{
 		$this->setData($request->getParam($this->ref,''));
 	}
-	function setDataFromDao($value,$daoDatatype){
+	public function setDataFromDao($value,$daoDatatype)
+	{
 		$this->setData($value);
 	}
-	function getDisplayValue($value){
+	public function getDisplayValue($value)
+	{
 		if($value==''&&$this->emptyValueLabel!==null){
 			return $this->emptyValueLabel;
 		}
 		return $value;
 	}
-	public function isHtmlContent(){
+	public function isHtmlContent()
+	{
 		return false;
 	}
-	public function deactivate($deactivation=true){
+	public function deactivate($deactivation=true)
+	{
 		$this->container->deactivate($this->ref,$deactivation);
 	}
-	public function isActivated(){
+	public function isActivated()
+	{
 		return $this->container->isActivated($this->ref);
 	}
-	public function isReadOnly(){
+	public function isReadOnly()
+	{
 		return $this->container->isReadOnly($this->ref);
+	}
+	public function setAttribute($name,$value)
+	{
+		$this->attributes[$name]=$value;
+	}
+	public function getAttribute($name)
+	{
+		if(isset($this->attributes[$name])){
+			return $this->attributes[$name];
+		}
+		return null;
+	}
+	public function isModified()
+	{
+		$orig=& $this->container->originalData;
+		$value=$this->container->data[$this->ref];
+		if(!array_key_exists($this->ref,$orig)){
+			return false;
+		}
+		return $this->_diffValues($orig[$this->ref],$value);
+	}
+	protected function _diffValues(&$v1,&$v2){
+		if(is_array($v1)&&is_array($v2)){
+			$comp=array_merge(array_diff($v1,$v2),array_diff($v2,$v1));
+			return !empty($comp);
+		}
+		if($v1===$v2){
+			return false;
+		}
+		if(($v1===''&&$v2===null)||($v1===null&&$v2==='')){
+			return false;
+		}
+		if(is_numeric($v1)!=is_numeric($v2)){
+			return true;
+		}
+		if(empty($v1)&&empty($v2)){
+			return false;
+		}
+		if(is_array($v1)||is_array($v2)){
+			return true;
+		}
+		return($v1!=$v2);
 	}
 }
 abstract class jFormsControlDatasource extends jFormsControl{
@@ -174,20 +238,55 @@ class jFormsControlCaptcha extends jFormsControl{
 	public $type='captcha';
 	public $question='';
 	public $required=true;
+	protected $validatorName='simple';
+	function __construct($ref){
+		parent::__construct($ref);
+		$this->validatorName=jApp::config()->forms['captcha'];
+	}
+	public function setValidator($validatorName){
+		$this->validatorName=$validatorName;
+	}
+	function getWidgetType(){
+		if(isset(jApp::config()->forms['captcha.'.$this->validatorName.'.widgettype'])){
+			return jApp::config()->forms['captcha.'.$this->validatorName.'.widgettype'];
+		}
+		return $this->type;
+	}
+	protected function getCaptcha(){
+		$className='';
+		if(isset(jApp::config()->forms['captcha.'.$this->validatorName.'.validator'])){
+			$className=jApp::config()->forms['captcha.'.$this->validatorName.'.validator'];
+		}
+		if(!$className){
+			throw new \Exception("Captcha validator not set in the configuration for '".$this->validatorName."'");
+		}
+		return new $className();
+	}
 	function check(){
 		$value=$this->container->data[$this->ref];
-		if(trim($value)==''){
-			return $this->container->errors[$this->ref]=jForms::ERRDATA_REQUIRED;
-		}elseif($value!=$this->container->privateData[$this->ref]){
-			return $this->container->errors[$this->ref]=jForms::ERRDATA_INVALID;
+		if(isset($this->container->privateData[$this->ref])){
+			$internalData=$this->container->privateData[$this->ref];
 		}
-		return null;
+		else{
+			$internalData=null;
+		}
+		$result=$this->getCaptcha()->validate($value,$internalData);
+		if($result){
+			$this->container->errors[$this->ref]=$result;
+		}
+		return $result;
+	}
+	function initCaptcha(){
+		$data=$this->getCaptcha()->initOnDisplay();
+		if(is_array($data)&&isset($data['question'])){
+			$this->question=$data['question'];
+		}
+		$this->container->privateData[$this->ref]=$data;
+		return $data;
 	}
 	function initExpectedValue(){
-		$numbers=jLocale::get('jelix~captcha.number');
-		$id=rand(1,intval($numbers));
-		$this->question=jLocale::get('jelix~captcha.question.'.$id);
-		$this->container->privateData[$this->ref]=jLocale::get('jelix~captcha.response.'.$id);
+		jLog::log("captcha jforms control: initExpectedValue is deprecated, use initCaptcha instead","deprecated");
+		$this->initCaptcha();
 	}
 }
 class jFormsControlCheckbox extends jFormsControl{
@@ -241,10 +340,7 @@ class jFormsControlCheckbox extends jFormsControl{
 		if($value==$this->valueOnCheck){
 			return($this->valueLabelOnCheck!==''?$this->valueLabelOnCheck:$value);
 		}
-		else{
-			return($this->valueLabelOnUncheck!==''?$this->valueLabelOnUncheck:$value);
-		}
-		return $value;
+		return($this->valueLabelOnUncheck!==''?$this->valueLabelOnUncheck:$value);
 	}
 }
 class jFormsControlCheckboxes extends jFormsControlDatasource{
@@ -408,10 +504,7 @@ class jFormsControlGroup extends jFormsControlGroups{
 		if($value==$this->valueOnCheck){
 			return($this->valueLabelOnCheck!==''?$this->valueLabelOnCheck:$value);
 		}
-		else{
-			return($this->valueLabelOnUncheck!==''?$this->valueLabelOnUncheck:$value);
-		}
-		return $value;
+		return($this->valueLabelOnUncheck!==''?$this->valueLabelOnUncheck:$value);
 	}
 }
 class jFormsControlReset extends jFormsControl{
@@ -435,6 +528,69 @@ class jFormsControlHtmlEditor extends jFormsControl{
 	}
 	public function isHtmlContent(){
 		return true;
+	}
+}
+require_once(__DIR__.'/jFormsControlUpload2.class.php');
+class jFormsControlImageUpload extends jFormsControlUpload2{
+	protected function processNewFile($fileInfo){
+		$this->error=null;
+		$inputRef=$this->ref.'_jforms_edited_image';
+		if(!array_key_exists($inputRef,$_POST)){
+			return parent::processNewFile($fileInfo);
+		}
+		$this->fileInfo=@json_decode($_POST[$inputRef],true);
+		if(!$this->fileInfo){
+			$this->fileInfo=array('name'=>'','type'=>'','size'=>0,
+				'tmp_name'=>'','error'=>UPLOAD_ERR_NO_FILE);
+			if($this->required){
+				$this->error=\jForms::ERRDATA_REQUIRED;
+			}
+			return null;
+		}
+		$content='';
+		if(isset($this->fileInfo['content'])){
+			$content=$this->fileInfo['content'];
+			unset($this->fileInfo['content']);
+		}
+		if($content!=''){
+			$content=@base64_decode($content,true);
+			if($content===false){
+				$this->error=\jForms::ERRDATA_INVALID;
+				return null;
+			}
+		}
+		else{
+			if($this->required){
+				$this->error=\jForms::ERRDATA_REQUIRED;
+			}
+			return null;
+		}
+		$filePath=$this->getTempFile($this->fileInfo['name']);
+		$size=file_put_contents($filePath,$content);
+		if($size===false){
+			$this->error=\jForms::ERRDATA_FILE_UPLOAD_ERROR;
+			return null;
+		}
+		if($this->maxsize&&$size > $this->maxsize){
+			$this->error=\jForms::ERRDATA_INVALID_FILE_SIZE;
+			unlink($filePath);
+			return null;
+		}
+		if(count($this->mimetype)){
+			$this->fileInfo['type']=\jFile::getMimeType($filePath);
+			if($this->fileInfo['type']=='application/octet-stream'){
+				$this->fileInfo['type']=\jFile::getMimeTypeFromFilename($this->fileInfo['name']);
+			}
+			if(!in_array($this->fileInfo['type'],$this->mimetype)){
+				$this->error=\jForms::ERRDATA_INVALID_FILE_TYPE;
+				unlink($filePath);
+				return null;
+			}
+		}
+		return $this->fileInfo['name'];
+	}
+	function getWidgetType(){
+		return 'imageupload';
 	}
 }
 class jFormsControlInput extends jFormsControl{
@@ -589,16 +745,53 @@ class jFormsControlTextarea extends jFormsControl{
 		return($this->datatype instanceof jDatatypeHtml);
 	}
 }
+class jFormsControlTime extends jFormsControl
+{
+	public $type='time';
+	public $enableSeconds=false;
+	public $timepickerConfig=false;
+	public function __construct($ref)
+	{
+		$this->ref=$ref;
+		$this->datatype=new jDatatypeTime();
+	}
+	public function setValueFromRequest($request)
+	{
+		$value=$request->getParam($this->ref,'');
+		if(is_array($value)){
+			$value=$value['hour'].':'.$value['minutes'].':'.$value['seconds'];
+		}
+		if($value=='::'){
+			$value='';
+		}
+		$this->setData($value);
+	}
+	public function getDisplayValue($value)
+	{
+		if($value!=''){
+			$dt=new jDateTime();
+			$dt->setFromString($value,jDateTime::DB_TFORMAT);
+			$value=$dt->toString(jDateTime::LANG_TFORMAT);
+		}elseif($this->emptyValueLabel!==null){
+			return $this->emptyValueLabel;
+		}
+		return $value;
+	}
+}
 class jFormsControlUpload extends jFormsControl{
 	public $type='upload';
 	public $mimetype=array();
 	public $maxsize=0;
+	public $accept='';
+	public $capture='';
 	public $fileInfo=array();
+	protected $modified=false;
 	function check(){
-		if(isset($_FILES[$this->ref]))
+		if(isset($_FILES[$this->ref])){
 			$this->fileInfo=$_FILES[$this->ref];
-		else
+		}else{
 			$this->fileInfo=array('name'=>'','type'=>'','size'=>0,'tmp_name'=>'','error'=>UPLOAD_ERR_NO_FILE);
+		}
 		if($this->fileInfo['error']==UPLOAD_ERR_NO_FILE){
 			if($this->required)
 				return $this->container->errors[$this->ref]=jForms::ERRDATA_REQUIRED;
@@ -627,13 +820,305 @@ class jFormsControlUpload extends jFormsControl{
 	function setValueFromRequest($request){
 		if(isset($_FILES[$this->ref])){
 			$this->setData($_FILES[$this->ref]['name']);
+			$this->modified=true;
 		}else{
 			$this->setData('');
 		}
 	}
+	public function isModified()
+	{
+		if($this->modified){
+			return true;
+		}
+		return parent::isModified();
+	}
+	function saveFile($directoryPath,$alternateName=''){
+		if(!isset($_FILES[$this->ref])||$_FILES[$this->ref]['error']!=UPLOAD_ERR_OK){
+			return false;
+		}
+		if($this->maxsize&&$_FILES[$this->ref]['size'] > $this->maxsize){
+			return false;
+		}
+		if($alternateName==''){
+			$directoryPath.=$_FILES[$this->ref]['name'];
+		}else{
+			$directoryPath.=$alternateName;
+		}
+		return move_uploaded_file($_FILES[$this->ref]['tmp_name'],$directoryPath);
+	}
+}
+class jFormsControlUpload2 extends jFormsControl{
+	public $type='upload';
+	public $mimetype=array();
+	public $maxsize=0;
+	public $accept='';
+	public $capture='';
+	public $fileInfo=array();
+	protected $error=null;
+	protected $modified=false;
+	function setForm($form){
+		parent::setForm($form);
+		if(!isset($this->container->privateData[$this->ref]['newfile'])){
+			$this->container->privateData[$this->ref]['newfile']='';
+		}
+		if(!isset($this->container->privateData[$this->ref]['originalfile'])){
+			$this->container->privateData[$this->ref]['originalfile']='';
+		}
+	}
+	public function getOriginalFile(){
+		if(isset($this->container->privateData[$this->ref]['originalfile'])){
+			return $this->container->privateData[$this->ref]['originalfile'];
+		}
+		return '';
+	}
+	public function getNewFile(){
+		if(isset($this->container->privateData[$this->ref]['newfile'])){
+			return $this->container->privateData[$this->ref]['newfile'];
+		}
+		return '';
+	}
+	protected function getTempFile($file){
+		jFile::createDir(jApp::tempPath('uploads/'));
+		$tmpFile=jApp::tempPath('uploads/'.session_id().'-'.
+			$this->form->getSelector().'-'.$this->form->id().'-'.
+			$this->ref.'-'.$file);
+		return $tmpFile;
+	}
+	protected function deleteNewFile(){
+		if($this->container->privateData[$this->ref]['newfile']!=''){
+			$file=$this->getTempFile($this->container->privateData[$this->ref]['newfile']);
+			if(is_file($file)){
+				unlink($file);
+			}
+			$this->container->privateData[$this->ref]['newfile']='';
+		}
+	}
+	function setDataFromDao($value,$daoDatatype){
+		$this->deleteNewFile();
+		$this->container->privateData[$this->ref]['originalfile']=$value;
+		$this->container->data[$this->ref]=$value;
+	}
+	function setValueFromRequest($request)
+	{
+		$action=$request->getParam($this->ref . '_jf_action','');
+		$this->processUpload($action,isset($_FILES[$this->ref])? $_FILES[$this->ref] : null);
+	}
+	protected function processUpload($action,$fileInfo)
+	{
+		if($this->isReadOnly()){
+			$action='keep';
+		}
+		switch($action){
+			case 'keep':
+				$this->deleteNewFile();
+				$this->error=null;
+				$this->container->data[$this->ref]=$this->container->privateData[$this->ref]['originalfile'];
+				$this->modified=false;
+				break;
+			case 'keepnew':
+				if($this->container->privateData[$this->ref]['newfile']!=''&&
+					file_exists($this->getTempFile($this->container->privateData[$this->ref]['newfile']))
+				){
+					$this->container->data[$this->ref]=$this->container->privateData[$this->ref]['newfile'];
+				}
+				else{
+					$this->container->data[$this->ref]=$this->container->privateData[$this->ref]['originalfile'];
+				}
+				$this->modified=true;
+				break;
+			case 'new':
+				$fileName=$this->processNewFile($fileInfo);
+				$this->modified=true;
+				if($fileName){
+					if($this->container->privateData[$this->ref]['newfile']!=$fileName){
+						$this->deleteNewFile();
+					}
+					$this->container->privateData[$this->ref]['newfile']=$fileName;
+					$this->container->data[$this->ref]=$fileName;
+				}
+				elseif($this->container->privateData[$this->ref]['newfile']!=''){
+					$this->container->data[$this->ref]=$this->container->privateData[$this->ref]['newfile'];
+				}
+				else{
+					$this->modified=false;
+					$this->container->privateData[$this->ref]['newfile']='';
+					$this->container->data[$this->ref]=$this->container->privateData[$this->ref]['originalfile'];
+				}
+				break;
+			case 'del':
+				$this->deleteNewFile();
+				if(!$this->required){
+					$this->modified=true;
+					$this->container->data[$this->ref]='';
+				}
+				else{
+					$this->modified=false;
+					$this->error=jForms::ERRDATA_REQUIRED;
+				}
+				break;
+			default:
+		}
+		$this->container->privateData[$this->ref]['action']=$action;
+	}
+	protected function processNewFile($fileInfo){
+		$this->error=null;
+		if($fileInfo){
+			$this->fileInfo=$fileInfo;
+		}
+		else{
+			$this->fileInfo=array('name'=>'','type'=>'','size'=>0,
+				'tmp_name'=>'','error'=>UPLOAD_ERR_NO_FILE);
+		}
+		if($this->fileInfo['error']==UPLOAD_ERR_NO_FILE){
+			if($this->required){
+				$this->error=jForms::ERRDATA_REQUIRED;
+			}
+			return null;
+		}else{
+			if($this->fileInfo['error']==UPLOAD_ERR_NO_TMP_DIR||
+				$this->fileInfo['error']==UPLOAD_ERR_CANT_WRITE
+			){
+				$this->error=jForms::ERRDATA_FILE_UPLOAD_ERROR;
+			}
+			if($this->fileInfo['error']==UPLOAD_ERR_INI_SIZE||
+				$this->fileInfo['error']==UPLOAD_ERR_FORM_SIZE||
+				($this->maxsize&&$this->fileInfo['size'] > $this->maxsize)
+			){
+				$this->error=jForms::ERRDATA_INVALID_FILE_SIZE;
+			}
+			if($this->fileInfo['error']==UPLOAD_ERR_PARTIAL||
+				!$this->isUploadedFile($this->fileInfo['tmp_name'])
+			){
+				$this->error=jForms::ERRDATA_INVALID;
+			}
+			if(count($this->mimetype)){
+				$this->fileInfo['type']=jFile::getMimeType($this->fileInfo['tmp_name']);
+				if($this->fileInfo['type']=='application/octet-stream'){
+					$this->fileInfo['type']=jFile::getMimeTypeFromFilename($this->fileInfo['name']);
+				}
+				if(!in_array($this->fileInfo['type'],$this->mimetype)){
+					$this->error=jForms::ERRDATA_INVALID_FILE_TYPE;
+				}
+			}
+		}
+		if($this->error===null){
+			$filePath=$this->getTempFile($this->fileInfo['name']);
+			if($this->moveUploadedFile($this->fileInfo['tmp_name'],$filePath)){
+				return $this->fileInfo['name'];
+			}
+			$this->error=jForms::ERRDATA_FILE_UPLOAD_ERROR;
+		}
+		return null;
+	}
+	function setNewFile($fileName){
+		if($fileName){
+			if($this->container->privateData[$this->ref]['newfile']!=$fileName){
+				$this->deleteNewFile();
+			}
+			$this->container->privateData[$this->ref]['newfile']=$fileName;
+			$this->container->data[$this->ref]=$fileName;
+		}
+		elseif($this->container->privateData[$this->ref]['newfile']!=''){
+			$this->deleteNewFile();
+			$this->container->data[$this->ref]='';
+		}
+		else{
+			$this->container->data[$this->ref]='';
+		}
+	}
+	function check(){
+		if($this->error){
+			return $this->container->errors[$this->ref]=$this->error;
+		}
+		return null;
+	}
+	public function isModified()
+	{
+		if($this->modified){
+			return true;
+		}
+		return parent::isModified();
+	}
+	function getUniqueFileName($directoryPath,$alternateName=''){
+		if($alternateName==''){
+			$alternateName=$this->container->privateData[$this->ref]['newfile'];
+			if($alternateName==''){
+				return '';
+			}
+		}
+		$directoryPath=rtrim($directoryPath,'/').'/';
+		$path=$directoryPath . $alternateName;
+		$filename=basename($path);
+		$dir=rtrim(dirname($path),'/');
+		$idx=0;
+		$originalName=$filename;
+		while(file_exists($dir.'/'.$filename)){
+			++$idx;
+			$splitValue=explode('.',$originalName);
+			$splitValue[0]=$splitValue[0].$idx;
+			$filename=implode('.',$splitValue);
+		}
+		return substr($dir.'/'.$filename,strlen($directoryPath));
+	}
+	function saveFile($directoryPath,$alternateName=''){
+		if(isset($this->container->errors[$this->ref])&&
+			$this->container->errors[$this->ref]!=''
+		){
+			return false;
+		}
+		if($this->container->privateData[$this->ref]['newfile']){
+			if($this->container->privateData[$this->ref]['originalfile']){
+				$originalFile=$directoryPath.$this->container->privateData[$this->ref]['originalfile'];
+				if(file_exists($originalFile)){
+					unlink($originalFile);
+				}
+			}
+			if($alternateName==''){
+				$alternateName=$this->container->privateData[$this->ref]['newfile'];
+			}
+			$newFileToCopy=$this->getTempFile($this->container->privateData[$this->ref]['newfile']);
+			$dir=dirname($directoryPath . $alternateName);
+			jFile::createDir($dir);
+			rename($newFileToCopy,$directoryPath . $alternateName);
+			$this->container->privateData[$this->ref]['originalfile']=$alternateName;
+			$this->container->data[$this->ref]=$alternateName;
+			$this->container->privateData[$this->ref]['newfile']='';
+		}
+		elseif($this->container->data[$this->ref]==''&&
+			$this->container->privateData[$this->ref]['originalfile']
+		){
+			$originalFile=$directoryPath.$this->container->privateData[$this->ref]['originalfile'];
+			if(file_exists($originalFile)){
+				unlink($originalFile);
+			}
+			$this->container->privateData[$this->ref]['originalfile']='';
+		}
+		return true;
+	}
+	function deleteFile($directoryPath){
+		if($this->container->data[$this->ref]!=''){
+			$file=$directoryPath.$this->container->data[$this->ref];
+			if(file_exists($file)){
+				unlink($file);
+			}
+			$this->container->data[$this->ref]='';
+		}
+	}
+	protected function isUploadedFile($file)
+	{
+		return is_uploaded_file($file);
+	}
+	protected function moveUploadedFile($file,$target)
+	{
+		return move_uploaded_file($file,$target);
+	}
+	function getWidgetType(){
+		return 'upload2';
+	}
 }
 class jFormsControlDate extends jFormsControl{
 	public $type='date';
+	public $datepickerConfig='';
 	public function __construct($ref){
 		$this->ref=$ref;
 		$this->datatype=new jDatatypeDate();

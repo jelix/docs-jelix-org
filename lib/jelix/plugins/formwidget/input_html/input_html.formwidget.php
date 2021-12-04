@@ -2,7 +2,7 @@
 /* comments & extra-whitespaces have been removed by jBuildTools*/
 /**
 * @package     jelix
-* @subpackage  formwidgets
+* @subpackage  forms_widget_plugin
 * @author      Claudio Bernardes
 * @contributor Laurent Jouanneau, Julien Issler, Dominique Papin
 * @copyright   2012 Claudio Bernardes
@@ -57,7 +57,7 @@ class input_htmlFormWidget extends \jelix\forms\HtmlWidget\WidgetBase{
 		$maxl=$this->ctrl->datatype->getFacet('maxLength');
 		if($maxl!==null)
 			$attr['maxlength']=$maxl;
-		$attr['value']=$this->getValue($this->ctrl);
+		$attr['value']=$this->getValue();
 		$attr['type']='text';
 		echo '<input';
 		$this->_outputAttr($attr);

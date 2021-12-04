@@ -1,13 +1,15 @@
 <?php
 /* comments & extra-whitespaces have been removed by jBuildTools*/
 /**
-* @package    jelix
-* @subpackage kvdb
-* @author     Laurent Jouanneau
-* @copyright  2012 Laurent Jouanneau
-* @licence  http://www.gnu.org/licenses/lgpl.html GNU Lesser General Public Licence, see LICENCE file
-*/
-class dbaKVDriver extends jKVDriver implements jIKVPersistent{
+ * @package    jelix
+ * @subpackage kvdb_plugin
+ *
+ * @author     Laurent Jouanneau
+ * @copyright  2012-2021 Laurent Jouanneau
+ * @licence  http://www.gnu.org/licenses/lgpl.html GNU Lesser General Public Licence, see LICENCE file
+ */
+class dbaKVDriver extends jKVDriver implements jIKVPersistent
+{
 	public function get($key){
 		if(is_array($key)){
 			$result=array();
@@ -25,22 +27,28 @@ class dbaKVDriver extends jKVDriver implements jIKVPersistent{
 		}
 		return null;
 	}
-	public function set($key,$value){
-		if(is_resource($value))
+	public function set($key,$value)
+	{
+		if($this->isResource($value)){
 			return false;
+		}
 		if(dba_exists($key,$this->_connection))
 			return dba_replace($key,serialize($value),$this->_connection);
 		else
 			return dba_insert($key,serialize($value),$this->_connection);
 	}
-	public function insert($key,$value){
-		if(is_resource($value))
+	public function insert($key,$value)
+	{
+		if($this->isResource($value)){
 			return false;
+		}
 		return dba_insert($key,serialize($value),$this->_connection);
 	}
-	public function replace($key,$value){
-		if(is_resource($value))
+	public function replace($key,$value)
+	{
+		if($this->isResource($value)){
 			return false;
+		}
 		if(dba_exists($key,$this->_connection))
 			return dba_replace($key,serialize($value),$this->_connection);
 		return false;
@@ -60,18 +68,22 @@ class dbaKVDriver extends jKVDriver implements jIKVPersistent{
 		}
 		return true;
 	}
-	public function append($key,$value){
-		if(is_resource($value))
+	public function append($key,$value)
+	{
+		if($this->isResource($value)){
 			return false;
+		}
 		if(!dba_exists($key,$this->_connection))
 			return false;
 		$value=unserialize(dba_fetch($key,$this->_connection)). $value;
 		dba_replace($key,serialize($value),$this->_connection);
 		return $value;
 	}
-	public function prepend($key,$value){
-		if(is_resource($value))
+	public function prepend($key,$value)
+	{
+		if($this->isResource($value)){
 			return false;
+		}
 		if(!dba_exists($key,$this->_connection))
 			return false;
 		$value.=unserialize(dba_fetch($key,$this->_connection));

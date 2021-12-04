@@ -5,7 +5,7 @@
 * @subpackage  core_response
 * @author      Baptiste Toinot
 * @contributor Laurent Jouanneau
-* @copyright   2008 Baptiste Toinot, 2011-2012 Laurent Jouanneau
+* @copyright   2008 Baptiste Toinot, 2011-2020 Laurent Jouanneau
 * @link        http://www.jelix.org
 * @licence     GNU Lesser General Public Licence see LICENCE file or http://www.gnu.org/licenses/lgpl.html
 */
@@ -20,10 +20,23 @@ class jResponseSitemap extends jResponse{
 	protected $urlList=array();
 	public $content;
 	public $contentTpl;
+	protected $sitemapCacheId='';
+	protected $sitemapCacheTtl=null;
+	protected $sitemapXmlContent=false;
 	public function __construct(){
 		$this->content=new jTpl();
 		$this->contentTpl='jelix~sitemap';
 		parent::__construct();
+	}
+	function hasUrlInCache($cacheName="sitemap.xml",$ttl=null)
+	{
+		$this->sitemapCacheId=$cacheName;
+		$this->sitemapCacheTtl=$ttl;
+		$this->sitemapXmlContent=jCache::get($cacheName,'sitemap');
+		if($this->sitemapXmlContent===false){
+			return false;
+		}
+		return true;
 	}
 	final public function output(){
 		if($this->_outputOnlyHeaders){
@@ -31,20 +44,25 @@ class jResponseSitemap extends jResponse{
 			return true;
 		}
 		$this->_httpHeaders['Content-Type']='application/xml;charset=UTF-8';
-		if(count($this->urlSitemap)){
-			$head='<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' . "\n";
-			$foot='</sitemapindex>';
-			$this->contentTpl='jelix~sitemapindex';
-			$this->content->assign('sitemaps',$this->urlSitemap);
-		}else{
-			$head='<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' . "\n";
-			$foot='</urlset>';
-			$this->content->assign('urls',$this->urlList);
+		if($this->sitemapXmlContent===false){
+			if(count($this->urlSitemap)){
+				$head='<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' . "\n";
+				$foot='</sitemapindex>';
+				$this->contentTpl='jelix~sitemapindex';
+				$this->content->assign('sitemaps',$this->urlSitemap);
+			}else{
+				$head='<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' . "\n";
+				$foot='</urlset>';
+				$this->content->assign('urls',$this->urlList);
+			}
+			$this->sitemapXmlContent=$head . $this->content->fetch($this->contentTpl). $foot;
+			if($this->sitemapCacheId!=''){
+				jCache::set($this->sitemapCacheId,$this->sitemapXmlContent,$this->sitemapCacheTtl,'sitemap');
+			}
 		}
-		$content=$this->content->fetch($this->contentTpl);
 		$this->sendHttpHeaders();
 		echo '<?xml version="1.0" encoding="UTF-8"?>',"\n";
-		echo $head,$content,$foot;
+		echo $this->sitemapXmlContent;
 		return true;
 	}
 	public function addUrl($loc,$lastmod=null,$changefreq=null,$priority=null){

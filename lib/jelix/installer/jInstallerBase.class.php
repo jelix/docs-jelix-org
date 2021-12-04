@@ -4,10 +4,11 @@
 * @package     jelix
 * @subpackage  installer
 * @author      Laurent Jouanneau
-* @copyright   2009-2012 Laurent Jouanneau
+* @copyright   2009-2021 Laurent Jouanneau
 * @link        http://jelix.org
 * @licence     GNU Lesser General Public Licence see LICENCE file or http://www.gnu.org/licenses/lgpl.html
 */
+require_once(__DIR__.'/../utils/FileUtilities/Path.php');
 abstract class jInstallerBase{
 	public $componentName;
 	public $name;
@@ -21,6 +22,7 @@ abstract class jInstallerBase{
 	protected $defaultDbProfile='';
 	protected $installWholeApp=false;
 	protected $parameters=array();
+	private $newEntrypoints=array();
 	function __construct($componentName,$name,$path,$version,$installWholeApp=false){
 		$this->path=$path;
 		$this->version=$version;
@@ -37,7 +39,6 @@ abstract class jInstallerBase{
 		else
 			return null;
 	}
-	private $_dbTool=null;
 	private $_dbConn=null;
 	public function setEntryPoint($ep,$config,$dbProfile,$contexts){
 		$this->config=$config;
@@ -49,13 +50,14 @@ abstract class jInstallerBase{
 		}
 		else
 			$this->useDbProfile($dbProfile);
+		$this->newEntrypoints=array();
 	}
 	protected function useDbProfile($dbProfile){
 		if($dbProfile=='')
 			$dbProfile='default';
 		$this->dbProfile=$dbProfile;
 		if(file_exists(jApp::configPath('profiles.ini.php'))){
-			$dbprofiles=parse_ini_file(jApp::configPath('profiles.ini.php'));
+			$dbprofiles=parse_ini_file(jApp::configPath('profiles.ini.php'),true);
 			if(isset($dbprofiles['jdb'][$dbProfile]))
 				$this->dbProfile=$dbprofiles['jdb'][$dbProfile];
 		}
@@ -129,25 +131,41 @@ abstract class jInstallerBase{
 			throw $e;
 		}
 	}
-	final protected function copyDirectoryContent($relativeSourcePath,$targetPath,$overwrite=false){
-		$targetPath=$this->expandPath($targetPath);
-		$this->_copyDirectoryContent($this->path.'install/'.$relativeSourcePath,$targetPath,$overwrite);
-	}
-	private function _copyDirectoryContent($sourcePath,$targetPath,$overwrite){
-		jFile::createDir($targetPath);
-		$dir=new DirectoryIterator($sourcePath);
-		foreach($dir as $dirContent){
-			if($dirContent->isFile()){
-				$p=$targetPath.substr($dirContent->getPathName(),strlen($dirContent->getPath()));
-				if($overwrite||!file_exists($p))
-					copy($dirContent->getPathName(),$p);
-			}else{
-				if(!$dirContent->isDot()&&$dirContent->isDir()){
-					$newTarget=$targetPath.substr($dirContent->getPathName(),strlen($dirContent->getPath()));
-					$this->_copyDirectoryContent($dirContent->getPathName(),$newTarget,$overwrite);
-				}
+	final protected function insertDaoData($relativeSourcePath,$option,$module=null){
+		if($module){
+			$conf=$this->entryPoint->config->_modulesPathList;
+			if(!isset($conf[$module])){
+				throw new Exception('insertDaoData : invalid module name');
 			}
+			$path=$conf[$module];
 		}
+		else{
+			$path=$this->path;
+		}
+		$file=$path.'install/'.$relativeSourcePath;
+		$dataToInsert=json_decode(file_get_contents($file),true);
+		if(!$dataToInsert){
+			throw new Exception("Bad format for dao data file.");
+		}
+		if(is_object($dataToInsert)){
+			$dataToInsert=array($dataToInsert);
+		}
+		$daoMapper=new jDaoDbMapper($this->dbProfile);
+		$count=0;
+		foreach($dataToInsert as $daoData){
+			if(!isset($daoData['dao'])||
+				!isset($daoData['properties'])||
+				!isset($daoData['data'])
+			){
+				throw new Exception("Bad format for dao data file.");
+			}
+			$count+=$daoMapper->insertDaoData($daoData['dao'],
+				$daoData['properties'],$daoData['data'],$option);
+		}
+		return $count;
+	}
+	final protected function copyDirectoryContent($relativeSourcePath,$targetPath,$overwrite=false){
+		jFile::copyDirectoryContent($this->path.'install/'.$relativeSourcePath,$this->expandPath($targetPath),$overwrite);
 	}
 	final protected function copyFile($relativeSourcePath,$targetPath,$overwrite=false){
 		$targetPath=$this->expandPath($targetPath);
@@ -204,7 +222,9 @@ abstract class jInstallerBase{
 			}
 			if(is_array($sectionContent)){
 				foreach($sectionContent as $k=>$v){
-					$profiles->setValue($k,$v,'jdb:'.$name);
+					if($force||!$profiles->getValue($k,'jdb:'.$name)){
+						$profiles->setValue($k,$v,'jdb:'.$name);
+					}
 				}
 			}
 			else{
@@ -242,5 +262,32 @@ abstract class jInstallerBase{
 		}
 		$pluginsPath.=','.$path;
 		$this->config->setValue('pluginsPath',$pluginsPath);
+	}
+	function createEntryPoint($entryPointFile,$configurationFile,$targetConfigDirName='',$type='classic')
+	{
+		$entryPointFileName=basename($entryPointFile);
+		$entryPointId=str_replace('.php','',$entryPointFileName);
+		$configurationFileName=basename($configurationFile);
+		if($targetConfigDirName==''){
+			$targetConfigDirName=$entryPointId;
+		}
+		if($this->firstExec('ep:'.$entryPointFileName)){
+			$newEpPath=jApp::wwwPath($entryPointFileName);
+			$this->copyFile($entryPointFile,$newEpPath,true);
+			$this->copyFile($configurationFile,jApp::configPath($targetConfigDirName.'/'.$configurationFileName),false);
+			$this->newEntrypoints[$entryPointId]=array(
+				'file'=>$entryPointFileName,
+				'config'=>$targetConfigDirName.'/'.$configurationFileName,
+				'type'=>$type
+			);
+			$relativePath=\Jelix\FileUtilities\Path::shortestPath(jApp::wwwPath(),jApp::appPath());
+			$epCode=file_get_contents($newEpPath);
+			$epCode=preg_replace('#(require\s*\(\s*[\'"])(.*)(application\.init\.php[\'"])#m','\\1'.$relativePath.'/\\3',$epCode);
+			file_put_contents($newEpPath,$epCode);
+		}
+	}
+	function getNewEntrypoints()
+	{
+		return $this->newEntrypoints;
 	}
 }
