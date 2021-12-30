@@ -10,9 +10,9 @@
 * @link        http://www.jelix.org
 * @licence     http://www.gnu.org/licenses/lgpl.html GNU Lesser General Public Licence, see LICENCE file
 */
-namespace jelix\forms\Builder;
-use \jelix\forms\HtmlWidget\ParentWidgetInterface;
-use \jelix\forms\HtmlWidget\WidgetBase;
+namespace Jelix\Forms\Builder;
+use \Jelix\Forms\HtmlWidget\ParentWidgetInterface;
+use \Jelix\Forms\HtmlWidget\WidgetBase;
 class HtmlBuilder extends BuilderBase{
 	protected $formType='html';
 	protected $formConfig='jforms_builder_html';

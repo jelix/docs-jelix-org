@@ -8,7 +8,7 @@
 * @link         http://jelix.org
 * @licence      MIT
 */
-namespace jelix\FakeServerConf;
+namespace Jelix\FakeServerConf;
 abstract class FakeServerConf{
 	protected $documentRoot='/var/www/';
 	protected $scriptName='/index.php';

@@ -5,7 +5,7 @@
 * @subpackage  utils
 * @author      Antoine Detante
 * @contributor Laurent Jouanneau
-* @contributor Hadrien Lanneau <hadrien at over-blog dot com>
+* @contributor Hadrien Lanneau
 * @copyright   2007 Antoine Detante, 2009-2012 Laurent Jouanneau
 * @link        http://www.jelix.org
 * @licence     GNU Lesser General Public Licence see LICENCE file or http://www.gnu.org/licenses/lgpl.html

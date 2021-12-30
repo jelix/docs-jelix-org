@@ -8,3 +8,5 @@ deploy:
   when: manual
   only:
     - master
+  tags:
+    - jelix

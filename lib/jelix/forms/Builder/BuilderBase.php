@@ -10,7 +10,7 @@
 * @link        http://www.jelix.org
 * @licence     http://www.gnu.org/licenses/lgpl.html GNU Lesser General Public Licence, see LICENCE file
 */
-namespace jelix\forms\Builder;
+namespace Jelix\Forms\Builder;
 abstract class BuilderBase{
 	protected $_form;
 	protected $_action;

@@ -20,11 +20,32 @@ class file2KVDriver extends jKVDriver{
 	public function get($key){
 		return $this->_connection->get($key);
 	}
-	public function set($key,$value,$ttl){
+	public function set($key,$value){
 		return $this->_connection->set(
 			$key,
-			$value,
-			$ttl
+			$value
+		);
+	}
+	public function insert($key,$value)
+	{
+		$val=$this->_connection->get($key);
+		if($val!==false){
+			return false;
+		}
+		return $this->_connection->set(
+			$key,
+			$value
+		);
+	}
+	public function replace($key,$value)
+	{
+		$val=$this->_connection->get($key);
+		if($val===false){
+			return false;
+		}
+		return $this->_connection->set(
+			$key,
+			$value
 		);
 	}
 	public function delete($key){
@@ -33,16 +54,76 @@ class file2KVDriver extends jKVDriver{
 	public function flush(){
 		return $this->_connection->flush();
 	}
+	public function append($key,$value)
+	{
+		$val=$this->_connection->get($key);
+		if($val===false){
+			return false;
+		}
+		$val.=$value;
+		if($this->_connection->set(
+			$key,
+			$val
+		)){
+			return $val;
+		}
+		return false;
+	}
+	public function prepend($key,$value)
+	{
+		$val=$this->_connection->get($key);
+		if($val===false){
+			return false;
+		}
+		$val=$value.$val;
+		if($this->_connection->set(
+			$key,
+			$val
+		)){
+			return $val;
+		}
+		return false;
+	}
+	public function increment($key,$incr=1)
+	{
+		$val=$this->_connection->get($key);
+		if($val===false||!is_numeric($val)){
+			return false;
+		}
+		$val+=$incr;
+		if($this->_connection->set(
+			$key,
+			$val
+		)){
+			return $val;
+		}
+		return false;
+	}
+	public function decrement($key,$decr=1)
+	{
+		$val=$this->_connection->get($key);
+		if($val===false||!is_numeric($val)){
+			return false;
+		}
+		$val-=$decr;
+		if($this->_connection->set(
+			$key,
+			$val
+		)){
+			return $val;
+		}
+		return false;
+	}
 }
 class fileServer{
 	protected $dir;
 	public function __construct($directory){
 		$this->dir=$directory;
-		if(! file_exists()){
+		if(! file_exists($this->dir)){
 			jFile::createDir($this->dir);
 		}
 	}
-	public function set($key,$value,$ttl){
+	public function set($key,$value,$ttl=0){
 		$r=false;
 		if($fl=@fopen($this->dir . '/.flock','w+')){
 			if(flock($fl,LOCK_EX)){

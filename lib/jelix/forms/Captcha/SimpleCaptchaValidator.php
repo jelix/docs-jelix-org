@@ -8,7 +8,7 @@
  * @link        http://www.jelix.org
  * @licence     http://www.gnu.org/licenses/lgpl.html GNU Lesser General Public Licence, see LICENCE file
  */
-namespace jelix\forms\Captcha;
+namespace Jelix\Forms\Captcha;
 class SimpleCaptchaValidator implements CaptchaValidatorInterface{
 	public function initOnDisplay(){
 		$numbers=\jLocale::get('jelix~captcha.number');

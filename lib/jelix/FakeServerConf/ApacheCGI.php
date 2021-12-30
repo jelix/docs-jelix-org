@@ -8,7 +8,7 @@
 * @link         http://jelix.org
 * @licence      MIT
 */
-namespace jelix\FakeServerConf;
+namespace Jelix\FakeServerConf;
 class ApacheCGI extends FakeServerConf{
 	protected $cgiBin='/usr/lib/cgi-bin/php5';
 	protected $cgiAlias='/cgi-bin/php5';

@@ -5,7 +5,7 @@
  * @package    jelix
  * @subpackage jtpl_plugin
  * @version    1
- * @author      Hadrien Lanneau <contact at hadrien dot eu>
+ * @author      Hadrien Lanneau
  * @copyright  2008 Hadrien.eu
  */
 function jtpl_block_common_jscompress($compiler,$begin,$params=array()){

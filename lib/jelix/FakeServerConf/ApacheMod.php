@@ -8,7 +8,7 @@
 * @link         http://jelix.org
 * @licence      MIT
 */
-namespace jelix\FakeServerConf;
+namespace Jelix\FakeServerConf;
 class ApacheMod extends FakeServerConf{
 	public function setHttpRequest($url,$method='get',$body='',$bodyContentType='application/x-www-form-urlencoded'){
 		parent::setHttpRequest($url,$method,$body,$bodyContentType);

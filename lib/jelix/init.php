@@ -18,7 +18,7 @@
 * @link     http://www.jelix.org
 * @licence  GNU Lesser General Public Licence see LICENCE file or http://www.gnu.org/licenses/lgpl.html
 */
-define('JELIX_VERSION','1.6.35-rc.3');
+define('JELIX_VERSION','1.6.35');
 define('JELIX_NAMESPACE_BASE','http://jelix.org/ns/');
 define('JELIX_LIB_PATH',__DIR__.'/');
 define('JELIX_LIB_CORE_PATH',JELIX_LIB_PATH.'core/');
@@ -2712,9 +2712,22 @@ $GLOBALS['gLibPath']=array('Config'=>JELIX_LIB_PATH.'core/',
 $GLOBALS['gLibClassPath']=array(
 	'jIInstallerComponent'=>JELIX_LIB_PATH.'installer/jIInstallerComponent.iface.php',
 );
-function jelix_autoload($class){
-	if(strpos($class,'jelix\\')===0){
-		$f=LIB_PATH.str_replace('\\',DIRECTORY_SEPARATOR,$class).'.php';
+function jelix_autoload($class)
+{
+	if(stripos($class,'jelix')===0){
+		$class=str_replace(
+			array('Jelix','\\'),
+			array('jelix',DIRECTORY_SEPARATOR),
+			$class);
+		if(strpos($class,'/Forms/')!==false){
+			$f=LIB_PATH.str_replace('Forms','forms',$class).'.php';
+		}
+		else if(strpos($class,'/Core/')!==false){
+			$f=LIB_PATH.str_replace('Core','core',$class).'.php';
+		}
+		else{
+			$f=LIB_PATH.$class.'.php';
+		}
 	}
 	else if(preg_match('/^j(Dao|Tpl|Event|Db|Controller|Forms|Auth|Config|Installer|KV).*/i',$class,$m)){
 		$f=$GLOBALS['gLibPath'][$m[1]].$class.'.class.php';

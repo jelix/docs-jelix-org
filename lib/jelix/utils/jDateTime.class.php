@@ -8,7 +8,7 @@
 * @contributor Loic Mathaud
 * @contributor Florian Hatat
 * @contributor Emmanuel Hesry, Brice G.
-* @contributor Hadrien Lanneau <hadrien@over-blog.com>
+* @contributor Hadrien Lanneau
 * @copyright   2005-2011 Laurent Jouanneau
 * @copyright   2007 Loic Mathaud
 * @copyright   2007-2008 Florian Hatat
