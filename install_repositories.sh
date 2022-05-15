@@ -11,7 +11,7 @@ if [ ! -d repositories/en/jelix-manual-en ]; then
       git clone git@github.com:${account}/jelix-manual-en.git
       git fetch
     else
-      git clone git://github.com/jelix/jelix-manual-en.git
+      git clone https://github.com/jelix/jelix-manual-en.git
     fi
 
     cd jelix-manual-en
@@ -26,7 +26,7 @@ if [ ! -d repositories/en/jelix-manual-en ]; then
     git checkout master
 
     if test $account != "jelix"; then
-      git remote add upstream git://github.com/jelix/jelix-manual-en.git
+      git remote add upstream https://github.com/jelix/jelix-manual-en.git
     fi
   )
 fi
@@ -38,7 +38,7 @@ if [ ! -d repositories/fr/jelix-manuel-fr ]; then
       git clone git@github.com:${account}/jelix-manuel-fr.git
       git fetch
     else
-      git clone git://github.com/jelix/jelix-manuel-fr.git
+      git clone https://github.com/jelix/jelix-manuel-fr.git
     fi
 
     cd jelix-manuel-fr
@@ -53,7 +53,7 @@ if [ ! -d repositories/fr/jelix-manuel-fr ]; then
     git checkout master
 
     if test $account != "jelix"; then
-      git remote add upstream git://github.com/jelix/jelix-manuel-fr.git
+      git remote add upstream https://github.com/jelix/jelix-manuel-fr.git
     fi
   )
 fi
