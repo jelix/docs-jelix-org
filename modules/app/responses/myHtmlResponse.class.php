@@ -18,8 +18,8 @@ class myHtmlResponse extends jResponseHtml {
     function __construct() {
         parent::__construct();
 
-        $this->addCssLink('/design/2011/design.css', array('media'=>'all', 'title'=>'Jelix'));
-        $this->addCssLink('/design/2011/print.css', array('media'=>'print'));
+        $this->addCssLink('/design/2023/design.css', array('media'=>'all', 'title'=>'Jelix'));
+        $this->addCssLink('/design/2023/print.css', array('media'=>'print'));
         $this->addCssLink('/assets/highlight/styles/vs.css', array('media'=>'all'));
         $this->addJSLink('/jelix/jquery/jquery.js');
         $this->addJSLink('/assets/highlight/highlight.pack.js');
