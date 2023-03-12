@@ -10,5 +10,4 @@ set -x
 #    echo "in order to setup databases and the app, after containers will be ready."
 #fi
 
-echo "launch exec $@"
-exec "$@"
+#

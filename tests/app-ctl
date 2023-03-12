@@ -34,8 +34,10 @@ case $COMMAND in
         docker exec -t -i $IMAGE_PHP appctl.sh composer_update;;
     unit-tests)
         docker exec -t -i $IMAGE_PHP appctl.sh unit-tests $@;;
+    update-book)
+        docker exec -t -i  --user userphp $IMAGE_PHP appctl.sh update-book $@;;
     shell)
-       docker exec -it --user usertest $IMAGE_PHP  /bin/bash -l;;
+       docker exec -it --user userphp $IMAGE_PHP  /bin/bash -l;;
     shell-root)
        docker exec -it $IMAGE_PHP  /bin/bash  -l;;
     *)

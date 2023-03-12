@@ -10,7 +10,7 @@ MANUAL_LANG=""
 ALL_LANG="Y"
 TARGETPATH=""
 ONLYCURRENTBRANCH=""
-
+NO_GIT_PULL=""
 set -e
 
 usage()
@@ -27,6 +27,7 @@ usage()
     echo "  --current-branch : only update for the current branch"
     echo "  -p|--no-pdf : generate only book informations, not pdfs"
     echo "  --output-pdf=a/path/ : indicates a path where to move books"
+    echo "  --no-pull: do not git pull"
     echo ""
 }
 
@@ -42,6 +43,9 @@ case $i in
     ;;
     --current-branch)
     ONLYCURRENTBRANCH="1"
+    ;;
+    --no-pull)
+    NO_GIT_PULL="1"
     ;;
     -h|--help)
     usage
@@ -59,7 +63,8 @@ case $i in
       exit 1
     ;;
     *)
-    if [ "$TARGET_BRANCH" == "" ]
+      echo "parameter " $i
+      if [ "$TARGET_BRANCH" == "" ]
         then
             TARGET_BRANCH=$i
         else
@@ -129,7 +134,9 @@ updateBook()
 
         git checkout $br
         OLDREV=`cat .git/refs/heads/$br`
-        git pull origin $br
+        if [ "$NO_GIT_PULL" == "" ]; then
+          git pull origin $br
+        fi
         NEWREV=`cat .git/refs/heads/$br`
     else
         OLDREV="0"

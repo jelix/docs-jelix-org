@@ -6,8 +6,8 @@ APPTEMPDIR_FR="$ROOTDIR/temp/doc_fr"
 APPDIR_EN="$ROOTDIR/doc_en"
 APPTEMPDIR_EN="$ROOTDIR/temp/doc_en"
 
-APP_USER=usertest
-APP_GROUP=grouptest
+APP_USER=userphp
+APP_GROUP=groupphp
 
 COMMAND="$1"
 shift
@@ -197,6 +197,9 @@ case $COMMAND in
     unit-tests)
         UTCMD="cd $ROOTDIR/tests/units && vendor/bin/phpunit  $@"
         su $APP_USER -c "$UTCMD"
+        ;;
+    update-book)
+        cd $ROOTDIR/ && ./update_repo_and_books.sh $@
         ;;
     *)
         echo "wrong command"
