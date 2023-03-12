@@ -21,16 +21,16 @@ class  gitiwiki_to_xhtml extends dokuwiki_to_xhtml  {
     public $textLineContainers = array(
             'WikiHtmlTextLine'=>array( 'dkxhtml_strong','dkxhtml_emphasis','dkxhtml_underlined','dkxhtml_monospaced',
         'dkxhtml_subscript', 'dkxhtml_superscript', 'dkxhtml_del', 'dkxhtml_link', 'dkxhtml_footnote', 'dkxhtml_image',
-        'dkxhtml_nowiki_inline', 'gtwxhtml_code'),
+        'dkxhtml_nowiki_inline', 'gtwxhtml_code', 'gtwxhtml_code2'),
             'dkxhtml_table_row'=>array( 'dkxhtml_strong','dkxhtml_emphasis','dkxhtml_underlined','dkxhtml_monospaced',
         'dkxhtml_subscript', 'dkxhtml_superscript', 'dkxhtml_del', 'dkxhtml_link', 'dkxhtml_footnote', 'dkxhtml_image',
-        'dkxhtml_nowiki_inline', 'gtwxhtml_code',));
+        'dkxhtml_nowiki_inline', 'gtwxhtml_code', 'gtwxhtml_code2'));
 
     /**
     * liste des balises de type bloc reconnus par WikiRenderer.
     */
     public $bloctags = array('gtwxhtml_title', 'gtwxhtml_list', 'dkxhtml_blockquote','dkxhtml_table', 'gtwxhtml_definition', 'dkxhtml_pre',
-          'dkxhtml_syntaxhighlight', 'dkxhtml_file', 'dkxhtml_nowiki', 'dkxhtml_html', 'dkxhtml_php', 'dkxhtml_para',
+          'dkxhtml_syntaxhighlight', 'dkxhtml_syntaxhighlight2', 'dkxhtml_file', 'dkxhtml_nowiki', 'dkxhtml_html', 'dkxhtml_php', 'dkxhtml_para',
           'gtwxhtml_alternatelang', 'gtwxhtml_bookcontents', 'gtwxhtml_bookinfos', 'gtwxhtml_notinbook',
           'gtwxhtml_bookpagelegalnotice', 'gtwxhtml_booklegalnotice'
     );
@@ -519,13 +519,28 @@ class gtwxhtml_code extends WikiTag {
     }
 }
 
+class gtwxhtml_code2 extends WikiTag {
+    protected $name='code2';
+    public $beginTag='`';
+    public $endTag='`';
+
+    public function getContent()
+    {
+        return '<code>'.htmlspecialchars($this->wikiContentArr[0]).'</code>';
+    }
+    public function isOtherTagAllowed() {
+        return false;
+    }
+}
+
 class gtwxhtml_list extends dkxhtml_list {
 
+    protected $regexp="/^(\s*)([\*\-])(.*)/";
     protected $_opened = false;
 
     public function detect($string){
         if ($this->_opened) {
-            if (preg_match('/^(\s{2,})([\*\-]|[^\=\|\^>;<=~ ])(.*)/', $string, $this->_detectMatch)) {
+            if (preg_match('/^(\s*)([\*\-]|[^\=\|\^>;<=~ ])(.*)/', $string, $this->_detectMatch)) {
                 $tag = $this->_detectMatch[2];
                 if ( $tag == '*' || $tag == '-') { // ok, this is a new item
                     return true;
@@ -700,4 +715,59 @@ class gtwxhtml_title extends WikiRendererBloc {
         return $title;
     }
 
+}
+
+
+
+class dkxhtml_syntaxhighlight2 extends WikiRendererBloc {
+
+    public $type='syntaxhighlight2';
+    protected $_openTag='<pre><code>';
+    protected $_closeTag='</code></pre>';
+    protected $isOpen = false;
+
+    public function open(){
+        $this->isOpen = true;
+        return $this->_openTag;
+    }
+
+    public function close(){
+        $this->isOpen=false;
+        return $this->_closeTag;
+    }
+
+    public function getRenderedLine(){
+        return htmlspecialchars($this->_detectMatch, ENT_COMPAT, $this->engine->getConfig()->charset);
+    }
+
+    public function detect($string){
+        if($this->isOpen){
+            if(preg_match('/(.*)```\s*$/',$string,$m)){
+                $this->_detectMatch=$m[1];
+                $this->isOpen=false;
+            }else{
+                $this->_detectMatch=$string;
+            }
+            return true;
+
+        }else{
+            if(preg_match('/^\s*```(\w+)(.*)/',$string,$m)){
+                if(preg_match('/(.*)```\s*$/',$m[2],$m2)){
+                    $this->_closeNow = true;
+                    $this->_detectMatch=$m2[1];
+                }
+                else {
+                    $this->_closeNow = false;
+                    $this->_detectMatch=$m[2];
+                }
+                if (isset($m[1]) && $m[1]!='')
+                    $this->_openTag = '<pre><code class="language-'.trim($m[1]).'">';
+                else
+                    $this->_openTag = '<pre><code>';
+                return true;
+            }else{
+                return false;
+            }
+        }
+    }
 }
