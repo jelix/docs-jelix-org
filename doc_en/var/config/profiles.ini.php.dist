@@ -105,11 +105,22 @@ urlName=manual
 [gtwrepo:manual-1.8]
 path="app:../repositories/en/jelix-manual-en/.git"
 generators=gitiwikiGenerators
+branch="jelix-1.8"
+title="Jelix 1.8 Manual"
+gitSourceEditURL="https://github.com/jelix/jelix-manual-en/edit/%branch%/%file%"
+gitSourceViewURL="https://github.com/jelix/jelix-manual-en/blob/%branch%/%file%"
+linkToDefault=off
+order=18
+menulabel="1.8"
+
+[gtwrepo:manual-1.9]
+path="app:../repositories/en/jelix-manual-en/.git"
+generators=gitiwikiGenerators
 branch="master"
-title="Jelix 1.8-dev Manual"
+title="Jelix 1.9-dev Manual"
 gitSourceEditURL="https://github.com/jelix/jelix-manual-en/edit/%branch%/%file%"
 gitSourceViewURL="https://github.com/jelix/jelix-manual-en/blob/%branch%/%file%"
 linkToDefault=on
 order=0
-menulabel="1.8-dev"
+menulabel="1.9-dev"
 robotsNoIndex=on

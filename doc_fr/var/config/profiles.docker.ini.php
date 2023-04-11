@@ -98,11 +98,22 @@ urlName=manuel
 [gtwrepo:manuel-1.8]
 path="app:../repositories/fr/jelix-manuel-fr/.git"
 generators=gitiwikiGenerators
+branch="jelix-1.8"
+title="Manuel Jelix 1.8"
+gitSourceEditURL="https://github.com/jelix/jelix-manuel-fr/edit/%branch%/%file%"
+gitSourceViewURL="https://github.com/jelix/jelix-manuel-fr/blob/%branch%/%file%"
+linkToDefault=off
+order=18
+menulabel="1.8"
+
+[gtwrepo:manuel-1.9]
+path="app:../repositories/fr/jelix-manuel-fr/.git"
+generators=gitiwikiGenerators
 branch="master"
-title="Manuel Jelix 1.8-dev"
+title="Manuel Jelix 1.9-dev"
 gitSourceEditURL="https://github.com/jelix/jelix-manuel-fr/edit/%branch%/%file%"
 gitSourceViewURL="https://github.com/jelix/jelix-manuel-fr/blob/%branch%/%file%"
 linkToDefault=on
 order=0
-menulabel="1.8-dev"
+menulabel="1.9-dev"
 robotsNoIndex=on
