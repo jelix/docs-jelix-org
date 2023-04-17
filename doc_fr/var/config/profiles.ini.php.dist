@@ -2,8 +2,8 @@
 ;for security reasons, don't remove or modify the first line
 
 [gtwrepo]
-default=manuel-1.7
-manuel=manuel-1.7
+default=manuel-1.8
+manuel=manuel-1.8
 
 [gtwrepo:manuel-1.0]
 path="app:../repositories/fr/jelix-manuel-fr/.git"
@@ -96,10 +96,9 @@ branch="jelix-1.7"
 title="Manuel Jelix 1.7"
 gitSourceEditURL="https://github.com/jelix/jelix-manuel-fr/edit/%branch%/%file%"
 gitSourceViewURL="https://github.com/jelix/jelix-manuel-fr/blob/%branch%/%file%"
-linkToDefault=off
+linkToDefault=on
 order=17
-menulabel="Manuel 1.7"
-urlName=manuel
+menulabel="1.7"
 
 [gtwrepo:manuel-1.8]
 path="app:../repositories/fr/jelix-manuel-fr/.git"
@@ -110,7 +109,9 @@ gitSourceEditURL="https://github.com/jelix/jelix-manuel-fr/edit/%branch%/%file%"
 gitSourceViewURL="https://github.com/jelix/jelix-manuel-fr/blob/%branch%/%file%"
 linkToDefault=off
 order=18
-menulabel="1.8"
+menulabel="Manuel 1.8"
+urlName=manuel
+robotsNoIndex=off
 
 [gtwrepo:manuel-1.9]
 path="app:../repositories/fr/jelix-manuel-fr/.git"
