@@ -1,0 +1,35 @@
+{
+  "name": "jelix/docs-jelix-org",
+  "type": "project",
+  "description": "",
+  "license": "GPL-3.0-only",
+  "authors": [
+  ],
+  "require": {
+    "php": ">=7.4",
+    "jelix/jelix": "dev-jelix-1.8.x",
+    "jelix/wikirenderer-plugin": "1.7.*",
+    "laurentj/glip": "1.0.*",
+    "guzzlehttp/guzzle": "^7.5.0"
+  },
+  "minimum-stability": "stable",
+  "config": {
+    "preferred-install": {
+      "*": "dist"
+    },
+    "allow-plugins": {
+      "jelix/composer-module-setup": true
+    }
+  },
+  "extra": {
+    "jelix": {
+      "target-jelix-version": "1.7",
+      "modules-dir": [
+        "modules/"
+      ],
+      "plugins-dir": [
+        "plugins/"
+      ]
+    }
+  }
+}

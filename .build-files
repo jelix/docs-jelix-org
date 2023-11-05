@@ -22,9 +22,7 @@ P /doc_fr/var/config/liveconfig.ini.php
 P /doc_fr/var/log/*.log
 - /doc_fr/var/log/*.log
 + /lib/
-+ /modules/
 + /pdf_utils/
-+ /plugins/
 + /repositories/en/.gitignore
 P /repositories/en/*/**
 - /repositories/en/*/**

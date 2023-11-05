@@ -6,5 +6,5 @@ books/pdf/*
 !books/pdf/.dummy
 .idea
 .drafts
-
+lib/vendor
 
