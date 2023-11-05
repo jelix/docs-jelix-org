@@ -1,4 +1,4 @@
-ARG php_version=7.4
+ARG php_version=8.1
 
 FROM 3liz/liz-php-fpm:${php_version}
 
