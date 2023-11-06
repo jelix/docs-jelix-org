@@ -147,10 +147,10 @@ updateBook()
         echo "Generate Book $book"
         cd $ROOTPATH
         #rm -rf books/$book
-        php $APP/scripts/manage.php gitiwiki~wiki:generateBook $book index
-        #php $APP/scripts/manage.php gtwdocbook~docbook:index -lang $MANUAL_LOCALE $book index.gtw
-        #echo "php $APP/scripts/manage.php gitiwiki~wiki:generateBook $book index"
-        #echo "php $APP/scripts/manage.php gtwdocbook~docbook:index -lang $MANUAL_LOCALE $book index.gtw"
+        php $APP/console.php gitiwiki:book $book index
+        #php $APP/console.php gitiwiki:docbook --lang $MANUAL_LOCALE $book index.gtw
+        #echo "php $APP/console.php gitiwiki:book $book index"
+        #echo "php $APP/console.php gitiwiki:docbook --lang $MANUAL_LOCALE $book index.gtw"
 
         if [ "$NOPDF" == "" ]
         then
