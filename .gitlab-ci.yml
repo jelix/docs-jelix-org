@@ -7,7 +7,6 @@ cache:
   key: "$CI_COMMIT_REF_SLUG"
   paths:
     - lib/vendor/
-    - lib/composer.lock
 
 build:
   stage: build
@@ -16,7 +15,8 @@ build:
   artifacts:
     name: "docs-jelix-org-${CI_COMMIT_SHA}"
     paths:
-      - portail/var/config/
+      - doc_fr/var/config/
+      - doc_en/var/config/
   only:
     - master
   tags:
