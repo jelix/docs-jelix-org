@@ -2,10 +2,8 @@
 ;for security reasons , don't remove or modify the first line
 ;this file doesn't list all possible properties. See lib/jelix/core/defaultconfig.ini.php for that
 
-startModule=app
-startAction="default:index"
 
-locale=en_US
+locale=fr_FR
 charset=UTF-8
 
 ; see http://www.php.net/manual/en/timezones.php for supported values
@@ -13,9 +11,7 @@ timeZone="Europe/Paris"
 
 theme=default
 
-pluginsPath="lib:jelix-plugins/,app:../plugins/,module:gitiwiki,module:gtwdocbook"
 
-modulesPath="lib:jelix-modules/,app:../modules/"
 
 ; default domain name to use with jfullurl for example.
 ; Let it empty to use $_SERVER['SERVER_NAME'] value instead.
@@ -23,25 +19,17 @@ domainName=
 
 
 [modules]
-; modulename.access = x where x =
-; 0 if installed but not used (database schema is ok for example)
-; 1 if accessible by other modules (other modules can use it, but it is not accessible directly through the web)
-; 2 if public (accessible through the web)
-
-jelix.access=2
-
-; jacldb is deprecated. keep it uninstall if possible. install jacl2db instead
-jacldb.access=0
-
-jacl2db.access=0
-jauth.access=0
-jauthdb.access=0
-junittests.access=0
-jWSDL.access=0
-
-app.access=2
-gitiwiki.access=2
-gtwdocbook.access=1
+jelix.enabled=on
+jacldb.enabled=off
+jacl2db.enabled=off
+jauth.enabled=off
+jauthdb.enabled=off
+junittests.enabled=off
+jWSDL.enabled=off
+app.enabled=on
+gitiwiki.enabled=on
+gtwdocbook.enabled=on
+jelix.installparam[wwwfiles]=vhost
 
 [coordplugins]
 ;name = file_ini_name or 1
@@ -60,8 +48,6 @@ html="module:app~myHtmlResponse"
 ;force  = off
 
 [urlengine]
-; name of url engine :  "simple", "basic_significant" or "significant"
-engine=significant
 
 ; this is the url path to the jelix-www content (you can found this content in lib/jelix-www/)
 ; because the jelix-www directory is outside the yourapp/www/ directory, you should create a link to
@@ -88,19 +74,11 @@ multiview=on
 ; : basePath="/aaa/" )
 basePath=
 
-defaultEntrypoint=en
 
 entrypointExtension=.php
 
-; action to show the 'page not found' error
-notfoundAct="jelix~error:notfound"
 
-[basic_significant_urlengine_entrypoints]
-; for each entry point, it indicates if the entry point name
-; should be include in the url or not
-en=on
-index=on
-
+notFoundAct="jelix~error:notfound"
 [jResponseHtml]
 ; list of active plugins for jResponseHtml
 ; remove the debugbar plugin on production server, and in this case don't forget
@@ -188,8 +166,6 @@ name=
 ;dao_selector = "jelix~jsession"
 ;dao_db_profile = ""
 
-[datepickers]
-;default = jelix/js/jforms/datepickers/default/init.js
 
 [gitiwiki]
 booksPath="app:../books"
@@ -198,4 +174,3 @@ showRepositoriesList=on
 [gitiwikiGenerators]
 wiki="gitiwiki~gtwWikiRenderer,gitiwiki_to_xhtml"
 gtw="gitiwiki~gtwWikiRenderer,gitiwiki_to_xhtml"
-

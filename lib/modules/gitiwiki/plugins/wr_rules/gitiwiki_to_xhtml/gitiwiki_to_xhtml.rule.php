@@ -1,6 +1,4 @@
 <?php
-
-
 /**
  * @package   gitiwiki
  * @subpackage
@@ -9,10 +7,6 @@
  * @link      http://jelix.org
  * @license    GNU PUBLIC LICENCE
  */
-
-require_once(jApp::appPath('vendor/jelix/wikirenderer/src/rules/dokuwiki_to_xhtml.php'));
-
-
 
 class  gitiwiki_to_xhtml extends dokuwiki_to_xhtml  {
 

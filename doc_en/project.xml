@@ -9,16 +9,6 @@
         <creator name="Laurent Jouanneau" email="laurent@innophi.com" active="true"/>
         <homepageURL>http://doc.jelix.org</homepageURL>
     </info>
-    <dependencies>
-        <jelix minversion="1.4pre.2325" maxversion="1.4pre.*"/>
-    </dependencies>
-    <entrypoints>
-        <!-- file: the path to the entry point relative to the base path
-            config: the path to the config file used by the entry point, relative
-                    to var/config/
-            type: type of the entry point : classic, cmdline, xmlrpc....-->
-        <entry file="index.php" config="index/config.ini.php"/>
-        <entry file="en.php" config="en/config.ini.php" type="classic"/>
-        <entry file="manage.php" config="cmdline/manage.ini.php" type="cmdline"/>
-    </entrypoints>
+    
+    
 </project>
