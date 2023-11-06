@@ -1,5 +1,26 @@
 stages:
+  - build
   - deploy
+
+
+cache:
+  key: "$CI_COMMIT_REF_SLUG"
+  paths:
+    - lib/vendor/
+
+build:
+  stage: build
+  script:
+    - make build
+  artifacts:
+    name: "docs-jelix-org-${CI_COMMIT_SHA}"
+    paths:
+      - doc_fr/var/config/
+      - doc_en/var/config/
+  only:
+    - master
+  tags:
+    - jelix
 
 deploy:
   stage: deploy

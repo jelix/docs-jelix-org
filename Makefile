@@ -9,6 +9,7 @@ $(distfiles):
 
 .PHONY: build
 build: clean $(distfiles)
+	composer install --prefer-dist --no-dev --no-progress --ignore-platform-reqs --no-ansi --no-interaction --working-dir=lib/
 
 .PHONY: clean
 clean:

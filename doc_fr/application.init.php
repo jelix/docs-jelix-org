@@ -3,13 +3,13 @@
 * @package   doc_fr
 * @subpackage
 * @author    Laurent Jouanneau
-* @copyright 2012 Innophi
+* @copyright 2012-2023 Laurent Jouanneau
 * @link      http://doc.jelix.org
 * @license    GPL
 */
 
 $appPath = __DIR__.'/';
-require ($appPath.'../lib/jelix/init.php');
+require (__DIR__.'/../lib/vendor/autoload.php');
 
 jApp::initPaths(
     $appPath,
@@ -20,3 +20,6 @@ jApp::initPaths(
     $appPath.'scripts/'
 );
 jApp::setTempBasePath(getenv('DOCS_FR_JELIX_ORG_TEMP_PATH'));
+
+require (__DIR__.'/../lib/vendor/jelix_app_path.php');
+
