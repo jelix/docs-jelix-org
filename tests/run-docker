@@ -29,7 +29,7 @@ fi
 
 if [ "$CMD" == "reset" ]; then
     # Stop/Remove containers
-    docker-compose -p ${IMG_PREFIX}-tests${APPBRANCH} rm -sf || true
+    docker compose -p ${IMG_PREFIX}-tests${APPBRANCH} rm -sf || true
     exit 0
 elif [ -z "$CMD" ]; then
     CMD="up"
@@ -38,4 +38,4 @@ else
 fi
 
 
-docker-compose -p ${IMG_PREFIX}-tests${APPBRANCH} $CMD
+docker compose -p ${IMG_PREFIX}-tests${APPBRANCH} $CMD

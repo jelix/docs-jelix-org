@@ -21,7 +21,7 @@ class myHtmlResponse extends jResponseHtml {
         $this->addCssLink('/design/2023/design.css', array('media'=>'all', 'title'=>'Jelix'));
         $this->addCssLink('/design/2023/print.css', array('media'=>'print'));
         $this->addCssLink('/assets/highlight/styles/vs.css', array('media'=>'all'));
-        $this->addJSLink('/jelix/jquery/jquery.js');
+        $this->addJSLink('/jelix/jquery/jquery.min.js');
         $this->addJSLink('/assets/highlight/highlight.pack.js');
         $this->addJSLink('/assets/display.js');
         
