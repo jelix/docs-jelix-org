@@ -41,11 +41,18 @@ class myHtmlResponse extends jResponseHtml {
    <meta name="robots" content="index,follow,all" />
 ');
 
-       $this->body->assignIfNone('menu','');
-       $this->body->assignIfNone('link_lang',false);
-       $this->body->assignIfNone('MAIN','<p></p>');
-       $this->body->assignIfNone('page_title','Jelix');
-       $this->body->assignIfNone('MAINFOOTER','');
-       $this->body->assignIfNone('currentRepoName',null);
+        $this->body->assignIfNone('menu','');
+        $this->body->assignIfNone('link_lang',false);
+        $this->body->assignIfNone('MAIN','<p></p>');
+        $this->body->assignIfNone('page_title','Jelix');
+        $this->body->assignIfNone('MAINFOOTER','');
+        $this->body->assignIfNone('currentRepoName',null);
+
+        $config = jApp::config()->website;
+        if ($config['analytics']) {
+            $this->addJSLink(
+                $config['analyticsUrl'],
+                ['defer'=>true, 'data-domain'=>$config['analyticsDomain']]);
+        }
     }
 }

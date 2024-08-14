@@ -177,3 +177,7 @@ showRepositoriesList=on
 wiki="gitiwiki~gtwWikiRenderer,gitiwiki_to_xhtml"
 gtw="gitiwiki~gtwWikiRenderer,gitiwiki_to_xhtml"
 
+[website]
+analytics=off
+analyticsUrl=
+analyticsDomain=
