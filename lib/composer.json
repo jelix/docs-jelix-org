@@ -7,7 +7,7 @@
   ],
   "require": {
     "php": ">=7.4",
-    "jelix/jelix": "dev-jelix-1.8.x",
+    "jelix/jelix": "~1.8.18",
     "jelix/wikirenderer-plugin": "1.7.*",
     "laurentj/glip": "1.0.*",
     "guzzlehttp/guzzle": "^7.5.0"
