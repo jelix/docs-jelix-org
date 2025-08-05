@@ -11,16 +11,21 @@ ALL_LANG="Y"
 TARGETPATH=""
 ONLYCURRENTBRANCH=""
 NO_GIT_PULL=""
+GIT_REMOTE_NAME=origin
 set -e
 
 usage()
 {
-    echo "update_repo_and_book [options] [bookid]"
+    echo "update_repo_and_book [options] <target-branch> [<lang>]"
+    echo " "
     echo "  For each book registered inside this script:"
     echo "  - it pull changes from the git repository"
     echo "  - if there are some changes, it generates book informations for the wiki"
     echo "    and it generates the pdf of the book"
-    echo "  If a book id is given, only do these operations on the corresponding book"
+    echo ""
+    echo "Parameters:"
+    echo " - target-branch: the branch to use (jelix-1.8, jelix-1.9...)"
+    echo " - lang: en or fr"
     echo ""
     echo "options:"
     echo "  -f|--force  :  force the generation of the books, even if there are no changes"
@@ -28,6 +33,8 @@ usage()
     echo "  -p|--no-pdf : generate only book informations, not pdfs"
     echo "  --output-pdf=a/path/ : indicates a path where to move books"
     echo "  --no-pull: do not git pull"
+    echo "  --book=<bookid> the book to generate"
+    echo "  --remote=<gitremote"
     echo ""
 }
 
@@ -55,6 +62,9 @@ case $i in
     ;;
     --book=*)
         BOOKID=${i:7}
+    ;;
+    --remote=*)
+        GIT_REMOTE_NAME=${i:9}
     ;;
     -*)
       echo "ERROR: Unknown option: $i"
@@ -135,7 +145,7 @@ updateBook()
         git checkout $br
         OLDREV=`cat .git/refs/heads/$br`
         if [ "$NO_GIT_PULL" == "" ]; then
-          git pull origin $br
+          git pull $GIT_REMOTE_NAME $br
         fi
         NEWREV=`cat .git/refs/heads/$br`
     else
@@ -204,7 +214,7 @@ if [ "$BOOKID" != "" ]; then
     fi
     ALL_LANG=""
     TARGET_BRANCH="jelix-"${BOOKID:7}
-    if [ $TARGET_BRANCH == "jelix-1.8" ]; then
+    if [ $TARGET_BRANCH == "jelix-1.9" ]; then
         TARGET_BRANCH=master
     fi
 fi
