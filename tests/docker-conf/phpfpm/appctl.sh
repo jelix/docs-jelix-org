@@ -5,6 +5,7 @@ APPDIR_FR="$ROOTDIR/doc_fr/"
 APPTEMPDIR_FR="$ROOTDIR/temp/doc_fr"
 APPDIR_EN="$ROOTDIR/doc_en"
 APPTEMPDIR_EN="$ROOTDIR/temp/doc_en"
+APPLIBDIR="$ROOTDIR/lib"
 
 APP_USER=userphp
 APP_GROUP=groupphp
@@ -122,7 +123,7 @@ function setRights() {
 function composerInstall() {
     echo "--- Install Composer packages"
     local appdir="$1"
-    if [ -d $appdir/composer.json ]; then
+    if [ -f $appdir/composer.json ]; then
       if [ -f $appdir/composer.lock ]; then
           rm -f $appdir/composer.lock
       fi
@@ -134,12 +135,14 @@ function composerInstall() {
 function composerUpdate() {
     echo "--- Update Composer packages"
     local appdir="$1"
-    if [ -d $appdir/composer.json ]; then
+    if [ -f $appdir/composer.json ]; then
       if [ -f $appdir/composer.lock ]; then
           rm -f $appdir/composer.lock
       fi
       composer update --prefer-dist --no-progress --no-ansi --no-interaction --working-dir=$appdir
       chown -R $APP_USER:$APP_GROUP $appdir/vendor $appdir/composer.lock
+    else
+      echo "   no composer.json found into $appdir"
     fi
 }
 
@@ -173,8 +176,7 @@ case $COMMAND in
     reset)
         resetJelixTemp $APPDIR_FR $TEMPDIR $APPTEMPDIR_FR
         resetJelixTemp $APPDIR_EN $TEMPDIR $APPTEMPDIR_EN
-        composerInstall $APPDIR_FR
-        composerInstall $APPDIR_EN
+        composerInstall $APPLIBDIR
         resetApp $APPDIR_FR $APPTEMPDIR_FR
         resetApp $APPDIR_EN $APPTEMPDIR_EN
         ;;
@@ -187,12 +189,10 @@ case $COMMAND in
         setRights $APPDIR_EN $APPTEMPDIR_EN
         ;;
     composer_install)
-        composerInstall $APPDIR_FR
-        composerInstall $APPDIR_EN
+        composerInstall $APPLIBDIR
         ;;
     composer_update)
-        composerUpdate $APPDIR_FR
-        composerUpdate $APPDIR_EN
+        composerUpdate $APPLIBDIR
         ;;
     unit-tests)
         UTCMD="cd $ROOTDIR/tests/units && vendor/bin/phpunit  $@"
@@ -206,4 +206,3 @@ case $COMMAND in
         exit 2
         ;;
 esac
-

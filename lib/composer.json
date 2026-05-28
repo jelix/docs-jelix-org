@@ -9,7 +9,7 @@
     "php": ">=7.4",
     "jelix/jelix": "~1.8.24",
     "jelix/wikirenderer-plugin": "1.7.*",
-    "laurentj/glip": "1.0.*",
+    "laurentj/glip": "1.1.*",
     "guzzlehttp/guzzle": "^7.5.0"
   },
   "minimum-stability": "stable",
