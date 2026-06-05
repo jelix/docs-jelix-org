@@ -15,4 +15,4 @@ gtw="gitiwiki~gtwWikiRenderer,gitiwiki_to_xhtml"
 [website]
 analytics=on
 analyticsUrl=https://bourbon.3liz.com/js/script.js
-analyticsDomain=jelix.org
+analyticsDomain=docs.jelix.org
